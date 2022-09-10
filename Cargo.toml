@@ -1,0 +1,6 @@
+[workspace]
+members = [
+	"src/di",
+	"src/di_macros",
+	"test/di",
+]

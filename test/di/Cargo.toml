@@ -1,0 +1,11 @@
+[package]
+name = "more-di-tests"
+version = "1.0.0"
+edition = "2018"
+publish = false
+
+[lib]
+path = "lib.rs"
+
+[dependencies]
+more-di = { path = "../../src/di" }
