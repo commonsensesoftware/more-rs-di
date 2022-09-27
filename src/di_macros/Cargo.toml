@@ -1,12 +1,13 @@
 [package]
 name = "more-di-macros"
-version = "1.0.0"
+version = "1.0.1"
 edition = "2018"
 authors = ["Chris Martinez <chris_martinez_77@hotmail.com>"]
 description = "Macro implementation of #[injectable(Trait)]"
 license = "MIT"
 repository = "https://github.com/commonsensesoftware/more-rs-di"
-include = ["*.rs", "../../LICENSE"]
+include = ["*.rs", "LICENSE"]
+exclude = ["build.rs"]
 
 [lib]
 name = "di_macros"
