@@ -8,8 +8,7 @@ keywords = ["more", "di", "dependency", "injection", "ioc", "inversion", "contro
 license = "MIT"
 readme = "README.md"
 repository = "https://github.com/commonsensesoftware/more-rs-di"
-include = ["*.rs", "README.md", "LICENSE"]
-exclude = ["build.rs"]
+include = ["*.rs", "!build.rs", "README.md"]
 
 [lib]
 name = "di"

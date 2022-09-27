@@ -10,5 +10,4 @@ Cargo.lock
 **/*.rs.bk
 
 # These files are copied from the root with build scripts
-/src/**/LICENSE
 /src/**/README.md
