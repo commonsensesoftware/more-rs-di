@@ -1,8 +1,10 @@
+use crate::ServiceRef;
 use std::env;
 use std::fs::{remove_file, File};
 use std::path::PathBuf;
 
-use crate::ServiceRef;
+#[cfg(feature = "async")]
+use std::sync::Mutex;
 
 pub(crate) fn new_temp_file(name: &str) -> PathBuf {
     let mut path = env::temp_dir();
@@ -65,5 +67,20 @@ impl Droppable {
 impl Drop for Droppable {
     fn drop(&mut self) {
         remove_file(&self.file).ok();
+    }
+}
+
+#[cfg(feature = "async")]
+#[derive(Default)]
+pub(crate) struct TestAsyncServiceImpl {
+    value: Mutex<usize>,
+}
+
+#[cfg(feature = "async")]
+impl TestService for TestAsyncServiceImpl {
+    fn value(&self) -> usize {
+        let mut value = self.value.lock().unwrap();
+        *value += 1;
+        *value
     }
 }

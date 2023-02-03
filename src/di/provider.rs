@@ -10,6 +10,12 @@ pub struct ServiceProvider {
     services: ServiceRef<HashMap<Type, Vec<ServiceDescriptor>>>,
 }
 
+#[cfg(feature = "async")]
+unsafe impl Send for ServiceProvider {}
+
+#[cfg(feature = "async")]
+unsafe impl Sync for ServiceProvider {}
+
 impl ServiceProvider {
     /// Initializes a new service provider.
     ///
@@ -125,9 +131,15 @@ impl Default for ServiceProvider {
 #[cfg(test)]
 mod tests {
 
-    use crate::{*, test::*};
+    use crate::{test::*, *};
     use std::fs::remove_file;
     use std::path::{Path, PathBuf};
+
+    #[cfg(feature = "async")]
+    use std::sync::{Arc, Mutex};
+
+    #[cfg(feature = "async")]
+    use std::thread;
 
     #[test]
     fn get_should_return_none_when_service_is_unregistered() {
@@ -406,5 +418,52 @@ mod tests {
         let not_dropped = file.exists();
         remove_file(&file).ok();
         assert!(not_dropped);
+    }
+
+    #[cfg(feature = "async")]
+    #[derive(Clone)]
+    struct Holder<T: Send + Sync + Clone>(T);
+
+    #[cfg(feature = "async")]
+    fn inject<V: Send + Sync + Clone + 'static>(value: V) -> Holder<V> {
+        Holder(value)
+    }
+
+    #[test]
+    #[cfg(feature = "async")]
+    fn service_provider_should_be_async_safe() {
+        // arrange
+        let provider = ServiceCollection::new()
+            .add(
+                singleton::<dyn TestService, TestAsyncServiceImpl>().from(|_sp| {
+                    ServiceRef::new(TestAsyncServiceImpl::default())
+                }),
+            )
+            .build_provider();
+        let holder = inject(provider);
+        let h1 = holder.clone();
+        let h2 = holder.clone();
+        let value = Arc::new(Mutex::new(0));
+        let v1 = value.clone();
+        let v2 = value.clone();
+
+        // act
+        let t1 = thread::spawn(move || {
+            let service = h1.0.get_required::<dyn TestService>();
+            let mut result = v1.lock().unwrap();
+            *result += service.value();
+        });
+
+        let t2 = thread::spawn(move || {
+            let service = h2.0.get_required::<dyn TestService>();
+            let mut result = v2.lock().unwrap();
+            *result += service.value();
+        });
+        
+        t1.join().ok();
+        t2.join().ok();
+
+        // assert
+        assert_eq!(*value.lock().unwrap(), 3);
     }
 }
