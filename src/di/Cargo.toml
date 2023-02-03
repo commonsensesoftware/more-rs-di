@@ -1,6 +1,6 @@
 [package]
 name = "more-di"
-version = "1.0.0"
+version = "1.0.1"
 edition = "2018"
 authors = ["Chris Martinez <chris_martinez_77@hotmail.com>"]
 description = "Provides support for dependency injection (DI)"
