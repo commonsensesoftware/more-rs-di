@@ -2,8 +2,10 @@
 
 mod r#type;
 mod collection;
+mod dependency;
 mod descriptor;
 mod provider;
+mod validation;
 
 #[cfg(feature = "builder")]
 mod builder;
@@ -16,8 +18,10 @@ mod test;
 
 pub use r#type::*;
 pub use collection::*;
+pub use dependency::*;
 pub use descriptor::*;
 pub use provider::*;
+pub use validation::*;
 
 #[cfg(feature = "builder")]
 pub use builder::*;
