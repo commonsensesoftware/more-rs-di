@@ -6,7 +6,8 @@ fn inject_should_implement_trait_for_struct() {
     // arrange
     let provider = ServiceCollection::new()
         .add(traits::BarImpl::transient())
-        .build_provider();
+        .build_provider()
+        .unwrap();
 
     // act
     let bar = provider.get_required::<dyn traits::Bar>();
@@ -21,7 +22,8 @@ fn inject_should_implement_trait_for_struct_with_dependency() {
     let provider = ServiceCollection::new()
         .add(traits::FooImpl::singleton())
         .add(traits::BarImpl::transient())
-        .build_provider();
+        .build_provider()
+        .unwrap();
 
     // act
     let foo = provider.get_required::<dyn traits::Foo>();
@@ -35,7 +37,8 @@ fn inject_should_implement_struct_for_self() {
     // arrange
     let provider = ServiceCollection::new()
         .add(structs::Bar::transient())
-        .build_provider();
+        .build_provider()
+        .unwrap();
 
     // act
     let bar = provider.get_required::<structs::Bar>();
@@ -50,7 +53,8 @@ fn inject_should_implement_struct_for_self_with_dependency() {
     let provider = ServiceCollection::new()
         .add(structs::Foo::singleton())
         .add(structs::Bar::transient())
-        .build_provider();
+        .build_provider()
+        .unwrap();
 
     // act
     let foo = provider.get_required::<structs::Foo>();
@@ -67,7 +71,8 @@ fn inject_should_clone_service_provider_and_return_same_singleton() {
         .add(traits::FooImpl::singleton())
         .add(traits::BarImpl::transient())
         .add(containers::Container::transient())
-        .build_provider();
+        .build_provider()
+        .unwrap();
     let container = provider.get_required::<containers::Container>();
 
     // act
@@ -86,7 +91,8 @@ fn inject_should_clone_service_provider_and_return_different_scoped_instance() {
         .add(traits::FooImpl::scoped())
         .add(traits::BarImpl::transient())
         .add(containers::ScopedContainer::transient())
-        .build_provider();
+        .build_provider()
+        .unwrap();
     let container = provider.get_required::<containers::ScopedContainer>();
 
     // act
