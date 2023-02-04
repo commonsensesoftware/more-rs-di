@@ -84,7 +84,7 @@ fn main() {
         transient::<dyn Bar, BarImpl>()
         .from(|sp| Rc::new(BarImpl::new(sp.get_required::<dyn Foo>()))));
 
-    let provider = services.build_provider();
+    let provider = services.build_provider().unwrap();
     let bar = provider.get_required::<dyn Bar>();
     let text = bar.speak();
 
@@ -124,7 +124,9 @@ let provider = ServiceCollection::new()
         .from(|_| Rc::new(FooImpl::default())))
     .add(
         transient::<dyn Bar, BarImpl>()
-        .from(|sp| Rc::new(BarImpl::new(sp.get_required::<dyn Foo>()))));
+        .from(|sp| Rc::new(BarImpl::new(sp.get_required::<dyn Foo>()))))
+    .build_provider()
+    .unwrap();
 
 {
     // create a scope where Bar is shared
@@ -146,6 +148,49 @@ let provider = ServiceCollection::new()
 ```
 
 _Figure 2: Using scoped services_
+
+### Validation
+
+The consumers of a `ServiceProvider` expect that is correctly configured and ready for use. There are edge cases,
+however, which could lead to runtime failures.
+
+- A required, dependent service that has not be registered
+- A circular dependency, which will trigger a stack overflow
+
+Intrinsic validation has been added to ensure this cannot happen. The `build_provider()` method will return
+`Result<ServiceProvider, ValidationError>`, which will either contain a valid `ServiceProvider` or a
+`ValidationError` that will detail all of the errors. From that point forward, the `ServiceProvider` will be
+considered semantically correct and safe to use. The same validation process can also be invoked imperatively
+on-demand by using the `di::validate` method.
+
+The `ServiceDescriptorBuilder` cannot automatically determine the dependencies your service may require. This
+means that validation is an explicit, opt-in capability. If you do not configure any dependencies for a
+`ServiceDescriptor`, then no validation will occur.
+
+```rust
+fn main() {
+    let mut services = ServiceCollection::new();
+
+    services.add(
+        singleton::<dyn Foo, FooImpl>()
+        .from(|_| Rc::new(FooImpl::default())));
+    services.add(
+        transient::<dyn Bar, BarImpl>()
+        .depends_on(ServiceDependency::new(Type::of::<dyn Foo>(), ServiceMultiplicity::ExactlyOne))
+        .from(|sp| Rc::new(BarImpl::new(sp.get_required::<dyn Foo>()))));
+
+    match services.build_provider() {
+        Ok(provider) => {
+            let bar = provider.get_required::<dyn Bar>();
+            assert_eq!(&bar.speak(), "foo bar");
+        },
+        Err(error) => {
+            println!("The service configuration is invalid.\n{}", &error.to_string());
+        }
+    }
+}
+```
+_Figure 3: Validating service configuration_
 
 ### Inject Feature
 
@@ -171,7 +216,7 @@ impl Injectable for BarImpl {
 }
 ```
 
-_Figure 3: Implementing `Injectable`_
+_Figure 4: Implementing `Injectable`_
 
 While implementing `Injectable` _might_ be necessary or desired in a handful of scenarios, it is mostly tedious ceremony.
 If the injection call site were known, then it would be possible to provide the implementation automatically. This is exactly
@@ -191,7 +236,7 @@ impl BarImpl {
 }
 ```
 
-_Figure 4: Automatically implementing `Injectable`_
+_Figure 5: Automatically implementing `Injectable`_
 
 #### Injection Rules
 
@@ -219,7 +264,7 @@ This means that the only allowed arguments are:
 - `Vec<ServiceRef<T>>`
 - `ServiceProvider`
 
-`ServiceRef<T>` is a provided type alias for `Rc<T>` by default, but becomes `Arc<T>` when the **async** feature is enabled. `Rc<T>` and `Arc<T>` are also allowed anywhere `ServiceRef<T>` is allowed.
+`ServiceRef<T>` is a provided type alias for `Rc<T>` by default, but becomes `Arc<T>` when the **async** feature is enabled. `Rc<T>` and `Arc<T>` are also allowed anywhere `ServiceRef<T>` is allowed. For every injected type `T`, the appropriate `ServiceDependency` configuration is also added so that injected types can be validated.
 
 The following is an advanced example with all of these concepts applied:
 
@@ -248,7 +293,7 @@ impl BarImpl {
 }
 ```
 
-_Figure 5: Advanced `Injectable` configuration_
+_Figure 6: Advanced `Injectable` configuration_
 
 Which will expand to:
 
@@ -256,6 +301,9 @@ Which will expand to:
 impl Injectable for BarImpl {
     fn inject(lifetime: ServiceLifetime) -> ServiceDescriptor {
         ServiceDescriptorBuilder::<dyn Bar, Self>::new(lifetime, Type::of::<Self>())
+            .depends_on(ServiceDependency::new(Type::of::<dyn Foo>(), ServiceMultiplicity::ExactlyOne))
+            .depends_on(ServiceDependency::new(Type::of::<dyn Translator>(), ServiceMultiplicity::ZeroOrOne))
+            .depends_on(ServiceDependency::new(Type::of::<dyn Logger>(), ServiceMultiplicity::ZeroOrMore))
             .from(|sp| Rc::new(
                 BarImpl::create(
                     sp.get_required::<dyn Foo>(),
@@ -265,7 +313,7 @@ impl Injectable for BarImpl {
 }
 ```
 
-_Figure 6: Advanced `Injectable` implementation_
+_Figure 7: Advanced `Injectable` implementation_
 
 #### Simplified Registration
 
@@ -282,7 +330,8 @@ fn main() {
     let provider = ServiceCollection::new()
         .add(FooImpl::singleton())
         .add(BarImpl::transient())
-        .build_provider();
+        .build_provider()
+        .unwrap();
 
     let bar = provider.get_required::<dyn Bar>();
     let text = bar.speak();
@@ -290,7 +339,7 @@ fn main() {
     assert_eq!(text, "foo bar")
 }
 ```
-_Figure 7: **inject** feature usage_
+_Figure 8: **inject** feature usage_
 
 ## License
 
