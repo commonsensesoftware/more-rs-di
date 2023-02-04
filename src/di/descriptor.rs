@@ -1,4 +1,4 @@
-use crate::{ServiceProvider, Type};
+use crate::{ServiceDependency, ServiceProvider, Type};
 use spin::Once;
 use std::any::Any;
 use std::marker::PhantomData;
@@ -32,6 +32,7 @@ pub struct ServiceDescriptor {
     lifetime: ServiceLifetime,
     service_type: Type,
     implementation_type: Type,
+    dependencies: Vec<ServiceDependency>,
     instance: ServiceRef<Once<ServiceRef<dyn Any>>>,
     factory: ServiceRef<ServiceFactory>,
 }
@@ -49,6 +50,7 @@ impl ServiceDescriptor {
             lifetime,
             service_type,
             implementation_type,
+            dependencies: Vec::with_capacity(0),
             instance: ServiceRef::new(instance),
             factory,
         }
@@ -69,6 +71,11 @@ impl ServiceDescriptor {
         &self.implementation_type
     }
 
+    /// Gets the associated [service dependencies](struct.ServiceDependency.html), if any.
+    pub fn dependencies(&self) -> &[ServiceDependency] {
+        &self.dependencies
+    }
+
     /// Gets or creates the service defined by the service descriptor.
     ///
     /// # Arguments
@@ -81,14 +88,17 @@ impl ServiceDescriptor {
 
         return self.instance.call_once(|| (self.factory)(services)).clone();
     }
-}
 
-impl Clone for ServiceDescriptor {
-    fn clone(&self) -> Self {
+    pub(crate) fn clone_with(&self, dependencies: bool) -> Self {
         Self {
             lifetime: self.lifetime,
             service_type: self.service_type.clone(),
             implementation_type: self.implementation_type.clone(),
+            dependencies: if dependencies {
+                self.dependencies.clone()
+            } else {
+                Vec::with_capacity(0)
+            },
             instance: if self.lifetime == ServiceLifetime::Singleton {
                 self.instance.clone()
             } else {
@@ -99,10 +109,19 @@ impl Clone for ServiceDescriptor {
     }
 }
 
+impl Clone for ServiceDescriptor {
+    fn clone(&self) -> Self {
+        // without context, we don't know if this is 'safe';
+        // always copy dependencies here
+        self.clone_with(true)
+    }
+}
+
 /// Represents a builder for [service descriptors](struct.ServiceDescriptor.html).
 pub struct ServiceDescriptorBuilder<TSvc: Any + ?Sized, TImpl> {
     lifetime: ServiceLifetime,
     implementation_type: Type,
+    dependencies: Vec<ServiceDependency>,
     _marker_svc: PhantomData<TSvc>,
     _marker_impl: PhantomData<TImpl>,
 }
@@ -113,7 +132,7 @@ impl<TSvc: Any + ?Sized, TImpl> ServiceDescriptorBuilder<TSvc, TImpl> {
     /// # Arguments
     ///
     /// * `factory` - The factory method used to create the service
-    pub fn from<F>(self, factory: F) -> ServiceDescriptor
+    pub fn from<F>(mut self, factory: F) -> ServiceDescriptor
     where
         F: Fn(&ServiceProvider) -> ServiceRef<TSvc> + 'static,
     {
@@ -121,20 +140,37 @@ impl<TSvc: Any + ?Sized, TImpl> ServiceDescriptorBuilder<TSvc, TImpl> {
             lifetime: self.lifetime,
             service_type: Type::of::<TSvc>(),
             implementation_type: self.implementation_type,
+            dependencies: if self.dependencies.is_empty() {
+                Vec::with_capacity(0)
+            } else {
+                self.dependencies.shrink_to_fit();
+                self.dependencies
+            },
             instance: ServiceRef::new(Once::new()),
             factory: ServiceRef::new(move |sp| ServiceRef::new(factory(sp))),
         }
+    }
+
+    /// Defines a dependency used by the service.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `dependency` - The [dependency](struct.ServiceDependency.html) associated with the service
+    pub fn depends_on(mut self, dependency: ServiceDependency) -> Self {
+        self.dependencies.push(dependency);
+        self
     }
 
     /// Initializes a new service descriptor builder.
     ///
     /// # Arguments
     ///
-    /// * `lifetime` - The [lifetime](enum.ServiceLifetime.html) of the service.
+    /// * `lifetime` - The [lifetime](enum.ServiceLifetime.html) of the service
     pub fn new(lifetime: ServiceLifetime, implementation_type: Type) -> Self {
         Self {
             lifetime,
             implementation_type,
+            dependencies: Vec::new(),
             _marker_svc: PhantomData,
             _marker_impl: PhantomData,
         }
