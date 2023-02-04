@@ -1,6 +1,6 @@
 [package]
 name = "more-di"
-version = "1.0.1"
+version = "2.0.0"
 edition = "2018"
 authors = ["Chris Martinez <chris_martinez_77@hotmail.com>"]
 description = "Provides support for dependency injection (DI)"
@@ -23,7 +23,7 @@ inject = ["more-di-macros"]
 
 [dependencies.more-di-macros]
 path = "../di_macros"
-version = "1.0"
+version = "2.0"
 optional = true
 
 [dependencies.spin]
