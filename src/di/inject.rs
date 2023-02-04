@@ -72,7 +72,8 @@ mod tests {
         let services = ServiceCollection::new()
             .add(TestServiceImpl::singleton())
             .add(OtherTestServiceImpl::transient())
-            .build_provider();
+            .build_provider()
+            .unwrap();
 
         // act
         let service = services.get::<dyn OtherTestService>();

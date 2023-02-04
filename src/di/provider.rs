@@ -144,7 +144,7 @@ mod tests {
     #[test]
     fn get_should_return_none_when_service_is_unregistered() {
         // arrange
-        let services = ServiceCollection::new().build_provider();
+        let services = ServiceCollection::new().build_provider().unwrap();
 
         // act
         let result = services.get::<dyn TestService>();
@@ -161,7 +161,8 @@ mod tests {
                 singleton::<dyn TestService, TestServiceImpl>()
                     .from(|_| ServiceRef::new(TestServiceImpl::default())),
             )
-            .build_provider();
+            .build_provider()
+            .unwrap();
 
         // act
         let result = services.get::<dyn TestService>();
@@ -178,7 +179,8 @@ mod tests {
                 singleton::<dyn TestService, TestServiceImpl>()
                     .from(|_| ServiceRef::new(TestServiceImpl::default())),
             )
-            .build_provider();
+            .build_provider()
+            .unwrap();
 
         // act
         let _ = services.get_required::<dyn TestService>();
@@ -193,7 +195,7 @@ mod tests {
     )]
     fn get_required_should_panic_when_service_is_unregistered() {
         // arrange
-        let services = ServiceCollection::new().build_provider();
+        let services = ServiceCollection::new().build_provider().unwrap();
 
         // act
         let _ = services.get_required::<dyn TestService>();
@@ -217,7 +219,8 @@ mod tests {
                     ))
                 }),
             )
-            .build_provider();
+            .build_provider()
+            .unwrap();
 
         // act
         let svc2 = services.get_required::<dyn OtherTestService>();
@@ -236,7 +239,8 @@ mod tests {
                 transient::<dyn TestService, TestServiceImpl>()
                     .from(|_| ServiceRef::new(TestServiceImpl::default())),
             )
-            .build_provider();
+            .build_provider()
+            .unwrap();
 
         // act
         let svc1 = services.get_required::<dyn TestService>();
@@ -261,7 +265,7 @@ mod tests {
                     .from(|_| ServiceRef::new(TestService2Impl { value: 2 })),
             );
 
-        let provider = collection.build_provider();
+        let provider = collection.build_provider().unwrap();
 
         // act
         let services = provider.get_all::<dyn TestService>();
@@ -280,7 +284,8 @@ mod tests {
                 scoped::<dyn TestService, TestServiceImpl>()
                     .from(|_| ServiceRef::new(TestServiceImpl::default())),
             )
-            .build_provider();
+            .build_provider()
+            .unwrap();
         let scope1 = services.create_scope();
         let scope2 = services.create_scope();
 
@@ -301,7 +306,8 @@ mod tests {
                 scoped::<dyn TestService, TestServiceImpl>()
                     .from(|_| ServiceRef::new(TestServiceImpl::default())),
             )
-            .build_provider();
+            .build_provider()
+            .unwrap();
         let scope1 = services.create_scope();
         let scope2 = scope1.create_scope();
 
@@ -322,7 +328,8 @@ mod tests {
                 singleton::<dyn TestService, TestServiceImpl>()
                     .from(|_| ServiceRef::new(TestServiceImpl::default())),
             )
-            .build_provider();
+            .build_provider()
+            .unwrap();
         let svc1 = services.get_required::<dyn TestService>();
         let scope1 = services.create_scope();
         let scope2 = scope1.create_scope();
@@ -345,7 +352,8 @@ mod tests {
                 singleton::<dyn TestService, TestServiceImpl>()
                     .from(|_| ServiceRef::new(TestServiceImpl::default())),
             )
-            .build_provider();
+            .build_provider()
+            .unwrap();
         let scope1 = services.create_scope();
         let scope2 = scope1.create_scope();
         let svc1 = services.get_required::<dyn TestService>();
@@ -368,7 +376,7 @@ mod tests {
         {
             let mut services = ServiceCollection::new();
             services.add(existing_as_self(Droppable::new(file.clone())));
-            let _ = services.build_provider();
+            let _ = services.build_provider().unwrap();
         }
 
         // assert
@@ -389,7 +397,8 @@ mod tests {
                 .add(singleton_as_self().from(|sp| {
                     ServiceRef::new(Droppable::new(sp.get_required::<Path>().to_path_buf()))
                 }))
-                .build_provider();
+                .build_provider()
+                .unwrap();
             let _ = provider.get_required::<Droppable>();
         }
 
@@ -411,7 +420,8 @@ mod tests {
                 .add(singleton_as_self().from(|sp| {
                     ServiceRef::new(Droppable::new(sp.get_required::<Path>().to_path_buf()))
                 }))
-                .build_provider();
+                .build_provider()
+                .unwrap();
         }
 
         // assert
@@ -435,11 +445,12 @@ mod tests {
         // arrange
         let provider = ServiceCollection::new()
             .add(
-                singleton::<dyn TestService, TestAsyncServiceImpl>().from(|_sp| {
+                singleton::<dyn TestService, TestAsyncServiceImpl>().from(|_| {
                     ServiceRef::new(TestAsyncServiceImpl::default())
                 }),
             )
-            .build_provider();
+            .build_provider()
+            .unwrap();
         let holder = inject(provider);
         let h1 = holder.clone();
         let h2 = holder.clone();

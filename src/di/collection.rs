@@ -1,4 +1,4 @@
-use crate::{ServiceDescriptor, ServiceProvider, Type};
+use crate::{validate, ServiceDescriptor, ServiceProvider, Type, ValidationError};
 use std::any::Any;
 use std::collections::HashMap;
 use std::iter::{DoubleEndedIterator, ExactSizeIterator};
@@ -167,21 +167,29 @@ impl ServiceCollection {
     }
 
     /// Builds and returns a new [service provider](struct.ServiceProvider.html).
-    pub fn build_provider(&self) -> ServiceProvider {
-        let mut services = HashMap::with_capacity(self.items.len());
+    pub fn build_provider(&self) -> Result<ServiceProvider, ValidationError> {
+        if let Err(error) = validate(self) {
+            Err(error)
+        } else {
+            let mut services = HashMap::with_capacity(self.items.len());
 
-        for item in &self.items {
-            let key = item.service_type().clone();
-            let descriptors = services.entry(key).or_insert_with(Vec::new);
-            descriptors.push(item.clone());
+            for item in &self.items {
+                let key = item.service_type().clone();
+                let descriptors = services.entry(key).or_insert_with(Vec::new);
+
+                // note: dependencies are only interesting for validation. after a ServiceProvider
+                // is created, no further validation occurs. prevent copying unnecessary memory
+                // and allow it to potentially be freed if the ServiceCollection is dropped.
+                descriptors.push(item.clone_with(false));
+            }
+
+            for values in services.values_mut() {
+                values.shrink_to_fit();
+            }
+
+            services.shrink_to_fit();
+            Ok(ServiceProvider::new(services))
         }
-
-        for values in services.values_mut() {
-            values.shrink_to_fit();
-        }
-
-        services.shrink_to_fit();
-        ServiceProvider::new(services)
     }
 
     /// Gets a read-only iterator for the collection
@@ -231,7 +239,7 @@ impl Index<usize> for ServiceCollection {
 mod tests {
 
     use super::*;
-    use crate::{*, test::*};
+    use crate::{test::*, *};
     use std::fs::remove_file;
     use std::path::{Path, PathBuf};
 
@@ -457,6 +465,7 @@ mod tests {
         // assert
         let value = collection
             .build_provider()
+            .unwrap()
             .get_required::<dyn TestService>()
             .value();
         assert_eq!(value, 1);
