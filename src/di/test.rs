@@ -20,6 +20,8 @@ pub(crate) trait TestService {
 
 pub(crate) trait OtherTestService {}
 
+pub(crate) trait AnotherTestService {}
+
 #[derive(Default)]
 pub(crate) struct TestServiceImpl {
     pub value: usize,
@@ -82,5 +84,56 @@ impl TestService for TestAsyncServiceImpl {
         let mut value = self.value.lock().unwrap();
         *value += 1;
         *value
+    }
+}
+
+pub(crate) struct TestOptionalDepImpl {
+    _service: Option<ServiceRef<dyn TestService>>,
+}
+
+impl TestOptionalDepImpl {
+    pub fn new(service: Option<ServiceRef<dyn TestService>>) -> Self {
+        Self { _service: service }
+    }
+}
+
+impl OtherTestService for TestOptionalDepImpl {}
+
+pub(crate) struct TestCircularDepImpl {
+    _service: ServiceRef<dyn TestService>,
+}
+
+impl TestCircularDepImpl {
+    pub fn new(service: ServiceRef<dyn TestService>) -> Self {
+        Self { _service: service }
+    }
+}
+
+impl TestService for TestCircularDepImpl {
+    fn value(&self) -> usize {
+        42
+    }
+}
+
+pub(crate) struct TestAllKindOfProblems {
+    _other: ServiceRef<dyn OtherTestService>,
+    _another: ServiceRef<dyn AnotherTestService>,
+}
+
+impl TestAllKindOfProblems {
+    pub fn new(
+        other: ServiceRef<dyn OtherTestService>,
+        another: ServiceRef<dyn AnotherTestService>,
+    ) -> Self {
+        Self {
+            _other: other,
+            _another: another,
+        }
+    }
+}
+
+impl TestService for TestAllKindOfProblems {
+    fn value(&self) -> usize {
+        42
     }
 }
