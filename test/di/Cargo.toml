@@ -6,6 +6,8 @@ publish = false
 
 [lib]
 path = "lib.rs"
+doc = false
+doctest = false
 
 [dependencies]
 more-di = { path = "../../src/di" }
