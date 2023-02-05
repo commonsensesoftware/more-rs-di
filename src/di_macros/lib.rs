@@ -310,21 +310,21 @@ fn resolve_type(arg: &Type) -> Result<(TokenStream, Option<TokenStream>)> {
                     (
                         quote! { sp.get::<#trait_>() },
                         Some(
-                            quote! { di::ServiceDependency::new(di::Type::of::<#trait_>(), di::ServiceMultiplicity::ZeroOrOne) },
+                            quote! { di::ServiceDependency::new(di::Type::of::<#trait_>(), di::ServiceCardinality::ZeroOrOne) },
                         ),
                     )
                 } else if many {
                     (
                         quote! { sp.get_all::<#trait_>().collect() },
                         Some(
-                            quote! { di::ServiceDependency::new(di::Type::of::<#trait_>(), di::ServiceMultiplicity::ZeroOrMore) },
+                            quote! { di::ServiceDependency::new(di::Type::of::<#trait_>(), di::ServiceCardinality::ZeroOrMore) },
                         ),
                     )
                 } else {
                     (
                         quote! { sp.get_required::<#trait_>() },
                         Some(
-                            quote! { di::ServiceDependency::new(di::Type::of::<#trait_>(), di::ServiceMultiplicity::ExactlyOne) },
+                            quote! { di::ServiceDependency::new(di::Type::of::<#trait_>(), di::ServiceCardinality::ExactlyOne) },
                         ),
                     )
                 }),
@@ -332,21 +332,21 @@ fn resolve_type(arg: &Type) -> Result<(TokenStream, Option<TokenStream>)> {
                     (
                         quote! { sp.get::<#struct_>() },
                         Some(
-                            quote! { di::ServiceDependency::new(di::Type::of::<#struct_>(), di::ServiceMultiplicity::ZeroOrOne) },
+                            quote! { di::ServiceDependency::new(di::Type::of::<#struct_>(), di::ServiceCardinality::ZeroOrOne) },
                         ),
                     )
                 } else if many {
                     (
                         quote! { sp.get_all::<#struct_>().collect() },
                         Some(
-                            quote! { di::ServiceDependency::new(di::Type::of::<#struct_>(), di::ServiceMultiplicity::ZeroOrMore) },
+                            quote! { di::ServiceDependency::new(di::Type::of::<#struct_>(), di::ServiceCardinality::ZeroOrMore) },
                         ),
                     )
                 } else {
                     (
                         quote! { sp.get_required::<#struct_>() },
                         Some(
-                            quote! { di::ServiceDependency::new(di::Type::of::<#struct_>(), di::ServiceMultiplicity::ExactlyOne) },
+                            quote! { di::ServiceDependency::new(di::Type::of::<#struct_>(), di::ServiceCardinality::ExactlyOne) },
                         ),
                     )
                 }),
@@ -489,7 +489,7 @@ mod test {
             "impl di :: Injectable for FooImpl { ",
             "fn inject (lifetime : di :: ServiceLifetime) -> di :: ServiceDescriptor { ",
             "di :: ServiceDescriptorBuilder :: < dyn Foo , Self > :: new (lifetime , di :: Type :: of :: < Self > ()) ",
-            ". depends_on (di :: ServiceDependency :: new (di :: Type :: of :: < dyn Bar > () , di :: ServiceMultiplicity :: ExactlyOne)) ",
+            ". depends_on (di :: ServiceDependency :: new (di :: Type :: of :: < dyn Bar > () , di :: ServiceCardinality :: ExactlyOne)) ",
             ". from (| sp : & di :: ServiceProvider | di :: ServiceRef :: new (FooImpl :: new (sp . get_required :: < dyn Bar > ()))) ",
             "} ",
             "}");
@@ -525,7 +525,7 @@ mod test {
             "impl di :: Injectable for FooImpl { ",
             "fn inject (lifetime : di :: ServiceLifetime) -> di :: ServiceDescriptor { ",
             "di :: ServiceDescriptorBuilder :: < dyn Foo , Self > :: new (lifetime , di :: Type :: of :: < Self > ()) ",
-            ". depends_on (di :: ServiceDependency :: new (di :: Type :: of :: < dyn Bar > () , di :: ServiceMultiplicity :: ZeroOrOne)) ",
+            ". depends_on (di :: ServiceDependency :: new (di :: Type :: of :: < dyn Bar > () , di :: ServiceCardinality :: ZeroOrOne)) ",
             ". from (| sp : & di :: ServiceProvider | di :: ServiceRef :: new (FooImpl :: new (sp . get :: < dyn Bar > ()))) ",
             "} ",
             "}");
@@ -561,7 +561,7 @@ mod test {
             "impl di :: Injectable for FooImpl { ",
             "fn inject (lifetime : di :: ServiceLifetime) -> di :: ServiceDescriptor { ",
             "di :: ServiceDescriptorBuilder :: < dyn Foo , Self > :: new (lifetime , di :: Type :: of :: < Self > ()) ",
-            ". depends_on (di :: ServiceDependency :: new (di :: Type :: of :: < dyn Bar > () , di :: ServiceMultiplicity :: ZeroOrMore)) ",
+            ". depends_on (di :: ServiceDependency :: new (di :: Type :: of :: < dyn Bar > () , di :: ServiceCardinality :: ZeroOrMore)) ",
             ". from (| sp : & di :: ServiceProvider | di :: ServiceRef :: new (FooImpl :: new (sp . get_all :: < dyn Bar > () . collect ()))) ",
             "} ",
             "}");
@@ -599,8 +599,8 @@ mod test {
             "impl di :: Injectable for ThingImpl { ",
             "fn inject (lifetime : di :: ServiceLifetime) -> di :: ServiceDescriptor { ",
             "di :: ServiceDescriptorBuilder :: < dyn Thing , Self > :: new (lifetime , di :: Type :: of :: < Self > ()) ",
-            ". depends_on (di :: ServiceDependency :: new (di :: Type :: of :: < dyn Foo > () , di :: ServiceMultiplicity :: ExactlyOne)) ",
-            ". depends_on (di :: ServiceDependency :: new (di :: Type :: of :: < dyn Bar > () , di :: ServiceMultiplicity :: ZeroOrOne)) ",
+            ". depends_on (di :: ServiceDependency :: new (di :: Type :: of :: < dyn Foo > () , di :: ServiceCardinality :: ExactlyOne)) ",
+            ". depends_on (di :: ServiceDependency :: new (di :: Type :: of :: < dyn Bar > () , di :: ServiceCardinality :: ZeroOrOne)) ",
             ". from (| sp : & di :: ServiceProvider | di :: ServiceRef :: new (ThingImpl :: create_new (sp . get_required :: < dyn Foo > () , sp . get :: < dyn Bar > ()))) ",
             "} ",
             "}");
@@ -671,7 +671,7 @@ mod test {
             "impl di :: Injectable for FooImpl { ",
             "fn inject (lifetime : di :: ServiceLifetime) -> di :: ServiceDescriptor { ",
             "di :: ServiceDescriptorBuilder :: < dyn Foo , Self > :: new (lifetime , di :: Type :: of :: < Self > ()) ",
-            ". depends_on (di :: ServiceDependency :: new (di :: Type :: of :: < Bar > () , di :: ServiceMultiplicity :: ExactlyOne)) ",
+            ". depends_on (di :: ServiceDependency :: new (di :: Type :: of :: < Bar > () , di :: ServiceCardinality :: ExactlyOne)) ",
             ". from (| sp : & di :: ServiceProvider | di :: ServiceRef :: new (FooImpl :: new (sp . get_required :: < Bar > ()))) ",
             "} ",
             "}");

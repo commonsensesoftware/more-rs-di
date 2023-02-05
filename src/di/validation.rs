@@ -1,4 +1,4 @@
-use crate::{ServiceCollection, ServiceDependency, ServiceDescriptor, ServiceMultiplicity, Type};
+use crate::{ServiceCollection, ServiceDependency, ServiceDescriptor, ServiceCardinality, Type};
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use std::fmt::{Display, Formatter};
@@ -75,7 +75,7 @@ impl<'a> MissingRequiredType<'a> {
 impl<'a> ValidationRule<'a> for MissingRequiredType<'a> {
     fn evaluate(&self, descriptor: &'a ServiceDescriptor, results: &mut Vec<ValidationResult>) {
         for dependency in descriptor.dependencies() {
-            if dependency.multiplicity() == ServiceMultiplicity::ExactlyOne
+            if dependency.cardinality() == ServiceCardinality::ExactlyOne
                 && !self.lookup.contains_key(dependency.injected_type())
             {
                 results.push(ValidationResult::fail(format!(
@@ -187,7 +187,7 @@ mod tests {
             singleton::<dyn OtherTestService, OtherTestServiceImpl>()
                 .depends_on(ServiceDependency::new(
                     Type::of::<dyn TestService>(),
-                    ServiceMultiplicity::ExactlyOne,
+                    ServiceCardinality::ExactlyOne,
                 ))
                 .from(|sp| {
                     ServiceRef::new(OtherTestServiceImpl::new(
@@ -214,7 +214,7 @@ mod tests {
             singleton::<dyn OtherTestService, TestOptionalDepImpl>()
                 .depends_on(ServiceDependency::new(
                     Type::of::<dyn TestService>(),
-                    ServiceMultiplicity::ZeroOrOne,
+                    ServiceCardinality::ZeroOrOne,
                 ))
                 .from(|sp| ServiceRef::new(TestOptionalDepImpl::new(sp.get::<dyn TestService>()))),
         );
@@ -235,7 +235,7 @@ mod tests {
             singleton::<dyn TestService, TestCircularDepImpl>()
                 .depends_on(ServiceDependency::new(
                     Type::of::<dyn TestService>(),
-                    ServiceMultiplicity::ExactlyOne,
+                    ServiceCardinality::ExactlyOne,
                 ))
                 .from(|sp| {
                     ServiceRef::new(TestCircularDepImpl::new(
@@ -263,11 +263,11 @@ mod tests {
                 singleton::<dyn TestService, TestAllKindOfProblems>()
                     .depends_on(ServiceDependency::new(
                         Type::of::<dyn OtherTestService>(),
-                        ServiceMultiplicity::ExactlyOne,
+                        ServiceCardinality::ExactlyOne,
                     ))
                     .depends_on(ServiceDependency::new(
                         Type::of::<dyn AnotherTestService>(),
-                        ServiceMultiplicity::ExactlyOne,
+                        ServiceCardinality::ExactlyOne,
                     ))
                     .from(|sp| {
                         ServiceRef::new(TestAllKindOfProblems::new(
@@ -280,7 +280,7 @@ mod tests {
                 singleton::<dyn OtherTestService, OtherTestServiceImpl>()
                     .depends_on(ServiceDependency::new(
                         Type::of::<dyn TestService>(),
-                        ServiceMultiplicity::ExactlyOne,
+                        ServiceCardinality::ExactlyOne,
                     ))
                     .from(|sp| {
                         ServiceRef::new(OtherTestServiceImpl::new(
