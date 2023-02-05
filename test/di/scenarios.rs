@@ -102,3 +102,17 @@ fn inject_should_clone_service_provider_and_return_different_scoped_instance() {
     // assert
     assert!(!ServiceRef::ptr_eq(&svc1, &svc2));
 }
+
+#[test]
+fn inject_should_add_dependencies_for_validation() {
+    // arrange
+    let mut services = ServiceCollection::new();
+
+    services.add(traits::FooImpl::transient());
+
+    // act
+    let result = services.build_provider();
+
+    // assert
+    assert!(result.is_err());
+}
