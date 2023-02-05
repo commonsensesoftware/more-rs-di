@@ -149,6 +149,8 @@ let provider = ServiceCollection::new()
 
 _Figure 2: Using scoped services_
 
+>Note: `scoped` and `transient` are utility functions provided by the **builder** feature.
+
 ### Validation
 
 The consumers of a `ServiceProvider` expect that is correctly configured and ready for use. There are edge cases,
@@ -157,11 +159,11 @@ however, which could lead to runtime failures.
 - A required, dependent service that has not be registered
 - A circular dependency, which will trigger a stack overflow
 
-Intrinsic validation has been added to ensure this cannot happen. The `build_provider()` method will return
+Intrinsic validation has been added to ensure this cannot happen. The `build_provider()` function will return
 `Result<ServiceProvider, ValidationError>`, which will either contain a valid `ServiceProvider` or a
 `ValidationError` that will detail all of the errors. From that point forward, the `ServiceProvider` will be
 considered semantically correct and safe to use. The same validation process can also be invoked imperatively
-on-demand by using the `di::validate` method.
+on-demand by using the `di::validate` function.
 
 The `ServiceDescriptorBuilder` cannot automatically determine the dependencies your service may require. This
 means that validation is an explicit, opt-in capability. If you do not configure any dependencies for a
@@ -191,6 +193,8 @@ fn main() {
 }
 ```
 _Figure 3: Validating service configuration_
+
+>Note: `singleton`, `transient`, and `exactly_one` are utility functions provided by the **builder** feature.
 
 ### Inject Feature
 
