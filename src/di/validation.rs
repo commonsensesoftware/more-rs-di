@@ -1,4 +1,4 @@
-use crate::{ServiceCollection, ServiceDependency, ServiceDescriptor, ServiceCardinality, Type};
+use crate::{ServiceCardinality, ServiceCollection, ServiceDependency, ServiceDescriptor, Type};
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use std::fmt::{Display, Formatter};
@@ -185,10 +185,7 @@ mod tests {
 
         services.add(
             singleton::<dyn OtherTestService, OtherTestServiceImpl>()
-                .depends_on(ServiceDependency::new(
-                    Type::of::<dyn TestService>(),
-                    ServiceCardinality::ExactlyOne,
-                ))
+                .depends_on(exactly_one::<dyn TestService>())
                 .from(|sp| {
                     ServiceRef::new(OtherTestServiceImpl::new(
                         sp.get_required::<dyn TestService>(),
@@ -212,10 +209,7 @@ mod tests {
 
         services.add(
             singleton::<dyn OtherTestService, TestOptionalDepImpl>()
-                .depends_on(ServiceDependency::new(
-                    Type::of::<dyn TestService>(),
-                    ServiceCardinality::ZeroOrOne,
-                ))
+                .depends_on(zero_or_one::<dyn TestService>())
                 .from(|sp| ServiceRef::new(TestOptionalDepImpl::new(sp.get::<dyn TestService>()))),
         );
 
@@ -233,10 +227,7 @@ mod tests {
 
         services.add(
             singleton::<dyn TestService, TestCircularDepImpl>()
-                .depends_on(ServiceDependency::new(
-                    Type::of::<dyn TestService>(),
-                    ServiceCardinality::ExactlyOne,
-                ))
+                .depends_on(exactly_one::<dyn TestService>())
                 .from(|sp| {
                     ServiceRef::new(TestCircularDepImpl::new(
                         sp.get_required::<dyn TestService>(),
@@ -261,14 +252,8 @@ mod tests {
         services
             .add(
                 singleton::<dyn TestService, TestAllKindOfProblems>()
-                    .depends_on(ServiceDependency::new(
-                        Type::of::<dyn OtherTestService>(),
-                        ServiceCardinality::ExactlyOne,
-                    ))
-                    .depends_on(ServiceDependency::new(
-                        Type::of::<dyn AnotherTestService>(),
-                        ServiceCardinality::ExactlyOne,
-                    ))
+                    .depends_on(exactly_one::<dyn OtherTestService>())
+                    .depends_on(exactly_one::<dyn AnotherTestService>())
                     .from(|sp| {
                         ServiceRef::new(TestAllKindOfProblems::new(
                             sp.get_required::<dyn OtherTestService>(),
@@ -278,10 +263,7 @@ mod tests {
             )
             .add(
                 singleton::<dyn OtherTestService, OtherTestServiceImpl>()
-                    .depends_on(ServiceDependency::new(
-                        Type::of::<dyn TestService>(),
-                        ServiceCardinality::ExactlyOne,
-                    ))
+                    .depends_on(exactly_one::<dyn TestService>())
                     .from(|sp| {
                         ServiceRef::new(OtherTestServiceImpl::new(
                             sp.get_required::<dyn TestService>(),
