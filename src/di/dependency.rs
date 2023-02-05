@@ -1,23 +1,23 @@
 use crate::Type;
 
-/// Represents the possible multiplicities of a service dependency.
+/// Represents the possible cardinalities of a service dependency.
 #[derive(Copy, Clone, Debug, PartialEq)]
-pub enum ServiceMultiplicity {
-    /// Indicates a multiplicity of zero or one (0:1).
+pub enum ServiceCardinality {
+    /// Indicates a cardinality of zero or one (0:1).
     ZeroOrOne,
 
-    /// Indicates a multiplicity of exactly one (1:1).
+    /// Indicates a cardinality of exactly one (1:1).
     ExactlyOne,
 
-    /// Indicates a multiplicity of zero or more (0:*).
+    /// Indicates a cardinality of zero or more (0:*).
     ZeroOrMore,
 }
 
 /// Represents a service dependency.
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct ServiceDependency {
     injected_type: Type,
-    multiplicity: ServiceMultiplicity,
+    cardinality: ServiceCardinality,
 }
 
 impl ServiceDependency {
@@ -26,11 +26,11 @@ impl ServiceDependency {
     /// # Arguments
     /// 
     /// * `injected_type` - the [injected type](struct.Type.html) of the service dependency
-    /// * `multiplicity` - the [multiplicity](enum.ServiceMultiplicity.html) of the service dependency
-    pub fn new(injected_type: Type, multiplicity: ServiceMultiplicity) -> Self {
+    /// * `cardinality` - the [cardinality](enum.ServiceCardinality.html) of the service dependency
+    pub fn new(injected_type: Type, cardinality: ServiceCardinality) -> Self {
         Self {
             injected_type,
-            multiplicity,
+            cardinality,
         }
     }
 
@@ -39,8 +39,8 @@ impl ServiceDependency {
         &self.injected_type
     }
 
-    /// Gets the [multiplicity](enum.ServiceMultiplicity.html) associated with the service dependency.
-    pub fn multiplicity(&self) -> ServiceMultiplicity {
-        self.multiplicity
+    /// Gets the [cardinality](enum.ServiceCardinality.html) associated with the service dependency.
+    pub fn cardinality(&self) -> ServiceCardinality {
+        self.cardinality
     }
 }
