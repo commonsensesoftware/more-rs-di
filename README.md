@@ -176,7 +176,7 @@ fn main() {
         .from(|_| Rc::new(FooImpl::default())));
     services.add(
         transient::<dyn Bar, BarImpl>()
-        .depends_on(ServiceDependency::new(Type::of::<dyn Foo>(), ServiceMultiplicity::ExactlyOne))
+        .depends_on(exactly_one::<dyn Foo>())
         .from(|sp| Rc::new(BarImpl::new(sp.get_required::<dyn Foo>()))));
 
     match services.build_provider() {
@@ -301,9 +301,9 @@ Which will expand to:
 impl Injectable for BarImpl {
     fn inject(lifetime: ServiceLifetime) -> ServiceDescriptor {
         ServiceDescriptorBuilder::<dyn Bar, Self>::new(lifetime, Type::of::<Self>())
-            .depends_on(ServiceDependency::new(Type::of::<dyn Foo>(), ServiceMultiplicity::ExactlyOne))
-            .depends_on(ServiceDependency::new(Type::of::<dyn Translator>(), ServiceMultiplicity::ZeroOrOne))
-            .depends_on(ServiceDependency::new(Type::of::<dyn Logger>(), ServiceMultiplicity::ZeroOrMore))
+            .depends_on(ServiceDependency::new(Type::of::<dyn Foo>(), ServiceCardinality::ExactlyOne))
+            .depends_on(ServiceDependency::new(Type::of::<dyn Translator>(), ServiceCardinality::ZeroOrOne))
+            .depends_on(ServiceDependency::new(Type::of::<dyn Logger>(), ServiceCardinality::ZeroOrMore))
             .from(|sp| Rc::new(
                 BarImpl::create(
                     sp.get_required::<dyn Foo>(),
