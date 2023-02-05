@@ -124,3 +124,21 @@ pub fn existing_as_self<T: Any>(instance: T) -> ServiceDescriptor {
         ServiceRef::new(no_op),
     )
 }
+
+/// Creates a new service dependency with a cardinality of exactly one (1:1).
+#[inline]
+pub fn exactly_one<T: Any + ?Sized>() -> ServiceDependency {
+    ServiceDependency::new(Type::of::<T>(), ServiceCardinality::ExactlyOne)
+}
+
+/// Creates a new service dependency with a cardinality of zero or one (0:1).
+#[inline]
+pub fn zero_or_one<T: Any + ?Sized>() -> ServiceDependency {
+    ServiceDependency::new(Type::of::<T>(), ServiceCardinality::ZeroOrOne)
+}
+
+/// Creates a new service dependency with a cardinality of zero or more (0:*).
+#[inline]
+pub fn zero_or_more<T: Any + ?Sized>() -> ServiceDependency {
+    ServiceDependency::new(Type::of::<T>(), ServiceCardinality::ZeroOrMore)
+}
