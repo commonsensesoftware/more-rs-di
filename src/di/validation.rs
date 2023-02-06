@@ -1,4 +1,7 @@
-use crate::{ServiceCardinality, ServiceCollection, ServiceDependency, ServiceDescriptor, Type};
+use crate::{
+    ServiceCardinality, ServiceCollection, ServiceDependency, ServiceDescriptor, ServiceLifetime,
+    Type,
+};
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use std::fmt::{Display, Formatter};
@@ -143,6 +146,62 @@ impl<'a> ValidationRule<'a> for CircularDependency<'a> {
     }
 }
 
+struct SingletonDependsOnScoped<'a> {
+    lookup: &'a HashMap<&'a Type, &'a ServiceDescriptor>,
+    visited: RefCell<HashSet<&'a Type>>,
+    queue: RefCell<Vec<&'a ServiceDescriptor>>,
+}
+
+impl<'a> SingletonDependsOnScoped<'a> {
+    fn new(lookup: &'a HashMap<&'a Type, &'a ServiceDescriptor>) -> Self {
+        Self {
+            lookup,
+            visited: RefCell::new(HashSet::new()),
+            queue: RefCell::new(Vec::new()),
+        }
+    }
+}
+
+impl<'a> ValidationRule<'a> for SingletonDependsOnScoped<'a> {
+    fn evaluate(&self, descriptor: &'a ServiceDescriptor, results: &mut Vec<ValidationResult>) {
+        if descriptor.lifetime() != ServiceLifetime::Singleton {
+            return;
+        }
+
+        let mut level = "";
+        let mut visited = self.visited.borrow_mut();
+        let mut queue = self.queue.borrow_mut();
+
+        visited.clear();
+        queue.clear();
+        queue.push(descriptor);
+
+        while let Some(current) = queue.pop() {
+            if !visited.insert(current.service_type()) {
+                continue;
+            }
+
+            for dependency in current.dependencies() {
+                if let Some(next) = self.lookup.get(dependency.injected_type()) {
+                    queue.push(next);
+
+                    if next.lifetime() == ServiceLifetime::Scoped {
+                        results.push(ValidationResult::fail(format!(
+                            "The service '{}' has a singleton lifetime, \
+                             but its {}dependency '{}' has a scoped lifetime",
+                            descriptor.implementation_type().name(),
+                            level,
+                            next.service_type().name()
+                        )));
+                    }
+                }
+            }
+
+            level = "transitive ";
+        }
+    }
+}
+
 /// Validates the specified [service collection](struct.ServiceCollection.html).
 ///
 /// # Arguments
@@ -158,7 +217,8 @@ pub fn validate(services: &ServiceCollection) -> Result<(), ValidationError> {
     let mut results = Vec::new();
     let missing_type = MissingRequiredType::new(&lookup);
     let circular_dep = CircularDependency::new(&lookup);
-    let rules: Vec<&dyn ValidationRule> = vec![&missing_type, &circular_dep];
+    let scoped_in_singleton = SingletonDependsOnScoped::new(&lookup);
+    let rules: Vec<&dyn ValidationRule> = vec![&missing_type, &circular_dep, &scoped_in_singleton];
 
     for descriptor in services {
         for rule in &rules {
@@ -199,7 +259,9 @@ mod tests {
         // assert
         assert_eq!(
             &result.err().unwrap().to_string(),
-            "Service 'di::test::OtherTestServiceImpl' requires dependent service 'dyn di::test::TestService', which has not be registered");
+            "Service 'di::test::OtherTestServiceImpl' requires dependent service \
+             'dyn di::test::TestService', which has not be registered"
+        );
     }
 
     #[test]
@@ -241,7 +303,9 @@ mod tests {
         // assert
         assert_eq!(
             &result.err().unwrap().to_string(),
-            "A circular dependency was detected for service 'dyn di::test::TestService' on service 'di::test::TestCircularDepImpl'");
+            "A circular dependency was detected for service \
+             'dyn di::test::TestService' on service 'di::test::TestCircularDepImpl'"
+        );
     }
 
     #[test]
@@ -281,5 +345,76 @@ mod tests {
               [1] Service 'di::test::TestAllKindOfProblems' requires dependent service 'dyn di::test::AnotherTestService', which has not be registered\n  \
               [2] A circular dependency was detected for service 'dyn di::test::TestService' on service 'di::test::TestAllKindOfProblems'\n  \
               [3] A circular dependency was detected for service 'dyn di::test::OtherTestService' on service 'di::test::OtherTestServiceImpl'");
+    }
+
+    #[test]
+    fn validate_should_report_scoped_service_in_singleton() {
+        // arrange
+        let mut services = ServiceCollection::new();
+
+        services
+            .add(
+                scoped::<dyn TestService, TestServiceImpl>()
+                    .from(|_| ServiceRef::new(TestServiceImpl::default())),
+            )
+            .add(
+                singleton::<dyn OtherTestService, OtherTestServiceImpl>()
+                    .depends_on(exactly_one::<dyn TestService>())
+                    .from(|sp| {
+                        ServiceRef::new(OtherTestServiceImpl::new(
+                            sp.get_required::<dyn TestService>(),
+                        ))
+                    }),
+            );
+
+        // act
+        let result = validate(&services);
+
+        // assert
+        assert_eq!(
+            &result.err().unwrap().to_string(),
+            "The service 'di::test::OtherTestServiceImpl' has a singleton lifetime, \
+             but its dependency 'dyn di::test::TestService' has a scoped lifetime"
+        );
+    }
+
+    #[test]
+    fn validate_should_report_transitive_scoped_service_in_singleton() {
+        // arrange
+        let mut services = ServiceCollection::new();
+
+        services
+            .add(
+                scoped::<dyn TestService, TestServiceImpl>()
+                    .from(|_| ServiceRef::new(TestServiceImpl::default())),
+            )
+            .add(
+                transient::<dyn OtherTestService, OtherTestServiceImpl>()
+                    .depends_on(exactly_one::<dyn TestService>())
+                    .from(|sp| {
+                        ServiceRef::new(OtherTestServiceImpl::new(
+                            sp.get_required::<dyn TestService>(),
+                        ))
+                    }),
+            )
+            .add(
+                singleton::<dyn AnotherTestService, AnotherTestServiceImpl>()
+                    .depends_on(exactly_one::<dyn OtherTestService>())
+                    .from(|sp| {
+                        ServiceRef::new(AnotherTestServiceImpl::new(
+                            sp.get_required::<dyn OtherTestService>(),
+                        ))
+                    }),
+            );
+
+        // act
+        let result = validate(&services);
+
+        // assert
+        assert_eq!(
+            &result.err().unwrap().to_string(),
+            "The service 'di::test::AnotherTestServiceImpl' has a singleton lifetime, \
+             but its transitive dependency 'dyn di::test::TestService' has a scoped lifetime"
+        );
     }
 }

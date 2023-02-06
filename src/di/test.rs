@@ -56,6 +56,18 @@ impl OtherTestServiceImpl {
 
 impl OtherTestService for OtherTestServiceImpl {}
 
+pub(crate) struct AnotherTestServiceImpl {
+    _service: ServiceRef<dyn OtherTestService>,
+}
+
+impl AnotherTestServiceImpl {
+    pub fn new(service: ServiceRef<dyn OtherTestService>) -> Self {
+        Self { _service: service }
+    }
+}
+
+impl AnotherTestService for AnotherTestServiceImpl {}
+
 pub(crate) struct Droppable {
     file: PathBuf,
 }

@@ -153,11 +153,12 @@ _Figure 2: Using scoped services_
 
 ### Validation
 
-The consumers of a `ServiceProvider` expect that is correctly configured and ready for use. There are edge cases,
-however, which could lead to runtime failures.
+The consumers of a `ServiceProvider` expect that it is correctly configured and ready for use. There are edge cases,
+however, which could lead to runtime failures or incorrect behavior such as:
 
 - A required, dependent service that has not be registered
 - A circular dependency, which will trigger a stack overflow
+- A service with a singleton lifetime has a dependent service with a scoped lifetime
 
 Intrinsic validation has been added to ensure this cannot happen. The `build_provider()` function will return
 `Result<ServiceProvider, ValidationError>`, which will either contain a valid `ServiceProvider` or a
