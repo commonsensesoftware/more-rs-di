@@ -1,4 +1,5 @@
 use di::{inject, injectable, ServiceRef};
+use std::fmt::Debug;
 
 pub trait Foo {
     fn echo(&self) -> &str;
@@ -43,5 +44,47 @@ impl FooImpl {
     #[inject]
     pub fn create(bar: ServiceRef<dyn Bar>) -> Self {
         Self { bar }
+    }
+}
+
+pub trait Pair<TKey: Default + Debug, TValue: Default + Debug> {
+    fn key(&self) -> &TKey;
+    fn value(&self) -> &TValue;
+}
+
+pub struct PairImpl<TKey, TValue>
+where
+    TKey: Default + Debug + 'static,
+    TValue: Default + Debug + 'static,
+{
+    key: TKey,
+    value: TValue,
+}
+
+#[injectable(Pair<TKey, TValue>)]
+impl<TKey, TValue> PairImpl<TKey, TValue>
+where
+    TKey: Default + Debug + 'static,
+    TValue: Default + Debug + 'static,
+{
+    pub fn new() -> Self {
+        Self {
+            key: Default::default(),
+            value: Default::default(),
+        }
+    }
+}
+
+impl<TKey, TValue> Pair<TKey, TValue> for PairImpl<TKey, TValue>
+where
+    TKey: Default + Debug,
+    TValue: Default + Debug,
+{
+    fn key(&self) -> &TKey {
+        &self.key
+    }
+
+    fn value(&self) -> &TValue {
+        &self.value
     }
 }
