@@ -116,3 +116,35 @@ fn inject_should_add_dependencies_for_validation() {
     // assert
     assert!(result.is_err());
 }
+
+#[test]
+fn inject_should_implement_generic_struct_with_dependency() {
+    // arrange
+    let provider = ServiceCollection::new()
+        .add(structs::GenericFoo::<u8>::singleton())
+        .add(structs::GenericBar::<u8>::transient())
+        .build_provider()
+        .unwrap();
+
+    // act
+    let foo = provider.get_required::<structs::GenericFoo<u8>>();
+
+    // assert
+    assert_eq!(u8::default(), foo.echo());
+}
+
+#[test]
+fn inject_should_implement_generic_trait_for_generic_struct() {
+    // arrange
+    let provider = ServiceCollection::new()
+        .add(traits::PairImpl::<u8, u8>::transient())
+        .build_provider()
+        .unwrap();
+
+    // act
+    let pair = provider.get_required::<dyn traits::Pair<u8, u8>>();
+
+    // assert
+    assert_eq!(&u8::default(), pair.key());
+    assert_eq!(&u8::default(), pair.value());
+}

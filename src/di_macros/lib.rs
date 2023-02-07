@@ -8,7 +8,7 @@ use syn::{
 };
 
 struct InjectableAttribute {
-    trait_: Option<Ident>,
+    trait_: Option<Path>,
 }
 
 impl Parse for InjectableAttribute {
@@ -138,11 +138,11 @@ fn _injectable(metadata: TokenStream, input: TokenStream) -> TokenStream {
         Ok(attribute) => {
             if let Ok(impl_) = parse2::<ItemImpl>(TokenStream::from(input)) {
                 if let Type::Path(type_) = &*impl_.self_ty {
-                    let implementation = &type_.path.segments.first().unwrap().ident;
+                    let implementation = &type_.path;
                     let service = attribute.trait_.as_ref().unwrap_or(implementation);
 
                     match get_injected_method(&impl_, implementation) {
-                        Ok(method) => match implement_injectable(implementation, service, method) {
+                        Ok(method) => match implement_injectable(&impl_, implementation, &service, method) {
                             Ok(trait_impl) => {
                                 original.extend(trait_impl.into_iter());
                                 Ok(original)
@@ -171,30 +171,33 @@ fn _injectable(metadata: TokenStream, input: TokenStream) -> TokenStream {
 }
 
 fn implement_injectable(
-    implementation: &Ident,
-    service: &Ident,
+    impl_: &ItemImpl,
+    implementation: &Path,
+    service: &Path,
     method: &Signature,
 ) -> Result<TokenStream> {
     let (args , deps) = inject_argument_call_sites(method)?;
     let fn_ = &method.ident;
-    let is_trait = implementation != service;
+    let is_trait = implementation.segments.last().unwrap().ident != service.segments.last().unwrap().ident;
     let new = if is_trait {
         quote! { di::ServiceDescriptorBuilder::<dyn #service, Self>::new(lifetime, di::Type::of::<Self>()) }
     } else {
-        quote! { di::ServiceDescriptorBuilder::<#service, Self>::new(lifetime, di::Type::of::<Self>()) }
+        quote! { di::ServiceDescriptorBuilder::<Self, Self>::new(lifetime, di::Type::of::<Self>()) }
     };
     let depends_on = quote! { #(.depends_on(#deps))* };
+    let generics = &impl_.generics;
+    let where_ = &generics.where_clause;
     let code = quote! {
-        impl di::Injectable for #implementation {
+        impl#generics di::Injectable for #implementation #where_ {
             fn inject(lifetime: di::ServiceLifetime) -> di::ServiceDescriptor {
-                #new#depends_on.from(|sp: &di::ServiceProvider| di::ServiceRef::new(#implementation::#fn_(#(#args),*)))
+                #new#depends_on.from(|sp: &di::ServiceProvider| di::ServiceRef::new(Self::#fn_(#(#args),*)))
             }
         }
     };
     Ok(code.into())
 }
 
-fn get_injected_method<'a>(impl_: &'a ItemImpl, type_: &Ident) -> Result<&'a Signature> {
+fn get_injected_method<'a>(impl_: &'a ItemImpl, path: &Path) -> Result<&'a Signature> {
     let new = Ident::new("new", Span::call_site());
     let mut convention = Option::None;
     let mut methods = Vec::new();
@@ -222,7 +225,7 @@ fn get_injected_method<'a>(impl_: &'a ItemImpl, type_: &Ident) -> Result<&'a Sig
                     impl_.span(),
                     format!(
                         "Neither {}::new or an associated method decorated with #[inject] was found.",
-                        type_
+                        path.segments.last().unwrap().ident
                     ),
                 ))
             }
@@ -232,7 +235,7 @@ fn get_injected_method<'a>(impl_: &'a ItemImpl, type_: &Ident) -> Result<&'a Sig
             impl_.span(),
             format!(
                 "{} has more than one associated method decorated with #[inject].",
-                type_
+                path.segments.last().unwrap().ident
             ),
         )),
     }
@@ -417,7 +420,7 @@ mod test {
             "impl di :: Injectable for FooImpl { ",
             "fn inject (lifetime : di :: ServiceLifetime) -> di :: ServiceDescriptor { ",
             "di :: ServiceDescriptorBuilder :: < dyn Foo , Self > :: new (lifetime , di :: Type :: of :: < Self > ()) ",
-            ". from (| sp : & di :: ServiceProvider | di :: ServiceRef :: new (FooImpl :: new ())) ",
+            ". from (| sp : & di :: ServiceProvider | di :: ServiceRef :: new (Self :: new ())) ",
             "} ",
             "}");
 
@@ -454,7 +457,7 @@ mod test {
             "impl di :: Injectable for FooImpl { ",
             "fn inject (lifetime : di :: ServiceLifetime) -> di :: ServiceDescriptor { ",
             "di :: ServiceDescriptorBuilder :: < dyn Foo , Self > :: new (lifetime , di :: Type :: of :: < Self > ()) ",
-            ". from (| sp : & di :: ServiceProvider | di :: ServiceRef :: new (FooImpl :: create ())) ",
+            ". from (| sp : & di :: ServiceProvider | di :: ServiceRef :: new (Self :: create ())) ",
             "} ",
             "}");
 
@@ -490,7 +493,7 @@ mod test {
             "fn inject (lifetime : di :: ServiceLifetime) -> di :: ServiceDescriptor { ",
             "di :: ServiceDescriptorBuilder :: < dyn Foo , Self > :: new (lifetime , di :: Type :: of :: < Self > ()) ",
             ". depends_on (di :: ServiceDependency :: new (di :: Type :: of :: < dyn Bar > () , di :: ServiceCardinality :: ExactlyOne)) ",
-            ". from (| sp : & di :: ServiceProvider | di :: ServiceRef :: new (FooImpl :: new (sp . get_required :: < dyn Bar > ()))) ",
+            ". from (| sp : & di :: ServiceProvider | di :: ServiceRef :: new (Self :: new (sp . get_required :: < dyn Bar > ()))) ",
             "} ",
             "}");
 
@@ -526,7 +529,7 @@ mod test {
             "fn inject (lifetime : di :: ServiceLifetime) -> di :: ServiceDescriptor { ",
             "di :: ServiceDescriptorBuilder :: < dyn Foo , Self > :: new (lifetime , di :: Type :: of :: < Self > ()) ",
             ". depends_on (di :: ServiceDependency :: new (di :: Type :: of :: < dyn Bar > () , di :: ServiceCardinality :: ZeroOrOne)) ",
-            ". from (| sp : & di :: ServiceProvider | di :: ServiceRef :: new (FooImpl :: new (sp . get :: < dyn Bar > ()))) ",
+            ". from (| sp : & di :: ServiceProvider | di :: ServiceRef :: new (Self :: new (sp . get :: < dyn Bar > ()))) ",
             "} ",
             "}");
 
@@ -562,7 +565,7 @@ mod test {
             "fn inject (lifetime : di :: ServiceLifetime) -> di :: ServiceDescriptor { ",
             "di :: ServiceDescriptorBuilder :: < dyn Foo , Self > :: new (lifetime , di :: Type :: of :: < Self > ()) ",
             ". depends_on (di :: ServiceDependency :: new (di :: Type :: of :: < dyn Bar > () , di :: ServiceCardinality :: ZeroOrMore)) ",
-            ". from (| sp : & di :: ServiceProvider | di :: ServiceRef :: new (FooImpl :: new (sp . get_all :: < dyn Bar > () . collect ()))) ",
+            ". from (| sp : & di :: ServiceProvider | di :: ServiceRef :: new (Self :: new (sp . get_all :: < dyn Bar > () . collect ()))) ",
             "} ",
             "}");
 
@@ -601,7 +604,7 @@ mod test {
             "di :: ServiceDescriptorBuilder :: < dyn Thing , Self > :: new (lifetime , di :: Type :: of :: < Self > ()) ",
             ". depends_on (di :: ServiceDependency :: new (di :: Type :: of :: < dyn Foo > () , di :: ServiceCardinality :: ExactlyOne)) ",
             ". depends_on (di :: ServiceDependency :: new (di :: Type :: of :: < dyn Bar > () , di :: ServiceCardinality :: ZeroOrOne)) ",
-            ". from (| sp : & di :: ServiceProvider | di :: ServiceRef :: new (ThingImpl :: create_new (sp . get_required :: < dyn Foo > () , sp . get :: < dyn Bar > ()))) ",
+            ". from (| sp : & di :: ServiceProvider | di :: ServiceRef :: new (Self :: create_new (sp . get_required :: < dyn Foo > () , sp . get :: < dyn Bar > ()))) ",
             "} ",
             "}");
 
@@ -635,8 +638,8 @@ mod test {
             "} ",
             "impl di :: Injectable for FooImpl { ",
             "fn inject (lifetime : di :: ServiceLifetime) -> di :: ServiceDescriptor { ",
-            "di :: ServiceDescriptorBuilder :: < FooImpl , Self > :: new (lifetime , di :: Type :: of :: < Self > ()) ",
-            ". from (| sp : & di :: ServiceProvider | di :: ServiceRef :: new (FooImpl :: new ())) ",
+            "di :: ServiceDescriptorBuilder :: < Self , Self > :: new (lifetime , di :: Type :: of :: < Self > ()) ",
+            ". from (| sp : & di :: ServiceProvider | di :: ServiceRef :: new (Self :: new ())) ",
             "} ",
             "}");
 
@@ -672,7 +675,93 @@ mod test {
             "fn inject (lifetime : di :: ServiceLifetime) -> di :: ServiceDescriptor { ",
             "di :: ServiceDescriptorBuilder :: < dyn Foo , Self > :: new (lifetime , di :: Type :: of :: < Self > ()) ",
             ". depends_on (di :: ServiceDependency :: new (di :: Type :: of :: < Bar > () , di :: ServiceCardinality :: ExactlyOne)) ",
-            ". from (| sp : & di :: ServiceProvider | di :: ServiceRef :: new (FooImpl :: new (sp . get_required :: < Bar > ()))) ",
+            ". from (| sp : & di :: ServiceProvider | di :: ServiceRef :: new (Self :: new (sp . get_required :: < Bar > ()))) ",
+            "} ",
+            "}");
+
+        assert_eq!(expected, result.to_string());
+    }
+
+    #[test]
+    fn attribute_should_implement_injectable_for_generic_struct() {
+        // arrange
+        let metadata = TokenStream::new();
+        let input = TokenStream::from_str(
+            r#"
+            impl<T: Default> GenericBar<T> {
+                fn new() -> Self {
+                    Self { }
+                }
+            }
+        "#,
+        )
+        .unwrap();
+
+        // act
+        let result = _injectable(metadata, input);
+
+        // assert
+        let expected = concat!(
+            "impl < T : Default > GenericBar < T > { ",
+            "fn new () -> Self { ",
+            "Self { } ",
+            "} ",
+            "} ",
+            "impl < T : Default > di :: Injectable for GenericBar < T > { ",
+            "fn inject (lifetime : di :: ServiceLifetime) -> di :: ServiceDescriptor { ",
+            "di :: ServiceDescriptorBuilder :: < Self , Self > :: new (lifetime , di :: Type :: of :: < Self > ()) ",
+            ". from (| sp : & di :: ServiceProvider | di :: ServiceRef :: new (Self :: new ())) ",
+            "} ",
+            "}");
+
+        assert_eq!(expected, result.to_string());
+    }
+
+    #[test]
+    fn attribute_should_implement_injectable_for_generic_trait() {
+        // arrange
+        let metadata = TokenStream::from_str(r#"Pair<TKey, TValue>"#).unwrap();
+        let input = TokenStream::from_str(
+            r#"
+            impl<TKey, TValue> PairImpl<TKey, TValue>
+            where
+                TKey: Debug,
+                TValue: Debug
+            {
+                fn new(key: ServiceRef<TKey>, value: ServiceRef<TValue>) -> Self {
+                    Self { key, value }
+                }
+            }
+        "#,
+        )
+        .unwrap();
+
+        // act
+        let result = _injectable(metadata, input);
+
+        // assert
+        let expected = concat!(
+            "impl < TKey , TValue > PairImpl < TKey , TValue > ",
+            "where ",
+            "TKey : Debug , ",
+            "TValue : Debug ",
+            "{ ",
+            "fn new (key : ServiceRef < TKey >, value : ServiceRef < TValue >) -> Self { ",
+            "Self { key , value } ",
+            "} ",
+            "} ",
+            "impl < TKey , TValue > di :: Injectable for PairImpl < TKey , TValue > ",
+            "where ",
+            "TKey : Debug , ",
+            "TValue : Debug ",
+            "{ ",
+            "fn inject (lifetime : di :: ServiceLifetime) -> di :: ServiceDescriptor { ",
+            "di :: ServiceDescriptorBuilder :: < dyn Pair < TKey , TValue > , Self > :: new (lifetime , di :: Type :: of :: < Self > ()) ",
+            ". depends_on (di :: ServiceDependency :: new (di :: Type :: of :: < TKey > () , di :: ServiceCardinality :: ExactlyOne)) ",
+            ". depends_on (di :: ServiceDependency :: new (di :: Type :: of :: < TValue > () , di :: ServiceCardinality :: ExactlyOne)) ",
+            ". from (| sp : & di :: ServiceProvider | di :: ServiceRef :: new (Self :: new (\
+                sp . get_required :: < TKey > () , \
+                sp . get_required :: < TValue > ()))) ",
             "} ",
             "}");
 

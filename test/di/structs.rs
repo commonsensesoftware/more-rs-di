@@ -1,3 +1,5 @@
+use std::marker::PhantomData;
+
 use di::{inject, injectable, ServiceRef};
 
 pub struct Bar;
@@ -17,7 +19,7 @@ impl Bar {
 }
 
 pub struct Foo {
-    bar: ServiceRef<Bar>
+    bar: ServiceRef<Bar>,
 }
 
 // make Foo injectable as Foo
@@ -31,6 +33,44 @@ impl Foo {
     }
 
     pub fn echo(&self) -> &str {
+        self.bar.echo()
+    }
+}
+
+pub struct GenericBar<T: Default + 'static> {
+    _phantom: PhantomData<T>,
+}
+
+#[injectable]
+impl<T: Default + 'static> GenericBar<T> {
+    pub fn new() -> Self {
+        Self {
+            _phantom: PhantomData,
+        }
+    }
+
+    pub fn echo(&self) -> T {
+        T::default()
+    }
+}
+
+pub struct GenericFoo<T>
+where
+    T: Default + 'static,
+{
+    bar: ServiceRef<GenericBar<T>>,
+}
+
+#[injectable]
+impl<T> GenericFoo<T>
+where
+    T: Default + 'static,
+{
+    pub fn new(bar: ServiceRef<GenericBar<T>>) -> Self {
+        Self { bar }
+    }
+
+    pub fn echo(&self) -> T {
         self.bar.echo()
     }
 }

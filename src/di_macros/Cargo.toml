@@ -1,6 +1,6 @@
 [package]
 name = "more-di-macros"
-version = "2.0.0"
+version = "2.0.1"
 edition = "2018"
 authors = ["Chris Martinez <chris_martinez_77@hotmail.com>"]
 description = "Macro implementation of #[injectable(Trait)]"
