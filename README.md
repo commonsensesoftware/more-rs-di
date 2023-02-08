@@ -19,6 +19,7 @@ This crate provides the following features:
 - **builder** - Provides utility functions for configuring service descriptors
 - **async** - Provides features for using dependencies in an asynchronous context
 - **inject** - Provides constructor injection
+- **lazy** - Provides features for lazy-initialized service resolution
 
 ## Service Lifetimes
 
@@ -92,7 +93,7 @@ fn main() {
 }
 ```
 
-_Figure 1: Basic usage_
+_Figure: Basic usage_
 
 >Note: `singleton` and `transient` are utility functions provided by the **builder** feature.
 
@@ -147,7 +148,7 @@ let provider = ServiceCollection::new()
 }
 ```
 
-_Figure 2: Using scoped services_
+_Figure: Using scoped services_
 
 >Note: `scoped` and `transient` are utility functions provided by the **builder** feature.
 
@@ -193,9 +194,88 @@ fn main() {
     }
 }
 ```
-_Figure 3: Validating service configuration_
+_Figure: Validating service configuration_
 
 >Note: `singleton`, `transient`, and `exactly_one` are utility functions provided by the **builder** feature.
+
+### Lazy Initialization
+
+There are some scenarios where you know or have high reason to believe that a particular service composition will
+be expensive to create. The requirement to eagerly load every injected service instance in such situations is
+undesirable. There are several methods by which you can differ dependency resolution, including declaring a
+parameter which would inject the `ServiceProvider` itself. Using the _Service Locator_ pattern in this manner
+hides dependencies and is considered to be an _anti-pattern_. The **lazy** feature provides an out-of-the-box
+facility to address this problem.
+
+When you enable the **lazy** feature, the `Lazy<T>` struct become available as a holder to resolve a service
+dependency in a lazily evaluated manner. The `Lazy<T>` struct itself is owned by the struct it is injected into
+and the lifetime of the service resolved is unchanged. The key behavior is that is changed is that the
+injected service dependency is well-known at the call site, but its evaluation is differed.
+
+Consider the following:
+
+```rust
+#[derive(Default)]
+pub struct Expensive {
+    // expensive stuff here
+}
+
+impl Expensive {
+    pub fn do_work(&self) {
+        // use expensive stuff
+    }
+}
+
+pub struct Needy {
+    expensive: Lazy<ServiceRef<Expensive>>
+}
+
+impl Needy {
+    pub fn new(expensive: Lazy<ServiceRef<Expensive>>) -> Self {
+        Self { expensive }
+    }
+
+    pub fn run(&self) {
+        self.expensive.value().do_work()
+    }
+}
+
+```
+_Figure: Declare lazy-initialized service dependency_
+
+The `Needy` struct defines a `Lazy<T>` that wraps around a service dependency. This allows the service to
+be evaluated on-demand and also keeps the `Expensive` struct visible as a required collaborator.
+
+Despite being a generic type, `Lazy<T>` can only be created using the utility functions from the `lazy`
+module as follows:
+
+| Utility Function     | Return Type                   |
+| -------------------- | ----------------------------- |
+| `lazy::exactly_one`  | `Lazy<ServiceRef<T>>`         |
+| `lazy::zero_or_one`  | `Lazy<Option<ServiceRef<T>>>` |
+| `lazy::zero_or_more` | `Lazy<Vec<ServiceRef<T>>>`    |
+
+`Lazy<T>` is a _special_ type which cannot be resolved directly from a `ServiceProvider`. You will
+need construct one or more `Lazy<T>` registrations in the activation factory method. For example:
+
+```rust
+fn main() {
+    let provider = ServiceCollection::new()
+        .add(singleton_as_self::<Expensive>()
+             .from(|_| Rc::new(Expensive::default())));
+        .add(singleton_as_self::<Needy>()
+             .depends_on(exactly_one::<Expensive>())
+             .from(|sp| Rc::new(Needy::new(lazy::exactly_one(sp.clone())))))
+        .build_provider()
+        .unwrap();
+    let needy = provider.get_required::<Needy>();
+    needy.run()
+}
+```
+_Figure: Register a lazy-initialized service dependency_
+
+>Note: `singleton_as_self` and `exactly_one` are utility functions provided by the
+**builder** feature, while `lazy::exactly_one` is provided by the **lazy** feature.
 
 ### Inject Feature
 
@@ -221,7 +301,7 @@ impl Injectable for BarImpl {
 }
 ```
 
-_Figure 4: Implementing `Injectable`_
+_Figure: Implementing `Injectable`_
 
 While implementing `Injectable` _might_ be necessary or desired in a handful of scenarios, it is mostly tedious ceremony.
 If the injection call site were known, then it would be possible to provide the implementation automatically. This is exactly
@@ -241,7 +321,7 @@ impl BarImpl {
 }
 ```
 
-_Figure 5: Automatically implementing `Injectable`_
+_Figure: Automatically implementing `Injectable`_
 
 #### Injection Rules
 
@@ -258,16 +338,22 @@ are defined, the decorated function will take precedence. If multiple functions 
 Call site arguments must conform to the return values from:
 
 - `ServiceProvider` - return the provider itself as a dependency
-- `ServiceProvider.get` - return an optional dependency
-- `ServiceProvider.get_required`- return a required dependency (or panic)
-- `ServiceProvider.get_all` - return all dependencies of a known type, which could be zero
+- `ServiceProvider::get` - return an optional dependency
+- `ServiceProvider::get_required`- return a required dependency (or panic)
+- `ServiceProvider::get_all` - return all dependencies of a known type, which could be zero
 
 This means that the only allowed arguments are:
 
-- `ServiceRef<T>` 
+- `ServiceRef<T>`
 - `Option<ServiceRef<T>>`
 - `Vec<ServiceRef<T>>`
 - `ServiceProvider`
+
+If the **lazy** feature is enabled, then the following additional arguments are allowed:
+
+- `Lazy<ServiceRef<T>>`
+- `Lazy<Option<ServiceRef<T>>>`
+- `Lazy<Vec<ServiceRef<T>>>`
 
 `ServiceRef<T>` is a provided type alias for `Rc<T>` by default, but becomes `Arc<T>` when the **async** feature is enabled. `Rc<T>` and `Arc<T>` are also allowed anywhere `ServiceRef<T>` is allowed. For every injected type `T`, the appropriate `ServiceDependency` configuration is also added so that injected types can be validated.
 
@@ -298,7 +384,7 @@ impl BarImpl {
 }
 ```
 
-_Figure 6: Advanced `Injectable` configuration_
+_Figure: Advanced `Injectable` configuration_
 
 Which will expand to:
 
@@ -318,15 +404,15 @@ impl Injectable for BarImpl {
 }
 ```
 
-_Figure 7: Advanced `Injectable` implementation_
+_Figure: Advanced `Injectable` implementation_
 
 #### Simplified Registration
 
-Blanket implementations are provided for:
+Default implementations are provided for:
 
-- `Injectable.singleton`
-- `Injectable.scoped`
-- `Injectable.transient`
+- `Injectable::singleton`
+- `Injectable::scoped`
+- `Injectable::transient`
 
 This simplifies registration to:
 
@@ -344,7 +430,7 @@ fn main() {
     assert_eq!(text, "foo bar")
 }
 ```
-_Figure 8: **inject** feature usage_
+_Figure: **inject** feature usage_
 
 ## License
 
