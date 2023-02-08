@@ -1,6 +1,6 @@
 [package]
 name = "more-di"
-version = "2.0.1"
+version = "2.1.0"
 edition = "2018"
 authors = ["Chris Martinez <chris_martinez_77@hotmail.com>"]
 description = "Provides support for dependency injection (DI)"
@@ -20,10 +20,11 @@ default = ["builder", "inject"]
 builder = []
 async = []
 inject = ["more-di-macros"]
+lazy = []
 
 [dependencies.more-di-macros]
 path = "../di_macros"
-version = "2.0"
+version = "2.1"
 optional = true
 
 [dependencies.spin]
@@ -34,4 +35,4 @@ features = ["once"]
 [dev-dependencies.more-di]
 path = "."
 default-features = false
-features = ["builder"]
+features = ["builder", "lazy"]
