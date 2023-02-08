@@ -1,6 +1,5 @@
+use di::{inject, injectable, lazy::Lazy, ServiceRef};
 use std::marker::PhantomData;
-
-use di::{inject, injectable, ServiceRef};
 
 pub struct Bar;
 
@@ -72,5 +71,20 @@ where
 
     pub fn echo(&self) -> T {
         self.bar.echo()
+    }
+}
+
+pub struct LazyFoo {
+    bar: Lazy<ServiceRef<Bar>>,
+}
+
+#[injectable]
+impl LazyFoo {
+    pub fn new(bar: Lazy<ServiceRef<Bar>>) -> Self {
+        Self { bar }
+    }
+
+    pub fn echo(&self) -> &str {
+        self.bar.value().echo()
     }
 }

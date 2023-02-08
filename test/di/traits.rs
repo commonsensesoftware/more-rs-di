@@ -1,4 +1,4 @@
-use di::{inject, injectable, ServiceRef};
+use di::{inject, injectable, lazy::Lazy, ServiceRef};
 use std::fmt::Debug;
 
 pub trait Foo {
@@ -86,5 +86,65 @@ where
 
     fn value(&self) -> &TValue {
         &self.value
+    }
+}
+
+pub struct OneLazyFoo {
+    bar: Lazy<ServiceRef<dyn Bar>>,
+}
+
+impl Foo for OneLazyFoo {
+    fn echo(&self) -> &str {
+        self.bar.value().echo()
+    }
+}
+
+#[injectable(Foo)]
+impl OneLazyFoo {
+    pub fn new(bar: Lazy<ServiceRef<dyn Bar>>) -> Self {
+        Self { bar }
+    }
+}
+
+pub struct MaybeLazyFoo {
+    bar: Lazy<Option<ServiceRef<dyn Bar>>>,
+}
+
+impl Foo for MaybeLazyFoo {
+    fn echo(&self) -> &str {
+        match self.bar.value() {
+            Some(value) => value.echo(),
+            _ => "",
+        }
+    }
+}
+
+#[injectable(Foo)]
+impl MaybeLazyFoo {
+    pub fn new(bar: Lazy<Option<ServiceRef<dyn Bar>>>) -> Self {
+        Self { bar }
+    }
+}
+
+pub struct ManyLazyFoo {
+    bars: Lazy<Vec<ServiceRef<dyn Bar>>>,
+}
+
+impl Foo for ManyLazyFoo {
+    fn echo(&self) -> &str {
+        let value = self.bars.value();
+
+        if value.is_empty() {
+            ""
+        } else {
+            value[0].echo()
+        }
+    }
+}
+
+#[injectable(Foo)]
+impl ManyLazyFoo {
+    pub fn new(bars: Lazy<Vec<ServiceRef<dyn Bar>>>) -> Self {
+        Self { bars }
     }
 }
