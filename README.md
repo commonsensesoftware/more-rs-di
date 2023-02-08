@@ -157,7 +157,7 @@ _Figure: Using scoped services_
 The consumers of a `ServiceProvider` expect that it is correctly configured and ready for use. There are edge cases,
 however, which could lead to runtime failures or incorrect behavior such as:
 
-- A required, dependent service that has not be registered
+- A required, dependent service that has not been registered
 - A circular dependency, which will trigger a stack overflow
 - A service with a singleton lifetime has a dependent service with a scoped lifetime
 
