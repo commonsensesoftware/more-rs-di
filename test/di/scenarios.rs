@@ -148,3 +148,82 @@ fn inject_should_implement_generic_trait_for_generic_struct() {
     assert_eq!(&u8::default(), pair.key());
     assert_eq!(&u8::default(), pair.value());
 }
+
+#[test]
+fn inject_should_implement_lazy_struct() {
+    // arrange
+    let provider = ServiceCollection::new()
+        .add(structs::Bar::transient())
+        .add(structs::LazyFoo::transient())
+        .build_provider()
+        .unwrap();
+
+    // act
+    let foo = provider.get_required::<structs::LazyFoo>();
+
+    // assert
+    assert_eq!("Success!", foo.echo())
+}
+
+#[test]
+fn inject_should_implement_required_lazy_trait() {
+    // arrange
+    let provider = ServiceCollection::new()
+        .add(traits::BarImpl::transient())
+        .add(traits::OneLazyFoo::transient())
+        .build_provider()
+        .unwrap();
+
+    // act
+    let foo = provider.get_required::<dyn traits::Foo>();
+
+    // assert
+    assert_eq!("Success!", foo.echo())
+}
+
+#[test]
+fn inject_should_implement_optional_lazy_trait() {
+    // arrange
+    let provider = ServiceCollection::new()
+        .add(traits::BarImpl::transient())
+        .add(traits::MaybeLazyFoo::transient())
+        .build_provider()
+        .unwrap();
+
+    // act
+    let foo = provider.get_required::<dyn traits::Foo>();
+
+    // assert
+    assert_eq!("Success!", foo.echo())
+}
+
+#[test]
+fn inject_should_handle_implement_optional_lazy_trait() {
+    // arrange
+    let provider = ServiceCollection::new()
+        .add(traits::MaybeLazyFoo::transient())
+        .build_provider()
+        .unwrap();
+
+    // act
+    let foo = provider.get_required::<dyn traits::Foo>();
+
+    // assert
+    assert_eq!("", foo.echo())
+}
+
+#[test]
+fn inject_should_implement_many_lazy_trait() {
+    // arrange
+    let provider = ServiceCollection::new()
+        .add(traits::BarImpl::transient())
+        .add(traits::ManyLazyFoo::transient())
+        .build_provider()
+        .unwrap();
+
+    // act
+    let foo = provider.get_required::<dyn traits::Foo>();
+
+    // assert
+    assert_eq!("Success!", foo.echo())
+}

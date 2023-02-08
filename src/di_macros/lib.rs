@@ -7,6 +7,28 @@ use syn::{
     *,
 };
 
+struct ArgContext<'a> {
+    type_: &'a TypePath,
+    optional: bool,
+    many: bool,
+    lazy: bool,
+}
+
+impl<'a> ArgContext<'a> {
+    fn new(type_: &'a TypePath, optional: bool, many: bool, lazy: bool) -> Self {
+        Self {
+            type_,
+            optional,
+            many,
+            lazy,
+        }
+    }
+
+    fn optional_of_many(&self) -> bool {
+        self.optional && self.many
+    }
+}
+
 struct InjectableAttribute {
     trait_: Option<Path>,
 }
@@ -142,13 +164,15 @@ fn _injectable(metadata: TokenStream, input: TokenStream) -> TokenStream {
                     let service = attribute.trait_.as_ref().unwrap_or(implementation);
 
                     match get_injected_method(&impl_, implementation) {
-                        Ok(method) => match implement_injectable(&impl_, implementation, &service, method) {
-                            Ok(trait_impl) => {
-                                original.extend(trait_impl.into_iter());
-                                Ok(original)
+                        Ok(method) => {
+                            match implement_injectable(&impl_, implementation, &service, method) {
+                                Ok(trait_impl) => {
+                                    original.extend(trait_impl.into_iter());
+                                    Ok(original)
+                                }
+                                Err(error) => Err(error),
                             }
-                            Err(error) => Err(error),
-                        },
+                        }
                         Err(error) => Err(error),
                     }
                 } else {
@@ -176,9 +200,10 @@ fn implement_injectable(
     service: &Path,
     method: &Signature,
 ) -> Result<TokenStream> {
-    let (args , deps) = inject_argument_call_sites(method)?;
+    let (args, deps) = inject_argument_call_sites(method)?;
     let fn_ = &method.ident;
-    let is_trait = implementation.segments.last().unwrap().ident != service.segments.last().unwrap().ident;
+    let is_trait =
+        implementation.segments.last().unwrap().ident != service.segments.last().unwrap().ident;
     let new = if is_trait {
         quote! { di::ServiceDescriptorBuilder::<dyn #service, Self>::new(lifetime, di::Type::of::<Self>()) }
     } else {
@@ -269,105 +294,146 @@ fn inject_argument_call_sites(method: &Signature) -> Result<(Vec<TokenStream>, V
     Ok((args, deps))
 }
 
-fn resolve_type(arg: &Type) -> Result<(TokenStream, Option<TokenStream>)> {
-    if let Type::Path(type_) = arg {
-        let optional;
-        let many;
-        let inner_type = if let Some(inner) = get_generic_type_arg(type_, "Option") {
-            optional = true;
-            many = false;
-
-            if let Type::Path(path) = inner {
-                path
-            } else {
-                return Err(Error::new(inner.span(), "Expected ServiceRef, Rc, or Arc."));
-            }
-        } else if let Some(inner) = get_generic_type_arg(type_, "Vec") {
-            optional = false;
-            many = true;
-
-            if let Type::Path(path) = inner {
-                path
-            } else {
-                return Err(Error::new(inner.span(), "Expected ServiceRef, Rc, or Arc."));
+fn new_arg_context(arg: &Type) -> Result<ArgContext<'_>> {
+    if let Type::Path(outer) = arg {
+        let (type_, lazy) = if let Some(inner) = get_generic_type_arg(outer, "Lazy") {
+            match inner {
+                Type::Path(path) => (path, true),
+                _ => (outer, false),
             }
         } else {
-            optional = false;
-            many = false;
-            type_
+            (outer, false)
         };
 
-        if let Some(inner_type) = get_generic_type_arg(inner_type, "ServiceRef")
-            .or(get_generic_type_arg(inner_type, "Rc"))
-            .or(get_generic_type_arg(inner_type, "Arc"))
-        {
-            if optional && many {
-                return Err(Error::new(
-                    arg.span(),
-                    "Option<Vec> is not supported. Did you mean Vec?",
-                ));
+        if let Some(inner) = get_generic_type_arg(type_, "Option") {
+            if let Type::Path(path) = inner {
+                Ok(ArgContext::new(path, true, false, lazy))
+            } else {
+                Err(Error::new(inner.span(), "Expected ServiceRef, Rc, or Arc."))
             }
-
-            return match inner_type {
-                Type::TraitObject(trait_) => Ok(if optional {
-                    (
-                        quote! { sp.get::<#trait_>() },
-                        Some(
-                            quote! { di::ServiceDependency::new(di::Type::of::<#trait_>(), di::ServiceCardinality::ZeroOrOne) },
-                        ),
-                    )
-                } else if many {
-                    (
-                        quote! { sp.get_all::<#trait_>().collect() },
-                        Some(
-                            quote! { di::ServiceDependency::new(di::Type::of::<#trait_>(), di::ServiceCardinality::ZeroOrMore) },
-                        ),
-                    )
-                } else {
-                    (
-                        quote! { sp.get_required::<#trait_>() },
-                        Some(
-                            quote! { di::ServiceDependency::new(di::Type::of::<#trait_>(), di::ServiceCardinality::ExactlyOne) },
-                        ),
-                    )
-                }),
-                Type::Path(struct_) => Ok(if optional {
-                    (
-                        quote! { sp.get::<#struct_>() },
-                        Some(
-                            quote! { di::ServiceDependency::new(di::Type::of::<#struct_>(), di::ServiceCardinality::ZeroOrOne) },
-                        ),
-                    )
-                } else if many {
-                    (
-                        quote! { sp.get_all::<#struct_>().collect() },
-                        Some(
-                            quote! { di::ServiceDependency::new(di::Type::of::<#struct_>(), di::ServiceCardinality::ZeroOrMore) },
-                        ),
-                    )
-                } else {
-                    (
-                        quote! { sp.get_required::<#struct_>() },
-                        Some(
-                            quote! { di::ServiceDependency::new(di::Type::of::<#struct_>(), di::ServiceCardinality::ExactlyOne) },
-                        ),
-                    )
-                }),
-                _ => Err(Error::new(inner_type.span(), "Expected a trait or struct.")),
-            };
-        } else if inner_type.path.segments.first().unwrap().ident
-            == Ident::new("ServiceProvider", Span::call_site())
-        {
-            return Ok((quote! { sp.clone() }, None));
+        } else if let Some(inner) = get_generic_type_arg(type_, "Vec") {
+            if let Type::Path(path) = inner {
+                Ok(ArgContext::new(path, false, true, lazy))
+            } else {
+                Err(Error::new(inner.span(), "Expected ServiceRef, Rc, or Arc."))
+            }
         } else {
+            Ok(ArgContext::new(type_, false, false, lazy))
+        }
+    } else {
+        Err(Error::new(arg.span(), "Expected type path."))
+    }
+}
+
+fn resolve_trait_type(
+    trait_: &TypeTraitObject,
+    context: &ArgContext,
+) -> (TokenStream, Option<TokenStream>) {
+    if context.optional {
+        (
+            if context.lazy {
+                quote! { di::lazy::zero_or_one::<#trait_>(sp.clone()) }
+            } else {
+                quote! { sp.get::<#trait_>() }
+            },
+            Some(
+                quote! { di::ServiceDependency::new(di::Type::of::<#trait_>(), di::ServiceCardinality::ZeroOrOne) },
+            ),
+        )
+    } else if context.many {
+        (
+            if context.lazy {
+                quote! { di::lazy::zero_or_more::<#trait_>(sp.clone()) }
+            } else {
+                quote! { sp.get_all::<#trait_>().collect() }
+            },
+            Some(
+                quote! { di::ServiceDependency::new(di::Type::of::<#trait_>(), di::ServiceCardinality::ZeroOrMore) },
+            ),
+        )
+    } else {
+        (
+            if context.lazy {
+                quote! { di::lazy::exactly_one::<#trait_>(sp.clone()) }
+            } else {
+                quote! { sp.get_required::<#trait_>() }
+            },
+            Some(
+                quote! { di::ServiceDependency::new(di::Type::of::<#trait_>(), di::ServiceCardinality::ExactlyOne) },
+            ),
+        )
+    }
+}
+
+fn resolve_struct_type(
+    struct_: &TypePath,
+    context: &ArgContext,
+) -> (TokenStream, Option<TokenStream>) {
+    if context.optional {
+        (
+            if context.lazy {
+                quote! { di::lazy::zero_or_one::<#struct_>(sp.clone()) }
+            } else {
+                quote! { sp.get::<#struct_>() }
+            },
+            Some(
+                quote! { di::ServiceDependency::new(di::Type::of::<#struct_>(), di::ServiceCardinality::ZeroOrOne) },
+            ),
+        )
+    } else if context.many {
+        (
+            if context.lazy {
+                quote! { di::lazy::zero_or_more::<#struct_>(sp.clone()) }
+            } else {
+                quote! { sp.get_all::<#struct_>().collect() }
+            },
+            Some(
+                quote! { di::ServiceDependency::new(di::Type::of::<#struct_>(), di::ServiceCardinality::ZeroOrMore) },
+            ),
+        )
+    } else {
+        (
+            if context.lazy {
+                quote! { di::lazy::exactly_one::<#struct_>(sp.clone()) }
+            } else {
+                quote! { sp.get_required::<#struct_>() }
+            },
+            Some(
+                quote! { di::ServiceDependency::new(di::Type::of::<#struct_>(), di::ServiceCardinality::ExactlyOne) },
+            ),
+        )
+    }
+}
+
+fn resolve_type(arg: &Type) -> Result<(TokenStream, Option<TokenStream>)> {
+    let context = new_arg_context(arg)?;
+
+    if let Some(inner_type) = get_generic_type_arg(context.type_, "ServiceRef")
+        .or(get_generic_type_arg(context.type_, "Rc"))
+        .or(get_generic_type_arg(context.type_, "Arc"))
+    {
+        if context.optional_of_many() {
             return Err(Error::new(
-                inner_type.span(),
-                "Expected ServiceRef, Rc, or Arc.",
+                arg.span(),
+                "Option<Vec> is not supported. Did you mean Vec?",
             ));
         }
-    }
 
-    Err(Error::new(arg.span(), "Expected type path."))
+        match inner_type {
+            Type::TraitObject(trait_) => Ok(resolve_trait_type(trait_, &context)),
+            Type::Path(struct_) => Ok(resolve_struct_type(struct_, &context)),
+            _ => Err(Error::new(inner_type.span(), "Expected a trait or struct.")),
+        }
+    } else if context.type_.path.segments.first().unwrap().ident
+        == Ident::new("ServiceProvider", Span::call_site())
+    {
+        Ok((quote! { sp.clone() }, None))
+    } else {
+        Err(Error::new(
+            context.type_.span(),
+            "Expected ServiceRef, Rc, or Arc.",
+        ))
+    }
 }
 
 fn get_generic_type_arg<'a>(type_: &'a TypePath, name: &str) -> Option<&'a Type> {
