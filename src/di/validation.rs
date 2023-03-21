@@ -120,7 +120,8 @@ impl<'a> CircularDependency<'a> {
 
         while let Some(current) = queue.pop() {
             if let Some(descriptor) = self.lookup.get(current.injected_type()) {
-                if visited.insert(descriptor.service_type()) {
+                if descriptor.service_type() != root.service_type() {
+                    visited.insert(descriptor.service_type());
                     queue.extend(descriptor.dependencies());
                 } else {
                     results.push(ValidationResult::fail(format!(
