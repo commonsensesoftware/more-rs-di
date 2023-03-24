@@ -93,7 +93,6 @@ impl<'a> ValidationRule<'a> for MissingRequiredType<'a> {
 
 struct CircularDependency<'a> {
     lookup: &'a HashMap<&'a Type, &'a ServiceDescriptor>,
-    visited: RefCell<HashSet<&'a Type>>,
     queue: RefCell<Vec<&'a ServiceDependency>>,
 }
 
@@ -101,7 +100,6 @@ impl<'a> CircularDependency<'a> {
     fn new(lookup: &'a HashMap<&'a Type, &'a ServiceDescriptor>) -> Self {
         Self {
             lookup,
-            visited: RefCell::new(HashSet::new()),
             queue: RefCell::new(Vec::new()),
         }
     }
@@ -110,7 +108,6 @@ impl<'a> CircularDependency<'a> {
         &self,
         root: &'a ServiceDescriptor,
         dependency: &'a ServiceDependency,
-        visited: &mut HashSet<&'a Type>,
         results: &mut Vec<ValidationResult>,
     ) {
         let mut queue = self.queue.borrow_mut();
@@ -121,7 +118,6 @@ impl<'a> CircularDependency<'a> {
         while let Some(current) = queue.pop() {
             if let Some(descriptor) = self.lookup.get(current.injected_type()) {
                 if descriptor.service_type() != root.service_type() {
-                    visited.insert(descriptor.service_type());
                     queue.extend(descriptor.dependencies());
                 } else {
                     results.push(ValidationResult::fail(format!(
@@ -137,12 +133,8 @@ impl<'a> CircularDependency<'a> {
 
 impl<'a> ValidationRule<'a> for CircularDependency<'a> {
     fn evaluate(&self, descriptor: &'a ServiceDescriptor, results: &mut Vec<ValidationResult>) {
-        let mut visited = self.visited.borrow_mut();
-
         for dependency in descriptor.dependencies() {
-            visited.clear();
-            visited.insert(descriptor.service_type());
-            self.check_dependency_graph(descriptor, dependency, &mut visited, results);
+            self.check_dependency_graph(descriptor, dependency, results);
         }
     }
 }
@@ -417,5 +409,49 @@ mod tests {
             "The service 'di::test::AnotherTestServiceImpl' has a singleton lifetime, \
              but its transitive dependency 'dyn di::test::TestService' has a scoped lifetime"
         );
+    }
+
+    #[test]
+    fn validate_should_allow_unidirectional_dependency_multiple_times() {
+        // arrange
+        struct A;
+        struct B;
+        struct C;
+        struct M;
+        struct Z;
+
+        let mut services = ServiceCollection::new();
+
+        services
+            .add(transient_as_self::<M>().from(|_| ServiceRef::new(M {})))
+            .add(
+                transient_as_self::<A>()
+                    .depends_on(exactly_one::<B>())
+                    .depends_on(exactly_one::<M>())
+                    .from(|_| ServiceRef::new(A {})),
+            )
+            .add(
+                transient_as_self::<B>()
+                    .depends_on(exactly_one::<M>())
+                    .from(|_| ServiceRef::new(B {})),
+            )
+            .add(
+                transient_as_self::<C>()
+                    .depends_on(exactly_one::<M>())
+                    .from(|_| ServiceRef::new(C {})),
+            )
+            .add(
+                transient_as_self::<Z>()
+                    .depends_on(exactly_one::<A>())
+                    .depends_on(exactly_one::<C>())
+                    .depends_on(exactly_one::<M>())
+                    .from(|_| ServiceRef::new(Z {})),
+            );
+
+        // act
+        let result = validate(&services);
+
+        // assert
+        assert!(result.is_ok());
     }
 }
