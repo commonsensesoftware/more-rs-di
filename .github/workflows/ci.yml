@@ -1,0 +1,46 @@
+on:
+  push:
+    branches-ignore:
+      - 'dependabot/**'
+  pull_request:
+  schedule:
+    - cron: '0 8 * * 1'
+
+jobs:
+  ci:
+    name: CI
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      checks: write
+      pull-requests: write
+      security-events: write
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Install Rust
+        run: |
+          curl https://sh.rustup.rs -sSf | sh -s -- -y
+          source "$HOME/.cargo/env"
+
+      - name: Install Cargo-to-JUnit
+        run: cargo install cargo2junit
+
+      - name: Cargo Build
+        run: |
+          cargo build
+          cargo build --features async
+
+      - name: Cargo Test
+        run: |
+          cargo test -- -Z unstable-options --format json --report-time | cargo2junit > target/debug/results.xml
+          cargo test --features async -- -Z unstable-options --format json --report-time | cargo2junit > target/debug/results-async.xml
+
+      - name: Publish Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: always()
+        with:
+          files: |
+            target/debug/*.xml
