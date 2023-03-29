@@ -2,10 +2,11 @@
 
 [![Crates.io][crates-badge]][crates-url]
 [![MIT licensed][mit-badge]][mit-url]
+![CI](https://github.com/commonsensesoftware/more-rs-di/actions/workflows/ci.yml/badge.svg)
 
 [crates-badge]: https://img.shields.io/crates/v/more-di.svg
 [crates-url]: https://crates.io/crates/more-di
-[mit-badge]: https://img.shields.io/badge/license-MIT-blue.svg
+[mit-badge]: https://img.shields.io/badge/license-MIT-blueviolet.svg
 [mit-url]: https://github.com/commonsensesoftware/more-rs-di/blob/main/LICENSE
 
 This library contains all of the fundamental abstractions for dependency injection (DI).
