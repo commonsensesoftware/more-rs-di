@@ -575,7 +575,7 @@ mod tests {
 
         // act
         let result = validate(&services);
-        assert_eq!(result.is_err(), false) //I will add the proper assert here;
+        assert!(result.is_ok())
     }
 
     #[test]
@@ -650,6 +650,6 @@ mod tests {
 
         // act
         let result = validate(&services);
-        assert_eq!(result.is_err(), true) // I will add the proper assert here;
+        assert!(result.is_err())
     }
 }
