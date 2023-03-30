@@ -18,6 +18,20 @@ pub(crate) trait TestService {
     fn value(&self) -> usize;
 }
 
+pub(crate) trait ServiceA {}
+
+pub(crate) trait ServiceB {}
+
+pub(crate) trait ServiceC {}
+
+pub(crate) trait ServiceM {}
+
+pub(crate) trait ServiceY {}
+
+pub(crate) trait ServiceX {}
+
+pub(crate) trait ServiceZ {}
+
 pub(crate) trait OtherTestService {}
 
 pub(crate) trait AnotherTestService {}
@@ -26,6 +40,124 @@ pub(crate) trait AnotherTestService {}
 pub(crate) struct TestServiceImpl {
     pub value: usize,
 }
+
+pub(crate) struct ServiceAImpl {
+    _service_m: ServiceRef<dyn ServiceM>,
+    _service_b: ServiceRef<dyn ServiceB>,
+}
+
+impl ServiceAImpl {
+    pub(crate) fn new(
+        _service_m: ServiceRef<dyn ServiceM>,
+        _service_b: ServiceRef<dyn ServiceB>,
+    ) -> Self {
+        Self {
+            _service_m,
+            _service_b,
+        }
+    }
+}
+
+impl ServiceA for ServiceAImpl {}
+
+pub(crate) struct ServiceBImpl {
+    _service_m: ServiceRef<dyn ServiceM>,
+}
+
+impl ServiceBImpl {
+    pub(crate) fn new(_service_m: ServiceRef<dyn ServiceM>) -> Self {
+        Self { _service_m }
+    }
+}
+
+impl ServiceB for ServiceBImpl {}
+
+pub(crate) struct ServiceCImpl {
+    _service_m: ServiceRef<dyn ServiceM>,
+}
+
+
+impl ServiceCImpl {
+    pub(crate) fn new(_service_m: ServiceRef<dyn ServiceM>) -> Self {
+        Self { _service_m }
+    }
+}
+impl ServiceC for ServiceCImpl {}
+
+pub(crate) struct ServiceCWithCircleRefToXImpl {
+    _service_m: ServiceRef<dyn ServiceM>,
+    _service_x: ServiceRef<dyn ServiceX>,
+}
+
+impl ServiceCWithCircleRefToXImpl {
+    pub(crate) fn new(_service_m: ServiceRef<dyn ServiceM>, _service_x: ServiceRef<dyn ServiceX>) -> Self { Self { _service_m, _service_x } }
+}
+
+impl ServiceC for ServiceCWithCircleRefToXImpl {}
+
+pub(crate) struct ServiceMImpl;
+
+impl ServiceM for ServiceMImpl {}
+
+pub(crate) struct ServiceYImpl {
+    _service_m: ServiceRef<dyn ServiceM>,
+    _service_c: ServiceRef<dyn ServiceC>,
+}
+
+impl ServiceYImpl {
+    pub(crate) fn new(
+        _service_m: ServiceRef<dyn ServiceM>,
+        _service_c: ServiceRef<dyn ServiceC>,
+    ) -> Self {
+        Self {
+            _service_m,
+            _service_c,
+        }
+    }
+}
+
+impl ServiceY for ServiceYImpl {}
+
+pub(crate) struct ServiceXImpl {
+    _service_m: ServiceRef<dyn ServiceM>,
+    _service_y: ServiceRef<dyn ServiceY>,
+}
+
+impl ServiceX for ServiceXImpl {}
+
+impl ServiceXImpl {
+    pub(crate) fn new(
+        _service_m: ServiceRef<dyn ServiceM>,
+        _service_y: ServiceRef<dyn ServiceY>,
+    ) -> Self {
+        Self {
+            _service_m,
+            _service_y,
+        }
+    }
+}
+
+pub(crate) struct ServiceZImpl {
+    _service_m: ServiceRef<dyn ServiceM>,
+    _service_a: ServiceRef<dyn ServiceA>,
+    _service_x: ServiceRef<dyn ServiceX>,
+}
+
+impl ServiceZImpl {
+    pub(crate) fn new(
+        _service_m: ServiceRef<dyn ServiceM>,
+        _service_a: ServiceRef<dyn ServiceA>,
+        _service_x: ServiceRef<dyn ServiceX>,
+    ) -> Self {
+        Self {
+            _service_m,
+            _service_a,
+            _service_x,
+        }
+    }
+}
+
+impl ServiceZ for ServiceZImpl {}
 
 #[derive(Default)]
 pub(crate) struct TestService2Impl {
