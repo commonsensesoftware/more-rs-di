@@ -129,10 +129,6 @@ impl<'a> CircularDependency<'a> {
                 root.implementation_type().name(),
             ))),
         }
-
-        self.add_nodes(dependency, results);
-
-        results.dedup_by(|a, b| a.message.eq_ignore_ascii_case(&b.message));
     }
 
     fn clean_graph(&self) {
