@@ -93,6 +93,7 @@ impl<'a> ValidationRule<'a> for MissingRequiredType<'a> {
 
 struct CircularDependency<'a> {
     lookup: &'a HashMap<&'a Type, &'a ServiceDescriptor>,
+    visited: RefCell<HashSet<&'a Type>>,
     queue: RefCell<Vec<&'a ServiceDependency>>,
 }
 
@@ -100,6 +101,7 @@ impl<'a> CircularDependency<'a> {
     fn new(lookup: &'a HashMap<&'a Type, &'a ServiceDescriptor>) -> Self {
         Self {
             lookup,
+            visited: RefCell::new(HashSet::new()),
             queue: RefCell::new(Vec::new()),
         }
     }
@@ -108,6 +110,7 @@ impl<'a> CircularDependency<'a> {
         &self,
         root: &'a ServiceDescriptor,
         dependency: &'a ServiceDependency,
+        visited: &mut HashSet<&'a Type>,
         results: &mut Vec<ValidationResult>,
     ) {
         let mut queue = self.queue.borrow_mut();
@@ -117,9 +120,11 @@ impl<'a> CircularDependency<'a> {
 
         while let Some(current) = queue.pop() {
             if let Some(descriptor) = self.lookup.get(current.injected_type()) {
-                if descriptor.service_type() != root.service_type() {
+                if visited.insert(descriptor.service_type()) {
                     queue.extend(descriptor.dependencies());
-                } else {
+                }
+
+                if descriptor.service_type() == root.service_type() {
                     results.push(ValidationResult::fail(format!(
                         "A circular dependency was detected for service '{}' on service '{}'",
                         descriptor.service_type().name(),
@@ -133,8 +138,12 @@ impl<'a> CircularDependency<'a> {
 
 impl<'a> ValidationRule<'a> for CircularDependency<'a> {
     fn evaluate(&self, descriptor: &'a ServiceDescriptor, results: &mut Vec<ValidationResult>) {
+        let mut visited = self.visited.borrow_mut();
+
         for dependency in descriptor.dependencies() {
-            self.check_dependency_graph(descriptor, dependency, results);
+            visited.clear();
+            visited.insert(descriptor.service_type());
+            self.check_dependency_graph(descriptor, dependency, &mut visited, results);
         }
     }
 }
@@ -412,40 +421,73 @@ mod tests {
     }
 
     #[test]
-    fn validate_should_allow_unidirectional_dependency_multiple_times() {
+    fn validate_should_not_report_circular_dependency_when_visited_multiple_times() {
         // arrange
-        struct A;
-        struct B;
-        struct C;
-        struct M;
-        struct Z;
-
         let mut services = ServiceCollection::new();
 
         services
-            .add(transient_as_self::<M>().from(|_| ServiceRef::new(M {})))
             .add(
-                transient_as_self::<A>()
-                    .depends_on(exactly_one::<B>())
-                    .depends_on(exactly_one::<M>())
-                    .from(|_| ServiceRef::new(A {})),
+                singleton::<dyn ServiceM, ServiceMImpl>().from(|_sp| ServiceRef::new(ServiceMImpl)),
             )
             .add(
-                transient_as_self::<B>()
-                    .depends_on(exactly_one::<M>())
-                    .from(|_| ServiceRef::new(B {})),
+                singleton::<dyn ServiceB, ServiceBImpl>()
+                    .depends_on(exactly_one::<dyn ServiceM>())
+                    .from(|sp| {
+                        ServiceRef::new(ServiceBImpl::new(sp.get_required::<dyn ServiceM>()))
+                    }),
             )
             .add(
-                transient_as_self::<C>()
-                    .depends_on(exactly_one::<M>())
-                    .from(|_| ServiceRef::new(C {})),
+                singleton::<dyn ServiceC, ServiceCImpl>()
+                    .depends_on(exactly_one::<dyn ServiceM>())
+                    .from(|sp| {
+                        ServiceRef::new(ServiceCImpl::new(sp.get_required::<dyn ServiceM>()))
+                    }),
             )
             .add(
-                transient_as_self::<Z>()
-                    .depends_on(exactly_one::<A>())
-                    .depends_on(exactly_one::<C>())
-                    .depends_on(exactly_one::<M>())
-                    .from(|_| ServiceRef::new(Z {})),
+                singleton::<dyn ServiceA, ServiceAImpl>()
+                    .depends_on(exactly_one::<dyn ServiceM>())
+                    .depends_on(exactly_one::<dyn ServiceB>())
+                    .from(|sp| {
+                        ServiceRef::new(ServiceAImpl::new(
+                            sp.get_required::<dyn ServiceM>(),
+                            sp.get_required::<dyn ServiceB>(),
+                        ))
+                    }),
+            )
+            .add(
+                singleton::<dyn ServiceY, ServiceYImpl>()
+                    .depends_on(exactly_one::<dyn ServiceM>())
+                    .depends_on(exactly_one::<dyn ServiceC>())
+                    .from(|sp| {
+                        ServiceRef::new(ServiceYImpl::new(
+                            sp.get_required::<dyn ServiceM>(),
+                            sp.get_required::<dyn ServiceC>(),
+                        ))
+                    }),
+            )
+            .add(
+                singleton::<dyn ServiceX, ServiceXImpl>()
+                    .depends_on(exactly_one::<dyn ServiceM>())
+                    .depends_on(exactly_one::<dyn ServiceY>())
+                    .from(|sp| {
+                        ServiceRef::new(ServiceXImpl::new(
+                            sp.get_required::<dyn ServiceM>(),
+                            sp.get_required::<dyn ServiceY>(),
+                        ))
+                    }),
+            )
+            .add(
+                singleton::<dyn ServiceZ, ServiceZImpl>()
+                    .depends_on(exactly_one::<dyn ServiceM>())
+                    .depends_on(exactly_one::<dyn ServiceA>())
+                    .depends_on(exactly_one::<dyn ServiceX>())
+                    .from(|sp| {
+                        ServiceRef::new(ServiceZImpl::new(
+                            sp.get_required::<dyn ServiceM>(),
+                            sp.get_required::<dyn ServiceA>(),
+                            sp.get_required::<dyn ServiceX>(),
+                        ))
+                    }),
             );
 
         // act
@@ -453,5 +495,86 @@ mod tests {
 
         // assert
         assert!(result.is_ok());
+    }
+
+    #[test]
+    fn validate_should_report_circular_dependency_in_complex_dependency_tree() {
+        // arrange
+        let mut services = ServiceCollection::new();
+
+        services
+            .add(
+                singleton::<dyn ServiceM, ServiceMImpl>().from(|_sp| ServiceRef::new(ServiceMImpl)),
+            )
+            .add(
+                singleton::<dyn ServiceB, ServiceBImpl>()
+                    .depends_on(exactly_one::<dyn ServiceM>())
+                    .from(|sp| {
+                        ServiceRef::new(ServiceBImpl::new(sp.get_required::<dyn ServiceM>()))
+                    }),
+            )
+            .add(
+                singleton::<dyn ServiceC, ServiceCWithCircleRefToXImpl>()
+                    .depends_on(exactly_one::<dyn ServiceM>())
+                    .depends_on(exactly_one::<dyn ServiceX>())
+                    .from(|sp| {
+                        ServiceRef::new(ServiceCWithCircleRefToXImpl::new(
+                            sp.get_required::<dyn ServiceM>(),
+                            sp.get_required::<dyn ServiceX>(),
+                        ))
+                    }),
+            )
+            .add(
+                singleton::<dyn ServiceA, ServiceAImpl>()
+                    .depends_on(exactly_one::<dyn ServiceM>())
+                    .depends_on(exactly_one::<dyn ServiceB>())
+                    .from(|sp| {
+                        ServiceRef::new(ServiceAImpl::new(
+                            sp.get_required::<dyn ServiceM>(),
+                            sp.get_required::<dyn ServiceB>(),
+                        ))
+                    }),
+            )
+            .add(
+                singleton::<dyn ServiceY, ServiceYImpl>()
+                    .depends_on(exactly_one::<dyn ServiceM>())
+                    .depends_on(exactly_one::<dyn ServiceC>())
+                    .from(|sp| {
+                        ServiceRef::new(ServiceYImpl::new(
+                            sp.get_required::<dyn ServiceM>(),
+                            sp.get_required::<dyn ServiceC>(),
+                        ))
+                    }),
+            )
+            .add(
+                singleton::<dyn ServiceX, ServiceXImpl>()
+                    .depends_on(exactly_one::<dyn ServiceM>())
+                    .depends_on(exactly_one::<dyn ServiceY>())
+                    .from(|sp| {
+                        ServiceRef::new(ServiceXImpl::new(
+                            sp.get_required::<dyn ServiceM>(),
+                            sp.get_required::<dyn ServiceY>(),
+                        ))
+                    }),
+            )
+            .add(
+                singleton::<dyn ServiceZ, ServiceZImpl>()
+                    .depends_on(exactly_one::<dyn ServiceM>())
+                    .depends_on(exactly_one::<dyn ServiceA>())
+                    .depends_on(exactly_one::<dyn ServiceX>())
+                    .from(|sp| {
+                        ServiceRef::new(ServiceZImpl::new(
+                            sp.get_required::<dyn ServiceM>(),
+                            sp.get_required::<dyn ServiceA>(),
+                            sp.get_required::<dyn ServiceX>(),
+                        ))
+                    }),
+            );
+
+        // act
+        let result = validate(&services);
+
+        // assert
+        assert!(result.is_err());
     }
 }
