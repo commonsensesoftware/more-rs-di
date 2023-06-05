@@ -5,6 +5,7 @@ on:
     branches-ignore:
       - 'dependabot/**'
   pull_request:
+  workflow_dispatch:
   schedule:
     - cron: '0 8 * * 1'
 
@@ -24,7 +25,7 @@ jobs:
 
       - name: Install Rust
         run: |
-          curl https://sh.rustup.rs -sSf | sh -s -- -y
+          curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain nightly
           source "$HOME/.cargo/env"
 
       # REF: https://crates.io/crates/cargo2junit
