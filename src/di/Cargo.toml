@@ -28,7 +28,7 @@ version = "2.1"
 optional = true
 
 [dependencies.spin]
-version = "0.9.4"
+version = "0.9.8"
 default-features = false
 features = ["once"]
 
