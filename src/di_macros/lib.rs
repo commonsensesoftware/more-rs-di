@@ -1,45 +1,11 @@
+mod internal;
+
 extern crate proc_macro;
-use proc_macro2::{Ident, Span, TokenStream};
-use quote::quote;
-use syn::{
-    parse::{Parse, ParseStream},
-    spanned::Spanned,
-    *,
-};
 
-struct ArgContext<'a> {
-    type_: &'a TypePath,
-    optional: bool,
-    many: bool,
-    lazy: bool,
-}
-
-impl<'a> ArgContext<'a> {
-    fn new(type_: &'a TypePath, optional: bool, many: bool, lazy: bool) -> Self {
-        Self {
-            type_,
-            optional,
-            many,
-            lazy,
-        }
-    }
-
-    fn optional_of_many(&self) -> bool {
-        self.optional && self.many
-    }
-}
-
-struct InjectableAttribute {
-    trait_: Option<Path>,
-}
-
-impl Parse for InjectableAttribute {
-    fn parse(input: ParseStream) -> Result<Self> {
-        Ok(Self {
-            trait_: input.parse().ok(),
-        })
-    }
-}
+use crate::internal::*;
+use internal::{DeriveContext, DeriveStrategy, InjectableTrait, KeyedInjectableTrait, Constructor};
+use proc_macro2::TokenStream;
+use syn::{spanned::Spanned, *};
 
 /// Represents the metadata used to identify an injected function.
 ///
@@ -155,33 +121,17 @@ pub fn injectable(
 }
 
 fn _injectable(metadata: TokenStream, input: TokenStream) -> TokenStream {
-    let mut original = TokenStream::from(input.clone());
+    let original = TokenStream::from(input.clone());
     let result = match parse2::<InjectableAttribute>(metadata) {
         Ok(attribute) => {
-            if let Ok(impl_) = parse2::<ItemImpl>(TokenStream::from(input)) {
-                if let Type::Path(type_) = &*impl_.self_ty {
-                    let implementation = &type_.path;
-                    let service = attribute.trait_.as_ref().unwrap_or(implementation);
-
-                    match get_injected_method(&impl_, implementation) {
-                        Ok(method) => {
-                            match implement_injectable(&impl_, implementation, &service, method) {
-                                Ok(trait_impl) => {
-                                    original.extend(trait_impl.into_iter());
-                                    Ok(original)
-                                }
-                                Err(error) => Err(error),
-                            }
-                        }
-                        Err(error) => Err(error),
-                    }
-                } else {
-                    Err(Error::new(impl_.span(), "Expected implementation type."))
-                }
+            if let Ok(impl_) = parse2::<ItemImpl>(TokenStream::from(input.clone())) {
+                derive_from_struct_impl(impl_, attribute, original)
+            } else if let Ok(struct_) = parse2::<ItemStruct>(TokenStream::from(input)) {
+                derive_from_struct(struct_, attribute, original)
             } else {
                 Err(Error::new(
                     original.span(),
-                    "Attribute can only be applied to a structure implementation block.",
+                    "Attribute can only be applied to a structure or structure implementation block.",
                 ))
             }
         }
@@ -194,263 +144,64 @@ fn _injectable(metadata: TokenStream, input: TokenStream) -> TokenStream {
     }
 }
 
-fn implement_injectable(
-    impl_: &ItemImpl,
-    implementation: &Path,
-    service: &Path,
-    method: &Signature,
+fn derive_from_struct_impl(
+    impl_: ItemImpl,
+    attribute: InjectableAttribute,
+    original: TokenStream,
 ) -> Result<TokenStream> {
-    let (args, deps) = inject_argument_call_sites(method)?;
-    let fn_ = &method.ident;
-    let is_trait =
-        implementation.segments.last().unwrap().ident != service.segments.last().unwrap().ident;
-    let new = if is_trait {
-        quote! { di::ServiceDescriptorBuilder::<dyn #service, Self>::new(lifetime, di::Type::of::<Self>()) }
-    } else {
-        quote! { di::ServiceDescriptorBuilder::<Self, Self>::new(lifetime, di::Type::of::<Self>()) }
-    };
-    let depends_on = quote! { #(.depends_on(#deps))* };
-    let generics = &impl_.generics;
-    let where_ = &generics.where_clause;
-    let code = quote! {
-        impl#generics di::Injectable for #implementation #where_ {
-            fn inject(lifetime: di::ServiceLifetime) -> di::ServiceDescriptor {
-                #new#depends_on.from(|sp: &di::ServiceProvider| di::ServiceRef::new(Self::#fn_(#(#args),*)))
+    if let Type::Path(type_) = &*impl_.self_ty {
+        let imp = &type_.path;
+        let svc = attribute.trait_.as_ref().unwrap_or(imp);
+
+        match Constructor::select(&impl_, imp) {
+            Ok(method) => {
+                let context = DeriveContext::for_method(&impl_.generics, imp, &svc, method);
+                derive(context, &attribute, original)
             }
-        }
-    };
-    Ok(code.into())
-}
-
-fn get_injected_method<'a>(impl_: &'a ItemImpl, path: &Path) -> Result<&'a Signature> {
-    let new = Ident::new("new", Span::call_site());
-    let mut convention = Option::None;
-    let mut methods = Vec::new();
-
-    for item in &impl_.items {
-        if let ImplItem::Method(method) = item {
-            let signature = &method.sig;
-
-            if method.attrs.iter().any(|a| a.path.is_ident("inject")) {
-                methods.push(signature);
-            }
-
-            if signature.ident == new {
-                convention = Some(signature);
-            }
-        }
-    }
-
-    match methods.len() {
-        0 => {
-            if let Some(method) = convention {
-                Ok(method)
-            } else {
-                Err(Error::new(
-                    impl_.span(),
-                    format!(
-                        "Neither {}::new or an associated method decorated with #[inject] was found.",
-                        path.segments.last().unwrap().ident
-                    ),
-                ))
-            }
-        }
-        1 => Ok(methods[0]),
-        _ => Err(Error::new(
-            impl_.span(),
-            format!(
-                "{} has more than one associated method decorated with #[inject].",
-                path.segments.last().unwrap().ident
-            ),
-        )),
-    }
-}
-
-fn inject_argument_call_sites(method: &Signature) -> Result<(Vec<TokenStream>, Vec<TokenStream>)> {
-    let count = method.inputs.len();
-
-    if count == 0 {
-        return Ok((Vec::with_capacity(0), Vec::with_capacity(0)));
-    }
-
-    let mut args = Vec::with_capacity(count);
-    let mut deps = Vec::with_capacity(count);
-
-    for input in method.inputs.iter() {
-        let (arg, dep) = match input {
-            FnArg::Typed(type_) => resolve_type(&*type_.ty)?,
-            _ => return Err(Error::new(
-                input.span(),
-                "The argument must be ServiceRef, Rc, or Arc and optionally wrapped with Option or Vec.")),
-        };
-
-        args.push(arg);
-
-        if let Some(d) = dep {
-            deps.push(d);
-        }
-    }
-
-    Ok((args, deps))
-}
-
-fn new_arg_context(arg: &Type) -> Result<ArgContext<'_>> {
-    if let Type::Path(outer) = arg {
-        let (type_, lazy) = if let Some(inner) = get_generic_type_arg(outer, "Lazy") {
-            match inner {
-                Type::Path(path) => (path, true),
-                _ => (outer, false),
-            }
-        } else {
-            (outer, false)
-        };
-
-        if let Some(inner) = get_generic_type_arg(type_, "Option") {
-            if let Type::Path(path) = inner {
-                Ok(ArgContext::new(path, true, false, lazy))
-            } else {
-                Err(Error::new(inner.span(), "Expected ServiceRef, Rc, or Arc."))
-            }
-        } else if let Some(inner) = get_generic_type_arg(type_, "Vec") {
-            if let Type::Path(path) = inner {
-                Ok(ArgContext::new(path, false, true, lazy))
-            } else {
-                Err(Error::new(inner.span(), "Expected ServiceRef, Rc, or Arc."))
-            }
-        } else {
-            Ok(ArgContext::new(type_, false, false, lazy))
+            Err(error) => Err(error),
         }
     } else {
-        Err(Error::new(arg.span(), "Expected type path."))
+        Err(Error::new(impl_.span(), "Expected implementation type."))
     }
 }
 
-fn resolve_trait_type(
-    trait_: &TypeTraitObject,
-    context: &ArgContext,
-) -> (TokenStream, Option<TokenStream>) {
-    if context.optional {
-        (
-            if context.lazy {
-                quote! { di::lazy::zero_or_one::<#trait_>(sp.clone()) }
-            } else {
-                quote! { sp.get::<#trait_>() }
-            },
-            Some(
-                quote! { di::ServiceDependency::new(di::Type::of::<#trait_>(), di::ServiceCardinality::ZeroOrOne) },
-            ),
-        )
-    } else if context.many {
-        (
-            if context.lazy {
-                quote! { di::lazy::zero_or_more::<#trait_>(sp.clone()) }
-            } else {
-                quote! { sp.get_all::<#trait_>().collect() }
-            },
-            Some(
-                quote! { di::ServiceDependency::new(di::Type::of::<#trait_>(), di::ServiceCardinality::ZeroOrMore) },
-            ),
-        )
-    } else {
-        (
-            if context.lazy {
-                quote! { di::lazy::exactly_one::<#trait_>(sp.clone()) }
-            } else {
-                quote! { sp.get_required::<#trait_>() }
-            },
-            Some(
-                quote! { di::ServiceDependency::new(di::Type::of::<#trait_>(), di::ServiceCardinality::ExactlyOne) },
-            ),
-        )
-    }
+fn derive_from_struct(
+    struct_: ItemStruct,
+    attribute: InjectableAttribute,
+    original: TokenStream,
+) -> Result<TokenStream> {
+    let path = syn::Path::from(struct_.ident.clone());
+    let imp = &path;
+    let svc = attribute.trait_.as_ref().unwrap_or(imp);
+    let context = DeriveContext::for_struct(&struct_.generics, imp, svc, &struct_);
+    
+    derive(context, &attribute, original)
 }
 
-fn resolve_struct_type(
-    struct_: &TypePath,
-    context: &ArgContext,
-) -> (TokenStream, Option<TokenStream>) {
-    if context.optional {
-        (
-            if context.lazy {
-                quote! { di::lazy::zero_or_one::<#struct_>(sp.clone()) }
-            } else {
-                quote! { sp.get::<#struct_>() }
-            },
-            Some(
-                quote! { di::ServiceDependency::new(di::Type::of::<#struct_>(), di::ServiceCardinality::ZeroOrOne) },
-            ),
-        )
-    } else if context.many {
-        (
-            if context.lazy {
-                quote! { di::lazy::zero_or_more::<#struct_>(sp.clone()) }
-            } else {
-                quote! { sp.get_all::<#struct_>().collect() }
-            },
-            Some(
-                quote! { di::ServiceDependency::new(di::Type::of::<#struct_>(), di::ServiceCardinality::ZeroOrMore) },
-            ),
-        )
-    } else {
-        (
-            if context.lazy {
-                quote! { di::lazy::exactly_one::<#struct_>(sp.clone()) }
-            } else {
-                quote! { sp.get_required::<#struct_>() }
-            },
-            Some(
-                quote! { di::ServiceDependency::new(di::Type::of::<#struct_>(), di::ServiceCardinality::ExactlyOne) },
-            ),
-        )
-    }
-}
+fn derive<'a>(
+    context: DeriveContext<'a>,
+    attribute: &'a InjectableAttribute,
+    mut original: TokenStream,
+) -> Result<TokenStream> {
+    let injectable = InjectableTrait::derive(&context);
 
-fn resolve_type(arg: &Type) -> Result<(TokenStream, Option<TokenStream>)> {
-    let context = new_arg_context(arg)?;
-
-    if let Some(inner_type) = get_generic_type_arg(context.type_, "ServiceRef")
-        .or(get_generic_type_arg(context.type_, "Rc"))
-        .or(get_generic_type_arg(context.type_, "Arc"))
-    {
-        if context.optional_of_many() {
-            return Err(Error::new(
-                arg.span(),
-                "Option<Vec> is not supported. Did you mean Vec?",
-            ));
-        }
-
-        match inner_type {
-            Type::TraitObject(trait_) => Ok(resolve_trait_type(trait_, &context)),
-            Type::Path(struct_) => Ok(resolve_struct_type(struct_, &context)),
-            _ => Err(Error::new(inner_type.span(), "Expected a trait or struct.")),
-        }
-    } else if context.type_.path.segments.first().unwrap().ident
-        == Ident::new("ServiceProvider", Span::call_site())
-    {
-        Ok((quote! { sp.clone() }, None))
-    } else {
-        Err(Error::new(
-            context.type_.span(),
-            "Expected ServiceRef, Rc, or Arc.",
-        ))
-    }
-}
-
-fn get_generic_type_arg<'a>(type_: &'a TypePath, name: &str) -> Option<&'a Type> {
-    let path = &type_.path;
-    let segment = path.segments.first().unwrap();
-
-    if segment.ident == Ident::new(name, Span::call_site()) {
-        if let PathArguments::AngleBracketed(ref type_args) = segment.arguments {
-            for type_arg in type_args.args.iter() {
-                if let GenericArgument::Type(ref inner_type) = type_arg {
-                    return Some(inner_type);
+    if injectable.is_ok() {
+        if attribute.keyed {
+            match KeyedInjectableTrait::derive(&context) {
+                Ok(keyed_injectable) => {
+                    original.extend(injectable.unwrap().into_iter());
+                    original.extend(keyed_injectable.into_iter());
+                    Ok(original)
                 }
+                Err(error) => Err(error),
             }
+        } else {
+            original.extend(injectable.unwrap().into_iter());
+            Ok(original)
         }
+    } else {
+        Err(injectable.unwrap_err())
     }
-
-    None
 }
 
 #[cfg(test)]
