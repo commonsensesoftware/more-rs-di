@@ -25,6 +25,31 @@ pub trait Injectable: Sized {
     }
 }
 
+/// Defines the behavior of an injectable type with a key.
+pub trait KeyedInjectable: Sized {
+    /// Creates and returns a [service descriptor](struct.ServiceDescriptor.html) for an injectable type with a key.
+    ///
+    /// # Arguments
+    ///
+    /// * `lifetime` - The [lifetime](enum.ServiceLifetime.html) of the injected type.
+    fn inject_with_key<TKey>(lifetime: ServiceLifetime) -> ServiceDescriptor;
+
+    /// Creates and returns a [service descriptor](struct.ServiceDescriptor.html) for a singleton injected type with a key.
+    fn keyed_singleton<TKey>() -> ServiceDescriptor {
+        Self::inject_with_key::<TKey>(ServiceLifetime::Singleton)
+    }
+
+    /// Creates and returns a [service descriptor](struct.ServiceDescriptor.html) for a scoped injected type with a key.
+    fn keyed_scoped<TKey>() -> ServiceDescriptor {
+        Self::inject_with_key::<TKey>(ServiceLifetime::Scoped)
+    }
+
+    /// Creates and returns a [service descriptor](struct.ServiceDescriptor.html) for a transient injected injected with a key.
+    fn keyed_transient<TKey>() -> ServiceDescriptor {
+        Self::inject_with_key::<TKey>(ServiceLifetime::Transient)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
