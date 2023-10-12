@@ -288,7 +288,6 @@ fn inject_should_implement_trait_for_unit_struct() {
 fn service_descriptor_should_exclude_duplicate_dependencies() {
     // arrange
 
-
     // act
     let descriptor = structs::NormalStruct::transient();
 
@@ -297,7 +296,7 @@ fn service_descriptor_should_exclude_duplicate_dependencies() {
 }
 
 #[test]
-fn inject_should_implement_trait_for_struct_definition() {
+fn inject_should_implement_struct_definition() {
     // arrange
     let provider = ServiceCollection::new()
         .add(structs::UnitStruct::transient())
@@ -314,7 +313,7 @@ fn inject_should_implement_trait_for_struct_definition() {
 }
 
 #[test]
-fn inject_should_implement_trait_for_tuple_struct() {
+fn inject_should_implement_tuple_struct() {
     // arrange
     let provider = ServiceCollection::new()
         .add(structs::UnitStruct::transient())
@@ -328,4 +327,53 @@ fn inject_should_implement_trait_for_tuple_struct() {
     // assert
     assert_eq!(record.2, 0);
     assert_eq!(record.1.value().echo(), "Hello world!");
+}
+
+#[test]
+fn inject_should_implement_trait_for_struct_definition() {
+    // arrange
+    let provider = ServiceCollection::new()
+        .add(traits::BarImpl::transient())
+        .add(traits::FooToo::transient())
+        .build_provider()
+        .unwrap();
+
+    // act
+    let foo = provider.get_required::<dyn Foo>();
+
+    // assert
+    assert_eq!(foo.echo(), "Success!");
+}
+
+#[test]
+fn inject_should_implement_trait_for_tuple_struct() {
+    // arrange
+    let provider = ServiceCollection::new()
+        .add(traits::BarImpl::transient())
+        .add(traits::FooTwo::transient())
+        .build_provider()
+        .unwrap();
+
+    // act
+    let foo = provider.get_required::<dyn Foo>();
+
+    // assert
+    assert_eq!(foo.echo(), "Success!");
+}
+
+#[test]
+fn inject_should_implement_many_for_struct_field() {
+    // arrange
+    let provider = ServiceCollection::new()
+        .add(traits::Thing1::transient())
+        .add(traits::Thing2::transient())
+        .add(traits::MoreThingies::transient())
+        .build_provider()
+        .unwrap();
+
+    // act
+    let thingies = provider.get_required::<MoreThingies>();
+
+    // assert
+    assert_eq!(thingies.count(), 2);
 }
