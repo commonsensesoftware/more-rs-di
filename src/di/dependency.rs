@@ -14,7 +14,7 @@ pub enum ServiceCardinality {
 }
 
 /// Represents a service dependency.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct ServiceDependency {
     injected_type: Type,
     cardinality: ServiceCardinality,
