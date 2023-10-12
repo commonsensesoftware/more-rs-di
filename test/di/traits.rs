@@ -226,3 +226,32 @@ impl Thingies {
         self.items.len()
     }
 }
+
+#[injectable(Foo)]
+pub struct FooToo;
+
+impl Foo for FooToo {
+    fn echo(&self) -> &str {
+        "Success!"
+    }
+}
+
+#[injectable(Foo)]
+pub struct FooTwo(ServiceRef<dyn Bar>);
+
+impl Foo for FooTwo {
+    fn echo(&self) -> &str {
+        self.0.echo()
+    }
+}
+
+#[injectable]
+pub struct MoreThingies {
+    things: Vec<ServiceRef<dyn Thing>>,
+}
+
+impl MoreThingies {
+    pub fn count(&self) -> usize {
+        self.things.len()
+    }
+}
