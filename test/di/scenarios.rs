@@ -1,4 +1,4 @@
-use crate::*;
+use crate::{traits::*, *};
 use di::*;
 
 #[test]
@@ -226,4 +226,106 @@ fn inject_should_implement_many_lazy_trait() {
 
     // assert
     assert_eq!("Success!", foo.echo())
+}
+
+#[test]
+fn inject_should_implemented_keyed_dependencies() {
+    // arrange
+    let provider = ServiceCollection::new()
+        .add(traits::Thing1::keyed_transient::<key::Thing1>())
+        .add(traits::Thing2::keyed_transient::<key::Thing2>())
+        .add(traits::CatInTheHat::transient())
+        .build_provider()
+        .unwrap();
+
+    // act
+    let cat_in_the_hat = provider.get_required::<CatInTheHat>();
+
+    // assert
+    assert_eq!(
+        &cat_in_the_hat.thing1.to_string(),
+        "more_di_tests::traits::Thing1"
+    );
+    assert_eq!(
+        &cat_in_the_hat.thing2.to_string(),
+        "more_di_tests::traits::Thing2"
+    );
+}
+
+#[test]
+fn inject_should_implement_iterator_argument() {
+    // arrange
+    let provider = ServiceCollection::new()
+        .add(traits::Thing1::transient())
+        .add(traits::Thing2::transient())
+        .add(traits::Thingies::transient())
+        .build_provider()
+        .unwrap();
+
+    // act
+    let thingies = provider.get_required::<Thingies>();
+
+    // assert
+    assert_eq!(thingies.count(), 2);
+}
+
+#[test]
+fn inject_should_implement_trait_for_unit_struct() {
+    // arrange
+    let provider = ServiceCollection::new()
+        .add(structs::UnitStruct::transient())
+        .build_provider()
+        .unwrap();
+
+    // act
+    let unit = provider.get_required::<structs::UnitStruct>();
+
+    // assert
+    assert_eq!(unit.echo(), "Hello world!");
+}
+
+#[test]
+fn service_descriptor_should_exclude_duplicate_dependencies() {
+    // arrange
+
+
+    // act
+    let descriptor = structs::NormalStruct::transient();
+
+    // assert
+    assert_eq!(descriptor.dependencies().len(), 1);
+}
+
+#[test]
+fn inject_should_implement_trait_for_struct_definition() {
+    // arrange
+    let provider = ServiceCollection::new()
+        .add(structs::UnitStruct::transient())
+        .add(structs::NormalStruct::singleton())
+        .build_provider()
+        .unwrap();
+
+    // act
+    let struct_ = provider.get_required::<structs::NormalStruct>();
+
+    // assert
+    assert_eq!(struct_.count, 0);
+    assert_eq!(struct_.lazy.value().echo(), "Hello world!");
+}
+
+#[test]
+fn inject_should_implement_trait_for_tuple_struct() {
+    // arrange
+    let provider = ServiceCollection::new()
+        .add(structs::UnitStruct::transient())
+        .add(structs::Record::singleton())
+        .build_provider()
+        .unwrap();
+
+    // act
+    let record = provider.get_required::<structs::Record>();
+
+    // assert
+    assert_eq!(record.2, 0);
+    assert_eq!(record.1.value().echo(), "Hello world!");
 }
