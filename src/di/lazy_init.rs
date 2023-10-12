@@ -1,4 +1,4 @@
-use crate::{ServiceProvider, ServiceRef};
+use crate::{ServiceProvider, ServiceRef, KeyedServiceRef};
 use spin::Once;
 use std::any::Any;
 
@@ -28,6 +28,10 @@ fn to_vec<T: Any + ?Sized>(services: &ServiceProvider) -> Vec<ServiceRef<T>> {
     services.get_all::<T>().collect()
 }
 
+fn to_keyed_vec<TKey: 'static, TSvc: Any + ?Sized>(services: &ServiceProvider) -> Vec<KeyedServiceRef<TKey, TSvc>> {
+    services.get_all_by_key::<TKey, TSvc>().collect()
+}
+
 /// Creates and returns a holder for a lazily-initialized, required service.
 ///
 /// # Arguments
@@ -38,19 +42,41 @@ pub fn exactly_one<T: Any + ?Sized>(services: ServiceProvider) -> Lazy<ServiceRe
     Lazy::new(services, ServiceProvider::get_required::<T>)
 }
 
+/// Creates and returns a holder for a lazily-initialized, keyed, required service.
+///
+/// # Arguments
+///
+/// * `services` - The [service provider](struct.ServiceProvider.html) used to resolve the service
+#[inline]
+pub fn exactly_one_with_key<TKey, TSvc: Any + ?Sized>(services: ServiceProvider) -> Lazy<KeyedServiceRef<TKey, TSvc>> {
+    Lazy::new(services, ServiceProvider::get_required_by_key::<TKey, TSvc>)
+}
+
 /// Creates and returns a holder for a lazily-initialized, optional service.
 ///
 /// # Arguments
 ///
 /// * `services` - The [service provider](struct.ServiceProvider.html) used to resolve the service
 #[inline]
-pub fn zero_or_one<TSvc: Any + ?Sized>(
+pub fn zero_or_one<T: Any + ?Sized>(
     services: ServiceProvider,
-) -> Lazy<Option<ServiceRef<TSvc>>> {
-    Lazy::new(services, ServiceProvider::get::<TSvc>)
+) -> Lazy<Option<ServiceRef<T>>> {
+    Lazy::new(services, ServiceProvider::get::<T>)
 }
 
-/// Creates and returns a holder for multiple lazily-initialized services.
+/// Creates and returns a holder for a lazily-initialized, keyed, optional service.
+///
+/// # Arguments
+///
+/// * `services` - The [service provider](struct.ServiceProvider.html) used to resolve the service
+#[inline]
+pub fn zero_or_one_with_key<TKey, TSvc: Any + ?Sized>(
+    services: ServiceProvider,
+) -> Lazy<Option<KeyedServiceRef<TKey, TSvc>>> {
+    Lazy::new(services, ServiceProvider::get_by_key::<TKey, TSvc>)
+}
+
+/// Creates and returns a holder for multiple, lazily-initialized services.
 ///
 /// # Arguments
 ///
@@ -60,16 +86,38 @@ pub fn zero_or_more<T: Any + ?Sized>(services: ServiceProvider) -> Lazy<Vec<Serv
     Lazy::new(services, to_vec::<T>)
 }
 
+/// Creates and returns a holder for multiple, lazily-initialized, keyed services.
+///
+/// # Arguments
+///
+/// * `services` - The [service provider](struct.ServiceProvider.html) used to resolve the services
+#[inline]
+pub fn zero_or_more_with_key<TKey: 'static, TSvc: Any + ?Sized>(services: ServiceProvider) -> Lazy<Vec<KeyedServiceRef<TKey, TSvc>>> {
+    Lazy::new(services, to_keyed_vec::<TKey, TSvc>)
+}
+
 /// Creates and return a holder for a lazy-initialized, optional service that is missing.
 #[inline]
 pub fn missing<T: Any + ?Sized>() -> Lazy<Option<ServiceRef<T>>> {
     Lazy::new(ServiceProvider::default(), ServiceProvider::get::<T>)
 }
 
+/// Creates and return a holder for a lazy-initialized, keyed, optional service that is missing.
+#[inline]
+pub fn missing_with_key<TKey, TSvc: Any + ?Sized>() -> Lazy<Option<KeyedServiceRef<TKey, TSvc>>> {
+    Lazy::new(ServiceProvider::default(), ServiceProvider::get_by_key::<TKey, TSvc>)
+}
+
 /// Creates and return a holder for any empty collection of lazy-initialized services.
 #[inline]
 pub fn empty<T: Any + ?Sized>() -> Lazy<Vec<ServiceRef<T>>> {
     Lazy::new(ServiceProvider::default(), to_vec::<T>)
+}
+
+/// Creates and return a holder for any empty collection of lazy-initialized, keyed services.
+#[inline]
+pub fn empty_with_key<TKey: 'static, TSvc: Any + ?Sized>() -> Lazy<Vec<KeyedServiceRef<TKey, TSvc>>> {
+    Lazy::new(ServiceProvider::default(), to_keyed_vec::<TKey, TSvc>)
 }
 
 #[cfg(test)]
