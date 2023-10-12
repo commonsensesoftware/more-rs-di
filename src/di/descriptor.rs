@@ -120,6 +120,7 @@ impl Clone for ServiceDescriptor {
 /// Represents a builder for [service descriptors](struct.ServiceDescriptor.html).
 pub struct ServiceDescriptorBuilder<TSvc: Any + ?Sized, TImpl> {
     lifetime: ServiceLifetime,
+    service_type: Type,
     implementation_type: Type,
     dependencies: Vec<ServiceDependency>,
     _marker_svc: PhantomData<TSvc>,
@@ -138,7 +139,7 @@ impl<TSvc: Any + ?Sized, TImpl> ServiceDescriptorBuilder<TSvc, TImpl> {
     {
         ServiceDescriptor {
             lifetime: self.lifetime,
-            service_type: Type::of::<TSvc>(),
+            service_type: self.service_type,
             implementation_type: self.implementation_type,
             dependencies: if self.dependencies.is_empty() {
                 Vec::with_capacity(0)
@@ -152,12 +153,14 @@ impl<TSvc: Any + ?Sized, TImpl> ServiceDescriptorBuilder<TSvc, TImpl> {
     }
 
     /// Defines a dependency used by the service.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `dependency` - The [dependency](struct.ServiceDependency.html) associated with the service
     pub fn depends_on(mut self, dependency: ServiceDependency) -> Self {
-        self.dependencies.push(dependency);
+        if !self.dependencies.contains(&dependency) {
+            self.dependencies.push(dependency);
+        }
         self
     }
 
@@ -166,9 +169,28 @@ impl<TSvc: Any + ?Sized, TImpl> ServiceDescriptorBuilder<TSvc, TImpl> {
     /// # Arguments
     ///
     /// * `lifetime` - The [lifetime](enum.ServiceLifetime.html) of the service
+    /// * `implementation_type` - The service implementation [type](struct.Type.html)
     pub fn new(lifetime: ServiceLifetime, implementation_type: Type) -> Self {
         Self {
             lifetime,
+            service_type: Type::of::<TSvc>(),
+            implementation_type,
+            dependencies: Vec::new(),
+            _marker_svc: PhantomData,
+            _marker_impl: PhantomData,
+        }
+    }
+
+    /// Initializes a new service descriptor builder.
+    ///
+    /// # Arguments
+    ///
+    /// * `lifetime` - The [lifetime](enum.ServiceLifetime.html) of the service
+    /// * `implementation_type` - The service implementation [type](struct.Type.html)
+    pub fn keyed<TKey>(lifetime: ServiceLifetime, implementation_type: Type) -> Self {
+        Self {
+            lifetime,
+            service_type: Type::keyed::<TKey, TSvc>(),
             implementation_type,
             dependencies: Vec::new(),
             _marker_svc: PhantomData,

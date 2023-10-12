@@ -3,6 +3,7 @@
 mod collection;
 mod dependency;
 mod descriptor;
+mod keyed_ref;
 mod provider;
 mod r#type;
 mod validation;
@@ -22,6 +23,7 @@ mod test;
 pub use collection::*;
 pub use dependency::*;
 pub use descriptor::*;
+pub use keyed_ref::*;
 pub use provider::*;
 pub use r#type::*;
 pub use validation::*;
@@ -39,5 +41,8 @@ pub use di_macros::{inject, injectable};
 #[cfg(feature = "lazy")]
 pub mod lazy {
     use super::*;
-    pub use lazy_init::{empty, exactly_one, missing, zero_or_more, zero_or_one, Lazy};
+    pub use lazy_init::{
+        empty, empty_with_key, exactly_one, exactly_one_with_key, missing, missing_with_key,
+        zero_or_more, zero_or_more_with_key, zero_or_one, zero_or_one_with_key, Lazy,
+    };
 }

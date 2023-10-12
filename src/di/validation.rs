@@ -6,6 +6,15 @@ use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use std::fmt::{Display, Formatter};
 
+fn expand_type(t: &Type) -> String {
+    let (name, key) = Type::deconstruct(t);
+
+    match key {
+        Some(val) => format!("'{}' with the key '{}'", name, val),
+        _ => format!("'{}'", name),
+    }
+}
+
 #[derive(Clone, Debug)]
 struct ValidationResult {
     message: String,
@@ -82,9 +91,9 @@ impl<'a> ValidationRule<'a> for MissingRequiredType<'a> {
                 && !self.lookup.contains_key(dependency.injected_type())
             {
                 results.push(ValidationResult::fail(format!(
-                    "Service '{}' requires dependent service '{}', which has not be registered",
+                    "Service '{}' requires dependent service {}, which has not be registered",
                     descriptor.implementation_type().name(),
-                    dependency.injected_type().name()
+                    expand_type(dependency.injected_type())
                 )));
             }
         }
@@ -126,8 +135,8 @@ impl<'a> CircularDependency<'a> {
 
                 if descriptor.service_type() == root.service_type() {
                     results.push(ValidationResult::fail(format!(
-                        "A circular dependency was detected for service '{}' on service '{}'",
-                        descriptor.service_type().name(),
+                        "A circular dependency was detected for service {} on service '{}'",
+                        expand_type(descriptor.service_type()),
                         root.implementation_type().name()
                     )));
                 }
@@ -189,9 +198,9 @@ impl<'a> ValidationRule<'a> for SingletonDependsOnScoped<'a> {
 
                     if next.lifetime() == ServiceLifetime::Scoped {
                         results.push(ValidationResult::fail(format!(
-                            "The service '{}' has a singleton lifetime, \
+                            "The service {} has a singleton lifetime, \
                              but its {}dependency '{}' has a scoped lifetime",
-                            descriptor.implementation_type().name(),
+                            expand_type(descriptor.implementation_type()),
                             level,
                             next.service_type().name()
                         )));
@@ -267,6 +276,39 @@ mod tests {
     }
 
     #[test]
+    fn validate_should_report_missing_required_keyed_type() {
+        // arrange
+        let mut services = ServiceCollection::new();
+
+        services
+            .add(
+                singleton_as_self::<CatInTheHat>()
+                    .depends_on(exactly_one_with_key::<key::Thing1, dyn Thing>())
+                    .depends_on(zero_or_one_with_key::<key::Thing2, dyn Thing>())
+                    .from(|sp| {
+                        ServiceRef::new(CatInTheHat::new(
+                            sp.get_required_by_key::<key::Thing1, dyn Thing>(),
+                            sp.get_by_key::<key::Thing2, dyn Thing>(),
+                        ))
+                    }),
+            )
+            .add(
+                keyed_transient::<key::Thing2, dyn Thing, Thing2>()
+                    .from(|_| ServiceRef::new(Thing2::default())),
+            );
+
+        // act
+        let result = validate(&services);
+
+        // assert
+        assert_eq!(
+            &result.err().unwrap().to_string(),
+            "Service 'di::test::CatInTheHat' requires dependent service \
+             'dyn di::test::Thing' with the key 'di::test::key::Thing1', which has not be registered"
+        );
+    }
+
+    #[test]
     fn validate_should_ignore_missing_optional_type() {
         // arrange
         let mut services = ServiceCollection::new();
@@ -276,6 +318,35 @@ mod tests {
                 .depends_on(zero_or_one::<dyn TestService>())
                 .from(|sp| ServiceRef::new(TestOptionalDepImpl::new(sp.get::<dyn TestService>()))),
         );
+
+        // act
+        let result = validate(&services);
+
+        // assert
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn validate_should_ignore_missing_optional_keyed_type() {
+        // arrange
+        let mut services = ServiceCollection::new();
+
+        services
+            .add(
+                singleton_as_self::<CatInTheHat>()
+                    .depends_on(exactly_one_with_key::<key::Thing1, dyn Thing>())
+                    .depends_on(zero_or_one_with_key::<key::Thing2, dyn Thing>())
+                    .from(|sp| {
+                        ServiceRef::new(CatInTheHat::new(
+                            sp.get_required_by_key::<key::Thing1, dyn Thing>(),
+                            sp.get_by_key::<key::Thing2, dyn Thing>(),
+                        ))
+                    }),
+            )
+            .add(
+                keyed_transient::<key::Thing1, dyn Thing, Thing1>()
+                    .from(|_| ServiceRef::new(Thing1::default())),
+            );
 
         // act
         let result = validate(&services);

@@ -1,4 +1,5 @@
-use crate::ServiceRef;
+use crate::{ServiceRef, KeyedServiceRef};
+use std::any::type_name;
 use std::env;
 use std::fs::{remove_file, File};
 use std::path::PathBuf;
@@ -260,3 +261,57 @@ impl ServiceZImpl {
 }
 
 impl ServiceZ for ServiceZImpl {}
+
+pub(crate) trait Thing: ToString {}
+
+#[derive(Default)]
+pub(crate) struct Thing1;
+
+#[derive(Default)]
+pub(crate) struct Thing2;
+
+#[derive(Default)]
+pub(crate) struct Thing3;
+
+impl Thing for Thing1 {}
+
+impl ToString for Thing1 {
+    fn to_string(&self) -> String {
+        String::from(type_name::<Self>())
+    }
+}
+
+impl Thing for Thing2 {}
+
+impl ToString for Thing2 {
+    fn to_string(&self) -> String {
+        String::from(type_name::<Self>())
+    }
+}
+
+impl Thing for Thing3 {}
+
+impl ToString for Thing3 {
+    fn to_string(&self) -> String {
+        String::from(type_name::<Self>())
+    }
+}
+
+pub(crate) mod key {
+    pub(crate) struct Thingy;
+    pub(crate) struct Thingies;
+    pub(crate) struct Thing1;
+    pub(crate) struct Thing2;
+}
+
+pub(crate) struct CatInTheHat {
+}
+
+impl CatInTheHat {
+    pub fn new(
+        _thing1: KeyedServiceRef<key::Thing1, dyn Thing>,
+        _thing2: Option<KeyedServiceRef<key::Thing2, dyn Thing>>,
+    ) -> Self {
+        Self { }
+    }
+}

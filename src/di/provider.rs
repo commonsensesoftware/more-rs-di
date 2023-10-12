@@ -1,4 +1,4 @@
-use crate::{ServiceDescriptor, ServiceRef, Type};
+use crate::{KeyedServiceRef, ServiceDescriptor, ServiceRef, Type};
 use std::any::{type_name, Any};
 use std::collections::HashMap;
 use std::iter::empty;
@@ -47,6 +47,25 @@ impl ServiceProvider {
         None
     }
 
+    /// Gets a keyed service of the specified type.
+    pub fn get_by_key<TKey, TSvc: Any + ?Sized>(&self) -> Option<KeyedServiceRef<TKey, TSvc>> {
+        let key = Type::keyed::<TKey, TSvc>();
+
+        if let Some(descriptors) = self.services.get(&key) {
+            if let Some(descriptor) = descriptors.last() {
+                return Some(KeyedServiceRef::new(
+                    descriptor
+                        .get(self)
+                        .downcast_ref::<ServiceRef<TSvc>>()
+                        .unwrap()
+                        .clone(),
+                ));
+            }
+        }
+
+        None
+    }
+
     /// Gets all of the services of the specified type.
     pub fn get_all<T: Any + ?Sized>(&self) -> impl Iterator<Item = ServiceRef<T>> + '_ {
         let key = Type::of::<T>();
@@ -55,6 +74,21 @@ impl ServiceProvider {
             ServiceIterator::new(self, descriptors.iter())
         } else {
             ServiceIterator::new(self, empty())
+        }
+    }
+
+    /// Gets all of the services of the specified type.
+    pub fn get_all_by_key<TKey, TSvc>(&self) -> impl Iterator<Item = KeyedServiceRef<TKey, TSvc>> + '_
+    where
+        TKey: 'static,
+        TSvc: Any + ?Sized,
+    {
+        let key = Type::keyed::<TKey, TSvc>();
+
+        if let Some(descriptors) = self.services.get(&key) {
+            KeyedServiceIterator::new(self, descriptors.iter())
+        } else {
+            KeyedServiceIterator::new(self, empty())
         }
     }
 
@@ -74,6 +108,23 @@ impl ServiceProvider {
         }
     }
 
+    /// Gets a required keyed service of the specified type.
+    ///
+    /// # Panics
+    ///
+    /// The requested service of type `TSvc` with key `TKey` does not exist.
+    pub fn get_required_by_key<TKey, TSvc: Any + ?Sized>(&self) -> KeyedServiceRef<TKey, TSvc> {
+        if let Some(service) = self.get_by_key::<TKey, TSvc>() {
+            service
+        } else {
+            panic!(
+                "No service for type '{}' with the key '{}' has been registered.",
+                type_name::<TSvc>(),
+                type_name::<TKey>()
+            );
+        }
+    }
+
     /// Creates and returns a new service provider that is used to resolve
     /// services from a newly create scope.
     pub fn create_scope(&self) -> Self {
@@ -88,6 +139,16 @@ where
     provider: &'a ServiceProvider,
     descriptors: Box<dyn Iterator<Item = &'a ServiceDescriptor> + 'a>,
     _marker: PhantomData<T>,
+}
+
+struct KeyedServiceIterator<'a, TKey, TSvc>
+where
+    TSvc: Any + ?Sized,
+{
+    provider: &'a ServiceProvider,
+    descriptors: Box<dyn Iterator<Item = &'a ServiceDescriptor> + 'a>,
+    _key: PhantomData<TKey>,
+    _svc: PhantomData<TSvc>,
 }
 
 impl<'a, T: Any + ?Sized> ServiceIterator<'a, T> {
@@ -114,6 +175,37 @@ impl<'a, T: Any + ?Sized> Iterator for ServiceIterator<'a, T> {
                     .unwrap()
                     .clone(),
             )
+        } else {
+            None
+        }
+    }
+}
+
+impl<'a, TKey, TSvc: Any + ?Sized> KeyedServiceIterator<'a, TKey, TSvc> {
+    fn new<I>(provider: &'a ServiceProvider, descriptors: I) -> Self
+    where
+        I: Iterator<Item = &'a ServiceDescriptor> + 'a,
+    {
+        Self {
+            provider,
+            descriptors: Box::new(descriptors),
+            _key: PhantomData,
+            _svc: PhantomData,
+        }
+    }
+}
+
+impl<'a, TKey, TSvc: Any + ?Sized> Iterator for KeyedServiceIterator<'a, TKey, TSvc> {
+    type Item = KeyedServiceRef<TKey, TSvc>;
+    fn next(&mut self) -> Option<Self::Item> {
+        if let Some(descriptor) = self.descriptors.next() {
+            Some(KeyedServiceRef::new(
+                descriptor
+                    .get(self.provider)
+                    .downcast_ref::<ServiceRef<TSvc>>()
+                    .unwrap()
+                    .clone(),
+            ))
         } else {
             None
         }
@@ -154,6 +246,18 @@ mod tests {
     }
 
     #[test]
+    fn get_by_key_should_return_none_when_service_is_unregistered() {
+        // arrange
+        let services = ServiceCollection::new().build_provider().unwrap();
+
+        // act
+        let result = services.get_by_key::<key::Thingy, dyn TestService>();
+
+        // assert
+        assert!(result.is_none());
+    }
+
+    #[test]
     fn get_should_return_registered_service() {
         // arrange
         let services = ServiceCollection::new()
@@ -166,6 +270,25 @@ mod tests {
 
         // act
         let result = services.get::<dyn TestService>();
+
+        // assert
+        assert!(result.is_some());
+    }
+
+    #[test]
+    fn get_by_key_should_return_registered_service() {
+        // arrange
+        let services = ServiceCollection::new()
+            .add(
+                keyed_singleton::<key::Thingy, dyn Thing, Thing1>()
+                    .from(|_| ServiceRef::new(Thing1::default())),
+            )
+            .add(singleton::<dyn Thing, Thing1>().from(|_| ServiceRef::new(Thing1::default())))
+            .build_provider()
+            .unwrap();
+
+        // act
+        let result = services.get_by_key::<key::Thingy, dyn Thing>();
 
         // assert
         assert!(result.is_some());
@@ -190,6 +313,25 @@ mod tests {
     }
 
     #[test]
+    fn get_required_by_key_should_return_registered_service() {
+        // arrange
+        let services = ServiceCollection::new()
+            .add(
+                keyed_singleton::<key::Thingy, dyn Thing, Thing3>()
+                    .from(|_| ServiceRef::new(Thing3::default())),
+            )
+            .add(singleton::<dyn Thing, Thing1>().from(|_| ServiceRef::new(Thing1::default())))
+            .build_provider()
+            .unwrap();
+
+        // act
+        let thing = services.get_required_by_key::<key::Thingy, dyn Thing>();
+
+        // assert
+        assert_eq!(&thing.to_string(), "di::test::Thing3");
+    }
+
+    #[test]
     #[should_panic(
         expected = "No service for type 'dyn di::test::TestService' has been registered."
     )]
@@ -199,6 +341,21 @@ mod tests {
 
         // act
         let _ = services.get_required::<dyn TestService>();
+
+        // assert
+        // panics
+    }
+
+    #[test]
+    #[should_panic(
+        expected = "No service for type 'dyn di::test::Thing' with the key 'di::test::key::Thing1' has been registered."
+    )]
+    fn get_required_by_key_should_panic_when_service_is_unregistered() {
+        // arrange
+        let services = ServiceCollection::new().build_provider().unwrap();
+
+        // act
+        let _ = services.get_required_by_key::<key::Thing1, dyn Thing>();
 
         // assert
         // panics
@@ -273,6 +430,42 @@ mod tests {
 
         // assert
         assert_eq!(&values, &[1, 2]);
+    }
+
+    #[test]
+    fn get_all_by_key_should_return_all_services() {
+        // arrange
+        let mut collection = ServiceCollection::new();
+
+        collection
+            .add(
+                keyed_singleton::<key::Thingies, dyn Thing, Thing1>()
+                    .from(|_| ServiceRef::new(Thing1::default())),
+            )
+            .add(
+                keyed_singleton::<key::Thingies, dyn Thing, Thing2>()
+                    .from(|_| ServiceRef::new(Thing2::default())),
+            )
+            .add(
+                keyed_singleton::<key::Thingies, dyn Thing, Thing3>()
+                    .from(|_| ServiceRef::new(Thing3::default())),
+            );
+
+        let provider = collection.build_provider().unwrap();
+
+        // act
+        let services = provider.get_all_by_key::<key::Thingies, dyn Thing>();
+        let values: Vec<_> = services.map(|s| s.to_string()).collect();
+
+        // assert
+        assert_eq!(
+            &values,
+            &[
+                "di::test::Thing1".to_owned(),
+                "di::test::Thing2".to_owned(),
+                "di::test::Thing3".to_owned()
+            ]
+        );
     }
 
     #[test]
@@ -445,9 +638,8 @@ mod tests {
         // arrange
         let provider = ServiceCollection::new()
             .add(
-                singleton::<dyn TestService, TestAsyncServiceImpl>().from(|_| {
-                    ServiceRef::new(TestAsyncServiceImpl::default())
-                }),
+                singleton::<dyn TestService, TestAsyncServiceImpl>()
+                    .from(|_| ServiceRef::new(TestAsyncServiceImpl::default())),
             )
             .build_provider()
             .unwrap();
@@ -470,7 +662,7 @@ mod tests {
             let mut result = v2.lock().unwrap();
             *result += service.value();
         });
-        
+
         t1.join().ok();
         t2.join().ok();
 
