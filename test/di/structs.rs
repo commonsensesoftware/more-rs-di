@@ -88,3 +88,22 @@ impl LazyFoo {
         self.bar.value().echo()
     }
 }
+
+#[injectable]
+pub struct UnitStruct;
+
+impl UnitStruct {
+    pub fn echo(&self) -> &str {
+        "Hello world!"
+    }
+}
+
+#[injectable]
+pub struct NormalStruct {
+    pub unit: ServiceRef<UnitStruct>,
+    pub lazy: Lazy<ServiceRef<UnitStruct>>,
+    pub count: usize,
+}
+
+#[injectable]
+pub struct Record(pub ServiceRef<UnitStruct>, pub Lazy<ServiceRef<UnitStruct>>, pub usize);

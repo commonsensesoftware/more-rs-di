@@ -1,4 +1,4 @@
-use di::{inject, injectable, lazy::Lazy, ServiceRef};
+use di::{inject, injectable, lazy::Lazy, KeyedServiceRef, ServiceRef};
 use std::fmt::Debug;
 
 pub trait Foo {
@@ -146,5 +146,83 @@ impl Foo for ManyLazyFoo {
 impl ManyLazyFoo {
     pub fn new(bars: Lazy<Vec<ServiceRef<dyn Bar>>>) -> Self {
         Self { bars }
+    }
+}
+
+pub mod key {
+    pub struct Thing1;
+    pub struct Thing2;
+}
+
+pub trait Thing: ToString {}
+
+#[derive(Default)]
+pub struct Thing1 {}
+
+#[injectable(Thing, keyed)]
+impl Thing1 {
+    pub fn new() -> Self {
+        Self::default()
+    }
+}
+
+#[derive(Default)]
+pub struct Thing2 {}
+
+#[injectable(Thing, keyed)]
+impl Thing2 {
+    pub fn new() -> Self {
+        Self::default()
+    }
+}
+
+impl Thing for Thing1 {}
+
+impl ToString for Thing1 {
+    fn to_string(&self) -> String {
+        String::from(std::any::type_name::<Self>())
+    }
+}
+
+impl Thing for Thing2 {}
+
+impl ToString for Thing2 {
+    fn to_string(&self) -> String {
+        String::from(std::any::type_name::<Self>())
+    }
+}
+
+pub struct CatInTheHat {
+    pub thing1: ServiceRef<dyn Thing>,
+    pub thing2: ServiceRef<dyn Thing>,
+}
+
+#[injectable]
+impl CatInTheHat {
+    pub fn new(
+        thing1: KeyedServiceRef<key::Thing1, dyn Thing>,
+        thing2: KeyedServiceRef<key::Thing2, dyn Thing>,
+    ) -> Self {
+        Self {
+            thing1: thing1.into(),
+            thing2: thing2.into(),
+        }
+    }
+}
+
+pub struct Thingies {
+    items: Vec<ServiceRef<dyn Thing>>,
+}
+
+#[injectable]
+impl Thingies {
+    pub fn new(items: impl Iterator<Item = ServiceRef<dyn Thing>>) -> Self {
+        Self {
+            items: items.collect(),
+        }
+    }
+
+    pub fn count(&self) -> usize {
+        self.items.len()
     }
 }
