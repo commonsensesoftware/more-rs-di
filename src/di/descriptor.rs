@@ -24,6 +24,9 @@ pub type ServiceRef<T> = std::rc::Rc<T>;
 #[cfg(feature = "async")]
 pub type ServiceRef<T> = std::sync::Arc<T>;
 
+/// Represents the type alias for a mutable service reference.
+pub type ServiceRefMut<T> = ServiceRef<std::sync::Mutex<T>>;
+
 /// Represents the callback function used to create a service.
 pub type ServiceFactory = dyn Fn(&ServiceProvider) -> ServiceRef<dyn Any>;
 
