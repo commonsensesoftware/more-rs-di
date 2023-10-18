@@ -51,8 +51,8 @@ impl ServiceCollection {
     /// # Arguments
     ///
     /// * `descriptor` - The [service descriptor](struct.ServiceDescriptor.html) to register.
-    pub fn add(&mut self, descriptor: ServiceDescriptor) -> &mut Self {
-        self.items.push(descriptor);
+    pub fn add<T: Into<ServiceDescriptor>>(&mut self, descriptor: T) -> &mut Self {
+        self.items.push(descriptor.into());
         self
     }
 
@@ -61,8 +61,9 @@ impl ServiceCollection {
     /// # Arguments
     ///
     /// * `descriptor` - The [service descriptor](struct.ServiceDescriptor.html) to register.
-    pub fn try_add(&mut self, descriptor: ServiceDescriptor) -> &mut Self {
-        let service_type = descriptor.service_type();
+    pub fn try_add<T: Into<ServiceDescriptor>>(&mut self, descriptor: T) -> &mut Self {
+        let new_item = descriptor.into();
+        let service_type = new_item.service_type();
 
         for item in &self.items {
             if item.service_type() == service_type {
@@ -70,7 +71,7 @@ impl ServiceCollection {
             }
         }
 
-        self.items.push(descriptor);
+        self.items.push(new_item);
         self
     }
 
@@ -80,9 +81,10 @@ impl ServiceCollection {
     /// # Arguments
     ///
     /// * `descriptor` - The [service descriptor](struct.ServiceDescriptor.html) to register.
-    pub fn try_add_to_all(&mut self, descriptor: ServiceDescriptor) -> &mut Self {
-        let service_type = descriptor.service_type();
-        let implementation_type = descriptor.implementation_type();
+    pub fn try_add_to_all<T: Into<ServiceDescriptor>>(&mut self, descriptor: T) -> &mut Self {
+        let new_item = descriptor.into();
+        let service_type = new_item.service_type();
+        let implementation_type = new_item.implementation_type();
 
         if service_type == implementation_type {
             return self;
@@ -96,7 +98,7 @@ impl ServiceCollection {
             }
         }
 
-        self.items.push(descriptor);
+        self.items.push(new_item);
         self
     }
 
@@ -121,8 +123,9 @@ impl ServiceCollection {
     /// # Arguments
     ///
     /// * `descriptor` - The replacement [service descriptor](struct.ServiceDescriptor.html).
-    pub fn replace(&mut self, descriptor: ServiceDescriptor) -> &mut Self {
-        let service_type = descriptor.service_type();
+    pub fn replace<T: Into<ServiceDescriptor>>(&mut self, descriptor: T) -> &mut Self {
+        let new_item = descriptor.into();
+        let service_type = new_item.service_type();
 
         for i in 0..self.items.len() {
             if self.items[i].service_type() == service_type {
@@ -131,7 +134,7 @@ impl ServiceCollection {
             }
         }
 
-        self.items.push(descriptor);
+        self.items.push(new_item);
         self
     }
 
@@ -140,8 +143,9 @@ impl ServiceCollection {
     /// # Arguments
     ///
     /// * `descriptor` - The replacement [service descriptor](struct.ServiceDescriptor.html).
-    pub fn try_replace(&mut self, descriptor: ServiceDescriptor) -> &mut Self {
-        let service_type = descriptor.service_type();
+    pub fn try_replace<T: Into<ServiceDescriptor>>(&mut self, descriptor: T) -> &mut Self {
+        let new_item = descriptor.into();
+        let service_type = new_item.service_type();
 
         for item in &self.items {
             if item.service_type() == service_type {
@@ -149,7 +153,7 @@ impl ServiceCollection {
             }
         }
 
-        self.items.push(descriptor);
+        self.items.push(new_item);
         self
     }
 
