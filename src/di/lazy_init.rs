@@ -248,4 +248,28 @@ mod tests {
         // assert
         assert!(value.is_empty());
     }
+
+    #[test]
+    #[allow(clippy::vtable_address_comparisons)]
+    fn lazy_should_return_same_scoped_service() {
+        // arrange
+        let provider = ServiceCollection::new()
+            .add(scoped_factory(|_| ServiceRef::new(Bar::default())))
+            .add(
+                transient_as_self::<Foo>()
+                    .depends_on(exactly_one::<Bar>())
+                    .from(|sp| ServiceRef::new(Foo::new(lazy::exactly_one::<Bar>(sp.clone())))),
+            )
+            .build_provider()
+            .unwrap();
+        
+        // act
+        let foo = provider.get_required::<Foo>();
+        let bar1 = provider.get_required::<Bar>();
+        let bar2 = provider.clone().get_required::<Bar>();
+
+        // assert
+        assert!(ServiceRef::ptr_eq(foo.bar.value(), &bar1));
+        assert!(ServiceRef::ptr_eq(&bar1, &bar2));
+    }
 }
