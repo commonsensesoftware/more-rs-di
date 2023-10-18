@@ -172,7 +172,9 @@ impl ServiceProvider {
     /// # Panics
     ///
     /// The requested service of type `TSvc` with key `TKey` does not exist.
-    pub fn get_required_by_key_mut<TKey, TSvc: Any + ?Sized>(&self) -> KeyedServiceRefMut<TKey, TSvc> {
+    pub fn get_required_by_key_mut<TKey, TSvc: Any + ?Sized>(
+        &self,
+    ) -> KeyedServiceRefMut<TKey, TSvc> {
         self.get_required_by_key::<TKey, Mutex<TSvc>>()
     }
 
@@ -672,6 +674,29 @@ mod tests {
         let not_dropped = file.exists();
         remove_file(&file).ok();
         assert!(not_dropped);
+    }
+
+    #[test]
+    #[allow(clippy::vtable_address_comparisons)]
+    fn clone_should_be_shallow() {
+        // arrange
+        let provider1 = ServiceCollection::new()
+            .add(
+                transient::<dyn TestService, TestServiceImpl>()
+                    .from(|_| ServiceRef::new(TestServiceImpl::default())),
+            )
+            .build_provider()
+            .unwrap();
+
+        // act
+        let provider2 = provider1.clone();
+
+        // assert
+        assert!(ServiceRef::ptr_eq(&provider1.services, &provider2.services));
+        assert!(std::ptr::eq(
+            provider1.services.as_ref(),
+            provider2.services.as_ref()
+        ));
     }
 
     #[cfg(feature = "async")]
