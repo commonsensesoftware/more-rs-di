@@ -12,7 +12,13 @@ mod validation;
 mod builder;
 
 #[cfg(feature = "inject")]
+mod activator;
+
+#[cfg(feature = "inject")]
 mod inject;
+
+#[cfg(feature = "inject")]
+mod inject_builder;
 
 #[cfg(feature = "lazy")]
 mod lazy_init;
@@ -32,7 +38,13 @@ pub use validation::*;
 pub use builder::*;
 
 #[cfg(feature = "inject")]
+pub use activator::*;
+
+#[cfg(feature = "inject")]
 pub use inject::*;
+
+#[cfg(feature = "inject")]
+pub use inject_builder::*;
 
 #[cfg(feature = "inject")]
 pub use di_macros::{inject, injectable};

@@ -1,52 +1,27 @@
-use crate::{ServiceDescriptor, ServiceLifetime};
+use crate::{InjectBuilder, ServiceLifetime};
 
 /// Defines the behavior of an injectable type.
 pub trait Injectable: Sized {
-    /// Creates and returns a [service descriptor](struct.ServiceDescriptor.html) for an injectable type.
+    /// Creates and returns a [builder](struct.InjectBuilder.html) for an injected type.
     ///
     /// # Arguments
     ///
     /// * `lifetime` - The [lifetime](enum.ServiceLifetime.html) of the injected type.
-    fn inject(lifetime: ServiceLifetime) -> ServiceDescriptor;
+    fn inject(lifetime: ServiceLifetime) -> InjectBuilder;
 
-    /// Creates and returns a [service descriptor](struct.ServiceDescriptor.html) for a singleton injected type.
-    fn singleton() -> ServiceDescriptor {
+    /// Creates and returns a [builder](struct.InjectBuilder.html) for a singleton injected type.
+    fn singleton() -> InjectBuilder {
         Self::inject(ServiceLifetime::Singleton)
     }
 
-    /// Creates and returns a [service descriptor](struct.ServiceDescriptor.html) for a scoped injected type.
-    fn scoped() -> ServiceDescriptor {
+    /// Creates and returns a [builder](struct.InjectBuilder.html) for a scoped injected type.
+    fn scoped() -> InjectBuilder {
         Self::inject(ServiceLifetime::Scoped)
     }
 
-    /// Creates and returns a [service descriptor](struct.ServiceDescriptor.html) for a transient injected injected.
-    fn transient() -> ServiceDescriptor {
+    /// Creates and returns a [builder](struct.InjectBuilder.html) for a transient injected type.
+    fn transient() -> InjectBuilder {
         Self::inject(ServiceLifetime::Transient)
-    }
-}
-
-/// Defines the behavior of an injectable type with a key.
-pub trait KeyedInjectable: Sized {
-    /// Creates and returns a [service descriptor](struct.ServiceDescriptor.html) for an injectable type with a key.
-    ///
-    /// # Arguments
-    ///
-    /// * `lifetime` - The [lifetime](enum.ServiceLifetime.html) of the injected type.
-    fn inject_with_key<TKey>(lifetime: ServiceLifetime) -> ServiceDescriptor;
-
-    /// Creates and returns a [service descriptor](struct.ServiceDescriptor.html) for a singleton injected type with a key.
-    fn keyed_singleton<TKey>() -> ServiceDescriptor {
-        Self::inject_with_key::<TKey>(ServiceLifetime::Singleton)
-    }
-
-    /// Creates and returns a [service descriptor](struct.ServiceDescriptor.html) for a scoped injected type with a key.
-    fn keyed_scoped<TKey>() -> ServiceDescriptor {
-        Self::inject_with_key::<TKey>(ServiceLifetime::Scoped)
-    }
-
-    /// Creates and returns a [service descriptor](struct.ServiceDescriptor.html) for a transient injected injected with a key.
-    fn keyed_transient<TKey>() -> ServiceDescriptor {
-        Self::inject_with_key::<TKey>(ServiceLifetime::Transient)
     }
 }
 
@@ -54,6 +29,7 @@ pub trait KeyedInjectable: Sized {
 mod tests {
     use super::*;
     use crate::*;
+    use std::sync::Mutex;
 
     trait TestService {}
     trait OtherTestService {}
@@ -67,9 +43,14 @@ mod tests {
     impl TestService for TestServiceImpl {}
 
     impl Injectable for TestServiceImpl {
-        fn inject(lifetime: ServiceLifetime) -> ServiceDescriptor {
-            ServiceDescriptorBuilder::<dyn TestService, Self>::new(lifetime, Type::of::<Self>())
-                .from(|_| ServiceRef::new(Self::default()))
+        fn inject(lifetime: ServiceLifetime) -> InjectBuilder {
+            InjectBuilder::new(
+                Activator::new::<dyn TestService, Self, _, _>(
+                    |_| ServiceRef::new(Self::default()),
+                    |_| ServiceRef::new(Mutex::new(Self::default())),
+                ),
+                lifetime,
+            )
         }
     }
 
@@ -80,12 +61,16 @@ mod tests {
     }
 
     impl Injectable for OtherTestServiceImpl {
-        fn inject(lifetime: ServiceLifetime) -> ServiceDescriptor {
-            ServiceDescriptorBuilder::<dyn OtherTestService, Self>::new(
+        fn inject(lifetime: ServiceLifetime) -> InjectBuilder {
+            InjectBuilder::new(
+                Activator::new::<dyn OtherTestService, Self, _, _>(
+                    |sp| ServiceRef::new(Self::new(sp.get_required::<dyn TestService>())),
+                    |sp| {
+                        ServiceRef::new(Mutex::new(Self::new(sp.get_required::<dyn TestService>())))
+                    },
+                ),
                 lifetime,
-                Type::of::<Self>(),
             )
-            .from(|sp| ServiceRef::new(Self::new(sp.get_required::<dyn TestService>())))
         }
     }
 
