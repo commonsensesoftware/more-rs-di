@@ -1,12 +1,12 @@
-use super::{Constructor, DeriveContext, DeriveStrategy, Fields, MacroTarget};
+use super::{Constructor, DeriveContext, Fields, MacroTarget};
 use proc_macro2::TokenStream;
 use quote::quote;
 use syn::Result;
 
-pub struct KeyedInjectableTrait;
+pub struct InjectableTrait;
 
-impl DeriveStrategy for KeyedInjectableTrait {
-    fn derive<'a>(context: &'a DeriveContext<'a>) -> Result<TokenStream> {
+impl InjectableTrait {
+    pub fn derive<'a>(context: &'a DeriveContext<'a>) -> Result<TokenStream> {
         let callsites = match *context.target() {
             MacroTarget::Method(method) => Constructor::visit(method)?,
             MacroTarget::Struct(struct_) => Fields::visit(struct_)?,
@@ -29,7 +29,6 @@ impl DeriveStrategy for KeyedInjectableTrait {
             quote! { Self }
         };
         let implementation = context.implementation;
-        let new = quote! { di::ServiceDescriptorBuilder::<#service, Self>::keyed::<TKey>(lifetime, di::Type::of::<Self>()) };
         let depends_on = quote! { #(.depends_on(#deps))* };
         let generics = &context.generics;
         let where_ = &generics.where_clause;
@@ -47,10 +46,17 @@ impl DeriveStrategy for KeyedInjectableTrait {
                 syn::Fields::Unit => quote! { Self },
             },
         };
+        let activate2 = activate.clone();
         let code = quote! {
-            impl#generics di::KeyedInjectable for #implementation #where_ {
-                fn inject_with_key<TKey>(lifetime: di::ServiceLifetime) -> di::ServiceDescriptor {
-                    #new#depends_on.from(|sp: &di::ServiceProvider| di::ServiceRef::new(#activate))
+            impl#generics di::Injectable for #implementation #where_ {
+                fn inject(lifetime: di::ServiceLifetime) -> di::InjectBuilder {
+                    di::InjectBuilder::new(
+                        di::Activator::new::<#service, Self, _, _>(
+                            |sp: &di::ServiceProvider| di::ServiceRef::new(#activate),
+                            |sp: &di::ServiceProvider| di::ServiceRef::new(std::sync::Mutex::new(#activate2))
+                        ),
+                        lifetime
+                    )#depends_on
                 }
             }
         };

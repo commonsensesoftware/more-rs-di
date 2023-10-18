@@ -1,5 +1,4 @@
-use proc_macro2::TokenStream;
-use syn::{Path, Result, Signature, Generics, ItemStruct};
+use syn::{Generics, ItemStruct, Path, Signature};
 
 pub enum MacroTarget<'a> {
     Method(&'a Signature),
@@ -51,8 +50,4 @@ impl<'a> DeriveContext<'a> {
         let struct_ = &self.service.segments.last().unwrap().ident;
         impl_ != struct_
     }
-}
-
-pub trait DeriveStrategy {
-    fn derive<'a>(context: &'a DeriveContext<'a>) -> Result<TokenStream>;
 }
