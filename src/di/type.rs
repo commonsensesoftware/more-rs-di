@@ -25,6 +25,15 @@ impl Type {
         )
     }
 
+    /// Creates and returns a new type based on the specified key.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `key` - The type to use as a key
+    pub fn with_key(&self, key: &Self) -> Self {
+        Type::new(self.name.clone(), Some(key.name.clone()))
+    }
+
     fn new(name: String, key: Option<String>) -> Self {
         let mut hasher = DefaultHasher::new();
 
