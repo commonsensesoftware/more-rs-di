@@ -38,11 +38,12 @@ pub struct ServiceDescriptor {
 }
 
 impl ServiceDescriptor {
-    #[cfg(feature = "builder")]
+    #[cfg(any(feature = "builder", feature = "inject"))]
     pub(crate) fn new(
         lifetime: ServiceLifetime,
         service_type: Type,
         implementation_type: Type,
+        dependencies: Vec<ServiceDependency>,
         instance: Once<ServiceRef<dyn Any>>,
         factory: ServiceRef<ServiceFactory>,
     ) -> Self {
@@ -50,7 +51,7 @@ impl ServiceDescriptor {
             lifetime,
             service_type,
             implementation_type,
-            dependencies: Vec::with_capacity(0),
+            dependencies,
             instance: ServiceRef::new(instance),
             factory,
         }

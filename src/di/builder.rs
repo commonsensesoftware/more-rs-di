@@ -190,6 +190,7 @@ pub fn existing<TSvc: Any + ?Sized, TImpl: 'static>(instance: Box<TSvc>) -> Serv
         ServiceLifetime::Singleton,
         Type::of::<TSvc>(),
         Type::of::<TImpl>(),
+        Vec::with_capacity(0),
         Once::initialized(ServiceRef::new(ServiceRef::<TSvc>::from(instance))),
         ServiceRef::new(no_op),
     )
@@ -210,6 +211,7 @@ pub fn existing_as_self<T: Any>(instance: T) -> ServiceDescriptor {
         ServiceLifetime::Singleton,
         Type::of::<T>(),
         Type::of::<T>(),
+        Vec::with_capacity(0),
         Once::initialized(ServiceRef::new(ServiceRef::from(instance))),
         ServiceRef::new(no_op),
     )
@@ -232,6 +234,7 @@ pub fn existing_with_key<TKey, TSvc: Any + ?Sized, TImpl: 'static>(
         ServiceLifetime::Singleton,
         Type::keyed::<TKey, TSvc>(),
         Type::of::<TImpl>(),
+        Vec::with_capacity(0),
         Once::initialized(ServiceRef::new(ServiceRef::<TSvc>::from(instance))),
         ServiceRef::new(no_op),
     )
@@ -252,6 +255,7 @@ pub fn existing_with_key_as_self<TKey, TSvc: Any>(instance: TSvc) -> ServiceDesc
         ServiceLifetime::Singleton,
         Type::keyed::<TKey, TSvc>(),
         Type::of::<TSvc>(),
+        Vec::with_capacity(0),
         Once::initialized(ServiceRef::new(ServiceRef::from(instance))),
         ServiceRef::new(no_op),
     )
