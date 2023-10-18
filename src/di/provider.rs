@@ -1,8 +1,11 @@
-use crate::{KeyedServiceRef, ServiceDescriptor, ServiceRef, Type};
+use crate::{
+    KeyedServiceRef, KeyedServiceRefMut, ServiceDescriptor, ServiceRef, ServiceRefMut, Type,
+};
 use std::any::{type_name, Any};
 use std::collections::HashMap;
 use std::iter::empty;
 use std::marker::PhantomData;
+use std::sync::Mutex;
 
 /// Represents a service provider.
 #[derive(Clone)]
@@ -47,6 +50,11 @@ impl ServiceProvider {
         None
     }
 
+    /// Gets a mutable service of the specified type.
+    pub fn get_mut<T: Any + ?Sized>(&self) -> Option<ServiceRefMut<T>> {
+        self.get::<Mutex<T>>()
+    }
+
     /// Gets a keyed service of the specified type.
     pub fn get_by_key<TKey, TSvc: Any + ?Sized>(&self) -> Option<KeyedServiceRef<TKey, TSvc>> {
         let key = Type::keyed::<TKey, TSvc>();
@@ -66,6 +74,13 @@ impl ServiceProvider {
         None
     }
 
+    /// Gets a keyed, mutable service of the specified type.
+    pub fn get_by_key_mut<TKey, TSvc: Any + ?Sized>(
+        &self,
+    ) -> Option<KeyedServiceRefMut<TKey, TSvc>> {
+        self.get_by_key::<TKey, Mutex<TSvc>>()
+    }
+
     /// Gets all of the services of the specified type.
     pub fn get_all<T: Any + ?Sized>(&self) -> impl Iterator<Item = ServiceRef<T>> + '_ {
         let key = Type::of::<T>();
@@ -77,8 +92,15 @@ impl ServiceProvider {
         }
     }
 
-    /// Gets all of the services of the specified type.
-    pub fn get_all_by_key<TKey, TSvc>(&self) -> impl Iterator<Item = KeyedServiceRef<TKey, TSvc>> + '_
+    /// Gets all of the mutable services of the specified type.
+    pub fn get_all_mut<T: Any + ?Sized>(&self) -> impl Iterator<Item = ServiceRefMut<T>> + '_ {
+        self.get_all::<Mutex<T>>()
+    }
+
+    /// Gets all of the services of the specified key and type.
+    pub fn get_all_by_key<TKey, TSvc>(
+        &self,
+    ) -> impl Iterator<Item = KeyedServiceRef<TKey, TSvc>> + '_
     where
         TKey: 'static,
         TSvc: Any + ?Sized,
@@ -90,6 +112,17 @@ impl ServiceProvider {
         } else {
             KeyedServiceIterator::new(self, empty())
         }
+    }
+
+    /// Gets all of the mutable services of the specified key and type.
+    pub fn get_all_by_key_mut<TKey, TSvc>(
+        &self,
+    ) -> impl Iterator<Item = KeyedServiceRefMut<TKey, TSvc>> + '_
+    where
+        TKey: 'static,
+        TSvc: Any + ?Sized,
+    {
+        self.get_all_by_key::<TKey, Mutex<TSvc>>()
     }
 
     /// Gets a required service of the specified type.
@@ -108,6 +141,15 @@ impl ServiceProvider {
         }
     }
 
+    /// Gets a required, mutable service of the specified type.
+    ///
+    /// # Panics
+    ///
+    /// The requested service of type `T` does not exist.
+    pub fn get_required_mut<T: Any + ?Sized>(&self) -> ServiceRefMut<T> {
+        self.get_required::<Mutex<T>>()
+    }
+
     /// Gets a required keyed service of the specified type.
     ///
     /// # Panics
@@ -123,6 +165,15 @@ impl ServiceProvider {
                 type_name::<TKey>()
             );
         }
+    }
+
+    /// Gets a required keyed service of the specified type.
+    ///
+    /// # Panics
+    ///
+    /// The requested service of type `TSvc` with key `TKey` does not exist.
+    pub fn get_required_by_key_mut<TKey, TSvc: Any + ?Sized>(&self) -> KeyedServiceRefMut<TKey, TSvc> {
+        self.get_required_by_key::<TKey, Mutex<TSvc>>()
     }
 
     /// Creates and returns a new service provider that is used to resolve
