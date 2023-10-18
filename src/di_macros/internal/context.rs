@@ -6,6 +6,7 @@ pub struct CallSiteContext<'a> {
     pub many: bool,
     pub lazy: bool,
     pub iterator: bool,
+    pub mutable: bool,
 }
 
 impl<'a> CallSiteContext<'a> {
@@ -21,6 +22,7 @@ pub struct CallSiteContextBuilder<'a> {
     many: bool,
     lazy: bool,
     iterator: bool,
+    mutable: bool,
 }
 
 impl<'a> CallSiteContextBuilder<'a> {
@@ -45,6 +47,10 @@ impl<'a> CallSiteContextBuilder<'a> {
         self.many = true
     }
 
+    pub fn is_mutable(&mut self) {
+        self.mutable = true
+    }
+
     pub fn build(self) -> CallSiteContext<'a> {
         CallSiteContext {
             type_: self.type_.unwrap(),
@@ -52,6 +58,7 @@ impl<'a> CallSiteContextBuilder<'a> {
             many: self.many,
             lazy: self.lazy,
             iterator: self.iterator,
+            mutable: self.mutable,
         }
     }
 }

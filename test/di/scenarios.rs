@@ -232,8 +232,8 @@ fn inject_should_implement_many_lazy_trait() {
 fn inject_should_implemented_keyed_dependencies() {
     // arrange
     let provider = ServiceCollection::new()
-        .add(traits::Thing1::keyed_transient::<key::Thing1>())
-        .add(traits::Thing2::keyed_transient::<key::Thing2>())
+        .add(traits::Thing1::transient().with_key::<key::Thing1>())
+        .add(traits::Thing2::transient().with_key::<key::Thing2>())
         .add(traits::CatInTheHat::transient())
         .build_provider()
         .unwrap();
@@ -289,7 +289,7 @@ fn service_descriptor_should_exclude_duplicate_dependencies() {
     // arrange
 
     // act
-    let descriptor = structs::NormalStruct::transient();
+    let descriptor = structs::NormalStruct::transient().build();
 
     // assert
     assert_eq!(descriptor.dependencies().len(), 1);
@@ -376,4 +376,50 @@ fn inject_should_implement_many_for_struct_field() {
 
     // assert
     assert_eq!(thingies.count(), 2);
+}
+
+
+#[test]
+fn inject_should_resolve_keyed() {
+    // arrange
+    let provider = ServiceCollection::new()
+        .add(traits::Thing1::transient().with_key::<key::Thing1>())
+        .build_provider()
+        .unwrap();
+
+    // act
+    let _ = provider.get_required_by_key::<key::Thing1, dyn Thing>();
+
+    // assert
+    // no panic!
+}
+
+#[test]
+fn inject_should_resolve_mut() {
+    // arrange
+    let provider = ServiceCollection::new()
+        .add(traits::Thing1::transient().as_mut())
+        .build_provider()
+        .unwrap();
+
+    // act
+    let _ = provider.get_required_mut::<dyn Thing>();
+
+    // assert
+    // no panic!
+}
+
+#[test]
+fn inject_should_resolve_keyed_mut() {
+    // arrange
+    let provider = ServiceCollection::new()
+        .add(traits::Thing1::transient().with_key::<key::Thing2>().as_mut())
+        .build_provider()
+        .unwrap();
+
+    // act
+    let _ = provider.get_required_by_key_mut::<key::Thing2, dyn Thing>();
+
+    // assert
+    // no panic!
 }

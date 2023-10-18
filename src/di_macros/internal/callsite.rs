@@ -7,6 +7,9 @@ use syn::{
     spanned::Spanned, Error, GenericArgument, PathArguments, Result, Type, TypeParamBound, TypePath,
 };
 
+const SUPPORTED_TYPES: &str =
+    "Expected ServiceRef, ServiceRefMut, KeyedServiceRef, KeyedServiceRefMut, Rc, or Arc.";
+
 pub struct CallSite;
 
 impl CallSite {
@@ -21,7 +24,17 @@ impl CallSite {
         context: &CallSiteContext<'a>,
         allow_default: bool,
     ) -> Result<Box<dyn InjectionStrategy + 'a>> {
-        let args = Self::visit_first_of(context, &["ServiceRef", "Rc", "Arc", "KeyedServiceRef"]);
+        let args = Self::visit_first_of(
+            context,
+            &[
+                "ServiceRef",
+                "Rc",
+                "Arc",
+                "KeyedServiceRef",
+                "ServiceRefMut",
+                "KeyedServiceRefMut",
+            ],
+        );
         let count = args.len();
 
         if count > 0 {
@@ -65,15 +78,13 @@ impl CallSite {
         } else if allow_default {
             Ok(Box::new(DefaultInjector))
         } else {
-            Err(Error::new(
-                context.type_.span(),
-                "Expected ServiceRef, KeyedServiceRef, Rc, or Arc.",
-            ))
+            Err(Error::new(context.type_.span(), SUPPORTED_TYPES))
         }
     }
 
     fn new_context(arg: &Type) -> Result<CallSiteContext<'_>> {
         let mut builder = CallSiteContextBuilder::default();
+        let mut read_only = true;
         let input = if let Some(ty) = Self::try_visit_iterator(arg) {
             builder.is_iterator();
             ty
@@ -82,6 +93,11 @@ impl CallSite {
         };
 
         if let Type::Path(outer) = input {
+            if Self::is_mutable_type(outer) {
+                builder.is_mutable();
+                read_only = false;
+            }
+
             let type_ = if let Some(inner) = Self::try_visit_lazy(outer) {
                 match inner {
                     Type::Path(path) => {
@@ -98,31 +114,66 @@ impl CallSite {
                 if let Type::Path(path) = inner {
                     builder.is_optional();
                     builder.has_type(path);
+
+                    if read_only && Self::is_mutable_type(path) {
+                        builder.is_mutable();
+                    }
+
                     Ok(builder.build())
                 } else {
-                    Err(Error::new(
-                        inner.span(),
-                        "Expected ServiceRef, KeyedServiceRef, Rc, or Arc.",
-                    ))
+                    Err(Error::new(inner.span(), SUPPORTED_TYPES))
                 }
             } else if let Some(inner) = Self::try_visit_vector(type_) {
                 if let Type::Path(path) = inner {
                     builder.has_many();
                     builder.has_type(path);
+
+                    if read_only && Self::is_mutable_type(path) {
+                        builder.is_mutable();
+                    }
+
                     Ok(builder.build())
                 } else {
-                    Err(Error::new(
-                        inner.span(),
-                        "Expected ServiceRef, KeyedServiceRef, Rc, or Arc.",
-                    ))
+                    Err(Error::new(inner.span(), SUPPORTED_TYPES))
                 }
             } else {
                 builder.has_type(type_);
+
+                if read_only && Self::is_mutable_type(type_) {
+                    builder.is_mutable();
+                }
+
                 Ok(builder.build())
             }
         } else {
             Err(Error::new(arg.span(), "Expected type path."))
         }
+    }
+
+    fn is_mutable_type(type_: &TypePath) -> bool {
+        if let Some(name) = type_.path.segments.last() {
+            if name.ident == Ident::new("ServiceRefMut", Span::call_site())
+                || name.ident == Ident::new("KeyedServiceRefMut", Span::call_site())
+            {
+                return true;
+            }
+
+            if name.ident == Ident::new("Rc", Span::call_site())
+                || name.ident == Ident::new("Arc", Span::call_site())
+            {
+                if let PathArguments::AngleBracketed(ref generics) = name.arguments {
+                    if let GenericArgument::Type(arg) = generics.args.first().unwrap() {
+                        if let Type::Path(ty) = arg {
+                            if let Some(name) = ty.path.segments.last() {
+                                return name.ident == Ident::new("Mutex", Span::call_site());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return false;
     }
 
     #[inline]
@@ -168,7 +219,9 @@ impl CallSite {
      * Rc<T>
      * Arc<T>
      * ServiceRef<T>
+     * ServiceRefMut<T>
      * KeyedServiceRef<K,T>
+     * KeyedServiceRefMut<K,T>
      * Lazy<T>
      * Option<T>
      * Vec<T>

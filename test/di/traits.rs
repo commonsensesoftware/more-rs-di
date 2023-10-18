@@ -159,7 +159,7 @@ pub trait Thing: ToString {}
 #[derive(Default)]
 pub struct Thing1 {}
 
-#[injectable(Thing, keyed)]
+#[injectable(Thing)]
 impl Thing1 {
     pub fn new() -> Self {
         Self::default()
@@ -169,7 +169,7 @@ impl Thing1 {
 #[derive(Default)]
 pub struct Thing2 {}
 
-#[injectable(Thing, keyed)]
+#[injectable(Thing)]
 impl Thing2 {
     pub fn new() -> Self {
         Self::default()

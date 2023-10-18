@@ -16,6 +16,8 @@ pub trait CallSiteInjector<'a> {
             InjectedCallSite {
                 resolve: if context.lazy {
                     quote! { di::lazy::zero_or_one_with_key::<#key, #svc>(sp.clone()) }
+                } else if context.mutable {
+                    quote! { sp.get_by_key_mut::<#key, #svc>() }
                 } else {
                     quote! { sp.get_by_key::<#key, #svc>() }
                 },
@@ -27,6 +29,8 @@ pub trait CallSiteInjector<'a> {
             InjectedCallSite {
                 resolve: if context.lazy {
                     quote! { di::lazy::zero_or_one::<#svc>(sp.clone()) }
+                } else if context.mutable {
+                    quote! { sp.get_mut::<#svc>() }
                 } else {
                     quote! { sp.get::<#svc>() }
                 },
@@ -44,6 +48,8 @@ pub trait CallSiteInjector<'a> {
             InjectedCallSite {
                 resolve: if context.lazy {
                     quote! { di::lazy::exactly_one_with_key::<#key, #svc>(sp.clone()) }
+                } else if context.mutable {
+                    quote! { sp.get_required_by_key_mut::<#key, #svc>() }
                 } else {
                     quote! { sp.get_required_by_key::<#key, #svc>() }
                 },
@@ -55,6 +61,8 @@ pub trait CallSiteInjector<'a> {
             InjectedCallSite {
                 resolve: if context.lazy {
                     quote! { di::lazy::exactly_one::<#svc>(sp.clone()) }
+                } else if context.mutable {
+                    quote! { sp.get_required_mut::<#svc>() }
                 } else {
                     quote! { sp.get_required::<#svc>() }
                 },
@@ -73,9 +81,17 @@ pub trait CallSiteInjector<'a> {
                 resolve: if context.lazy {
                     quote! { di::lazy::zero_or_more_with_key::<#key, #svc>(sp.clone()) }
                 } else if context.iterator {
-                    quote! { sp.get_all_by_key::<#key, #svc>() }
+                    if context.mutable {
+                        quote! { sp.get_all_by_key_mut::<#key, #svc>() }
+                    } else {
+                        quote! { sp.get_all_by_key::<#key, #svc>() }
+                    }
                 } else {
-                    quote! { sp.get_all_by_key::<#key, #svc>().collect() }
+                    if context.mutable {
+                        quote! { sp.get_all_by_key_mut::<#key, #svc>().collect() }
+                    } else {
+                        quote! { sp.get_all_by_key::<#key, #svc>().collect() }
+                    }
                 },
                 dependency: Some(
                     quote! { di::ServiceDependency::new(di::Type::keyed::<#key, #svc>(), di::ServiceCardinality::ZeroOrMore) },
@@ -86,9 +102,17 @@ pub trait CallSiteInjector<'a> {
                 resolve: if context.lazy {
                     quote! { di::lazy::zero_or_more::<#svc>(sp.clone()) }
                 } else if context.iterator {
-                    quote! { sp.get_all::<#svc>() }
+                    if context.mutable {
+                        quote! { sp.get_all_mut::<#svc>() }
+                    } else {
+                        quote! { sp.get_all::<#svc>() }
+                    }
                 } else {
-                    quote! { sp.get_all::<#svc>().collect() }
+                    if context.mutable {
+                        quote! { sp.get_all_mut::<#svc>().collect() }
+                    } else {
+                        quote! { sp.get_all::<#svc>().collect() }
+                    }
                 },
                 dependency: Some(
                     quote! { di::ServiceDependency::new(di::Type::of::<#svc>(), di::ServiceCardinality::ZeroOrMore) },

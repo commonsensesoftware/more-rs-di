@@ -3,7 +3,7 @@ mod internal;
 extern crate proc_macro;
 
 use crate::internal::*;
-use internal::{DeriveContext, DeriveStrategy, InjectableTrait, KeyedInjectableTrait, Constructor};
+use internal::{Constructor, DeriveContext, InjectableTrait};
 use proc_macro2::TokenStream;
 use syn::{spanned::Spanned, *};
 
@@ -32,9 +32,9 @@ pub fn inject(
 ///
 /// # Remarks
 ///
-/// This attribute must be applied to the `impl` of a struct. The
-/// defining struct implementation must either have an associated
-/// function named `new` or decorate the injected function with
+/// This attribute may be applied a struct definition or a struct `impl`
+/// block. The defining struct implementation block must either have an
+/// associated function named `new` or decorate the injected function with
 /// `#[inject]`. The injected function does not have to be public.
 ///
 /// If `trait` is not specified, then the implementation will
@@ -44,13 +44,29 @@ pub fn inject(
 /// values supported by `ServiceProvider`, which can only be:
 ///
 /// * `ServiceRef<T>`
+/// * `ServiceRefMut<T>`
 /// * `Option<ServiceRef<T>>`
+/// * `Option<ServiceRefMut<T>>`
 /// * `Vec<ServiceRef<T>>`
+/// * `Vec<ServiceRefMut<T>>`
+/// * `impl Iterator<Item = ServiceRef<T>>`
+/// * `impl Iterator<Item = ServiceRefMut<T>>`
+/// * `Lazy<ServiceRef<T>>`
+/// * `Lazy<ServiceRefMut<T>>`
+/// * `Lazy<Option<ServiceRef<T>>>`
+/// * `Lazy<Option<ServiceRefMut<T>>>`
+/// * `Lazy<Vec<ServiceRef<T>>>`
+/// * `Lazy<Vec<ServiceRefMut<T>>>`
+/// * `KeyedServiceRef<TKey, TSvc>`
+/// * `KeyedServiceRefMut<TKey, TSvc>`
 /// * `ServiceProvider`
 ///
-/// `ServiceRef<T>` is a type alias for `Rc<T>` or `Arc<T>` depending
-/// on whether the **async** feature is activated; therefore, `Rc<T>`
-/// and `Arc<T>` are also allowed any place `ServiceRef<T>` is allowed.
+/// `ServiceRef<T>` is a type alias for `Rc<T>` or `Arc<T>` and
+/// `ServiceRefMut<T>` is a type alias for `Rc<Mutex<T>>` or `Arc<Mutex<T>>`
+/// depending on whether the **async** feature is activated; therefore,
+/// `Rc<T>` and `Arc<T>` are allowed any place `ServiceRef<T>` is allowed
+/// and `Rc<Mutex<T>>` and `Arc<Mutex<T>>` are allowed any place
+/// `ServiceRefMut<T>` is allowed.
 ///
 /// # Examples
 ///
@@ -80,14 +96,10 @@ pub fn inject(
 /// Injecting a struct as itself.
 ///
 /// ```
+/// #[injectable]
 /// pub struct Foo;
 ///
-/// #[injectable]
 /// impl Foo {
-///     pub fn new() -> Self {
-///         Self {}
-///     }
-///
 ///     fn do_work(&self) {
 ///         println!("Did something!");
 ///     }
@@ -156,7 +168,7 @@ fn derive_from_struct_impl(
         match Constructor::select(&impl_, imp) {
             Ok(method) => {
                 let context = DeriveContext::for_method(&impl_.generics, imp, &svc, method);
-                derive(context, &attribute, original)
+                derive(context, original)
             }
             Err(error) => Err(error),
         }
@@ -174,33 +186,18 @@ fn derive_from_struct(
     let imp = &path;
     let svc = attribute.trait_.as_ref().unwrap_or(imp);
     let context = DeriveContext::for_struct(&struct_.generics, imp, svc, &struct_);
-    
-    derive(context, &attribute, original)
+
+    derive(context, original)
 }
 
-fn derive<'a>(
-    context: DeriveContext<'a>,
-    attribute: &'a InjectableAttribute,
-    mut original: TokenStream,
-) -> Result<TokenStream> {
-    let injectable = InjectableTrait::derive(&context);
-
-    if injectable.is_ok() {
-        if attribute.keyed {
-            match KeyedInjectableTrait::derive(&context) {
-                Ok(keyed_injectable) => {
-                    original.extend(injectable.unwrap().into_iter());
-                    original.extend(keyed_injectable.into_iter());
-                    Ok(original)
-                }
-                Err(error) => Err(error),
-            }
-        } else {
-            original.extend(injectable.unwrap().into_iter());
+#[inline]
+fn derive<'a>(context: DeriveContext<'a>, mut original: TokenStream) -> Result<TokenStream> {
+    match InjectableTrait::derive(&context) {
+        Ok(injectable) => {
+            original.extend(injectable.into_iter());
             Ok(original)
         }
-    } else {
-        Err(injectable.unwrap_err())
+        Err(error) => Err(error),
     }
 }
 
@@ -235,9 +232,12 @@ mod test {
             "} ",
             "} ",
             "impl di :: Injectable for FooImpl { ",
-            "fn inject (lifetime : di :: ServiceLifetime) -> di :: ServiceDescriptor { ",
-            "di :: ServiceDescriptorBuilder :: < dyn Foo , Self > :: new (lifetime , di :: Type :: of :: < Self > ()) ",
-            ". from (| sp : & di :: ServiceProvider | di :: ServiceRef :: new (Self :: new ())) ",
+            "fn inject (lifetime : di :: ServiceLifetime) -> di :: InjectBuilder { ",
+            "di :: InjectBuilder :: new (",
+            "di :: Activator :: new :: < dyn Foo , Self , _ , _ > (",
+            "| sp : & di :: ServiceProvider | di :: ServiceRef :: new (Self :: new ()) , ",
+            "| sp : & di :: ServiceProvider | di :: ServiceRef :: new (std :: sync :: Mutex :: new (Self :: new ()))) , ",
+            "lifetime) ",
             "} ",
             "}");
 
@@ -272,9 +272,12 @@ mod test {
             "} ",
             "} ",
             "impl di :: Injectable for FooImpl { ",
-            "fn inject (lifetime : di :: ServiceLifetime) -> di :: ServiceDescriptor { ",
-            "di :: ServiceDescriptorBuilder :: < dyn Foo , Self > :: new (lifetime , di :: Type :: of :: < Self > ()) ",
-            ". from (| sp : & di :: ServiceProvider | di :: ServiceRef :: new (Self :: create ())) ",
+            "fn inject (lifetime : di :: ServiceLifetime) -> di :: InjectBuilder { ",
+            "di :: InjectBuilder :: new (",
+            "di :: Activator :: new :: < dyn Foo , Self , _ , _ > (",
+            "| sp : & di :: ServiceProvider | di :: ServiceRef :: new (Self :: create ()) , ",
+            "| sp : & di :: ServiceProvider | di :: ServiceRef :: new (std :: sync :: Mutex :: new (Self :: create ()))) , ",
+            "lifetime) ",
             "} ",
             "}");
 
@@ -307,10 +310,13 @@ mod test {
             "} ",
             "} ",
             "impl di :: Injectable for FooImpl { ",
-            "fn inject (lifetime : di :: ServiceLifetime) -> di :: ServiceDescriptor { ",
-            "di :: ServiceDescriptorBuilder :: < dyn Foo , Self > :: new (lifetime , di :: Type :: of :: < Self > ()) ",
+            "fn inject (lifetime : di :: ServiceLifetime) -> di :: InjectBuilder { ",
+            "di :: InjectBuilder :: new (",
+            "di :: Activator :: new :: < dyn Foo , Self , _ , _ > (",
+            "| sp : & di :: ServiceProvider | di :: ServiceRef :: new (Self :: new (sp . get_required :: < dyn Bar > ())) , ",
+            "| sp : & di :: ServiceProvider | di :: ServiceRef :: new (std :: sync :: Mutex :: new (Self :: new (sp . get_required :: < dyn Bar > ())))) , ",
+            "lifetime) ",
             ". depends_on (di :: ServiceDependency :: new (di :: Type :: of :: < dyn Bar > () , di :: ServiceCardinality :: ExactlyOne)) ",
-            ". from (| sp : & di :: ServiceProvider | di :: ServiceRef :: new (Self :: new (sp . get_required :: < dyn Bar > ()))) ",
             "} ",
             "}");
 
@@ -343,10 +349,13 @@ mod test {
             "} ",
             "} ",
             "impl di :: Injectable for FooImpl { ",
-            "fn inject (lifetime : di :: ServiceLifetime) -> di :: ServiceDescriptor { ",
-            "di :: ServiceDescriptorBuilder :: < dyn Foo , Self > :: new (lifetime , di :: Type :: of :: < Self > ()) ",
+            "fn inject (lifetime : di :: ServiceLifetime) -> di :: InjectBuilder { ",
+            "di :: InjectBuilder :: new (",
+            "di :: Activator :: new :: < dyn Foo , Self , _ , _ > (",
+            "| sp : & di :: ServiceProvider | di :: ServiceRef :: new (Self :: new (sp . get :: < dyn Bar > ())) , ",
+            "| sp : & di :: ServiceProvider | di :: ServiceRef :: new (std :: sync :: Mutex :: new (Self :: new (sp . get :: < dyn Bar > ())))) , ",
+            "lifetime) ",
             ". depends_on (di :: ServiceDependency :: new (di :: Type :: of :: < dyn Bar > () , di :: ServiceCardinality :: ZeroOrOne)) ",
-            ". from (| sp : & di :: ServiceProvider | di :: ServiceRef :: new (Self :: new (sp . get :: < dyn Bar > ()))) ",
             "} ",
             "}");
 
@@ -379,10 +388,13 @@ mod test {
             "} ",
             "} ",
             "impl di :: Injectable for FooImpl { ",
-            "fn inject (lifetime : di :: ServiceLifetime) -> di :: ServiceDescriptor { ",
-            "di :: ServiceDescriptorBuilder :: < dyn Foo , Self > :: new (lifetime , di :: Type :: of :: < Self > ()) ",
+            "fn inject (lifetime : di :: ServiceLifetime) -> di :: InjectBuilder { ",
+            "di :: InjectBuilder :: new (",
+            "di :: Activator :: new :: < dyn Foo , Self , _ , _ > (",
+            "| sp : & di :: ServiceProvider | di :: ServiceRef :: new (Self :: new (sp . get_all :: < dyn Bar > () . collect ())) , ",
+            "| sp : & di :: ServiceProvider | di :: ServiceRef :: new (std :: sync :: Mutex :: new (Self :: new (sp . get_all :: < dyn Bar > () . collect ())))) , ",
+            "lifetime) ",
             ". depends_on (di :: ServiceDependency :: new (di :: Type :: of :: < dyn Bar > () , di :: ServiceCardinality :: ZeroOrMore)) ",
-            ". from (| sp : & di :: ServiceProvider | di :: ServiceRef :: new (Self :: new (sp . get_all :: < dyn Bar > () . collect ()))) ",
             "} ",
             "}");
 
@@ -417,11 +429,14 @@ mod test {
             "} ",
             "} ",
             "impl di :: Injectable for ThingImpl { ",
-            "fn inject (lifetime : di :: ServiceLifetime) -> di :: ServiceDescriptor { ",
-            "di :: ServiceDescriptorBuilder :: < dyn Thing , Self > :: new (lifetime , di :: Type :: of :: < Self > ()) ",
+            "fn inject (lifetime : di :: ServiceLifetime) -> di :: InjectBuilder { ",
+            "di :: InjectBuilder :: new (",
+            "di :: Activator :: new :: < dyn Thing , Self , _ , _ > (",
+            "| sp : & di :: ServiceProvider | di :: ServiceRef :: new (Self :: create_new (sp . get_required :: < dyn Foo > () , sp . get :: < dyn Bar > ())) , ",
+            "| sp : & di :: ServiceProvider | di :: ServiceRef :: new (std :: sync :: Mutex :: new (Self :: create_new (sp . get_required :: < dyn Foo > () , sp . get :: < dyn Bar > ())))) , ",
+            "lifetime) ",
             ". depends_on (di :: ServiceDependency :: new (di :: Type :: of :: < dyn Foo > () , di :: ServiceCardinality :: ExactlyOne)) ",
             ". depends_on (di :: ServiceDependency :: new (di :: Type :: of :: < dyn Bar > () , di :: ServiceCardinality :: ZeroOrOne)) ",
-            ". from (| sp : & di :: ServiceProvider | di :: ServiceRef :: new (Self :: create_new (sp . get_required :: < dyn Foo > () , sp . get :: < dyn Bar > ()))) ",
             "} ",
             "}");
 
@@ -454,9 +469,12 @@ mod test {
             "} ",
             "} ",
             "impl di :: Injectable for FooImpl { ",
-            "fn inject (lifetime : di :: ServiceLifetime) -> di :: ServiceDescriptor { ",
-            "di :: ServiceDescriptorBuilder :: < Self , Self > :: new (lifetime , di :: Type :: of :: < Self > ()) ",
-            ". from (| sp : & di :: ServiceProvider | di :: ServiceRef :: new (Self :: new ())) ",
+            "fn inject (lifetime : di :: ServiceLifetime) -> di :: InjectBuilder { ",
+            "di :: InjectBuilder :: new (",
+            "di :: Activator :: new :: < Self , Self , _ , _ > (",
+            "| sp : & di :: ServiceProvider | di :: ServiceRef :: new (Self :: new ()) , ",
+            "| sp : & di :: ServiceProvider | di :: ServiceRef :: new (std :: sync :: Mutex :: new (Self :: new ()))) , ",
+            "lifetime) ",
             "} ",
             "}");
 
@@ -489,10 +507,13 @@ mod test {
             "} ",
             "} ",
             "impl di :: Injectable for FooImpl { ",
-            "fn inject (lifetime : di :: ServiceLifetime) -> di :: ServiceDescriptor { ",
-            "di :: ServiceDescriptorBuilder :: < dyn Foo , Self > :: new (lifetime , di :: Type :: of :: < Self > ()) ",
+            "fn inject (lifetime : di :: ServiceLifetime) -> di :: InjectBuilder { ",
+            "di :: InjectBuilder :: new (",
+            "di :: Activator :: new :: < dyn Foo , Self , _ , _ > (",
+            "| sp : & di :: ServiceProvider | di :: ServiceRef :: new (Self :: new (sp . get_required :: < Bar > ())) , ",
+            "| sp : & di :: ServiceProvider | di :: ServiceRef :: new (std :: sync :: Mutex :: new (Self :: new (sp . get_required :: < Bar > ())))) , ",
+            "lifetime) ",
             ". depends_on (di :: ServiceDependency :: new (di :: Type :: of :: < Bar > () , di :: ServiceCardinality :: ExactlyOne)) ",
-            ". from (| sp : & di :: ServiceProvider | di :: ServiceRef :: new (Self :: new (sp . get_required :: < Bar > ()))) ",
             "} ",
             "}");
 
@@ -525,9 +546,12 @@ mod test {
             "} ",
             "} ",
             "impl < T : Default > di :: Injectable for GenericBar < T > { ",
-            "fn inject (lifetime : di :: ServiceLifetime) -> di :: ServiceDescriptor { ",
-            "di :: ServiceDescriptorBuilder :: < Self , Self > :: new (lifetime , di :: Type :: of :: < Self > ()) ",
-            ". from (| sp : & di :: ServiceProvider | di :: ServiceRef :: new (Self :: new ())) ",
+            "fn inject (lifetime : di :: ServiceLifetime) -> di :: InjectBuilder { ",
+            "di :: InjectBuilder :: new (",
+            "di :: Activator :: new :: < Self , Self , _ , _ > (",
+            "| sp : & di :: ServiceProvider | di :: ServiceRef :: new (Self :: new ()) , ",
+            "| sp : & di :: ServiceProvider | di :: ServiceRef :: new (std :: sync :: Mutex :: new (Self :: new ()))) , ",
+            "lifetime) ",
             "} ",
             "}");
 
@@ -572,13 +596,14 @@ mod test {
             "TKey : Debug , ",
             "TValue : Debug ",
             "{ ",
-            "fn inject (lifetime : di :: ServiceLifetime) -> di :: ServiceDescriptor { ",
-            "di :: ServiceDescriptorBuilder :: < dyn Pair < TKey , TValue > , Self > :: new (lifetime , di :: Type :: of :: < Self > ()) ",
+            "fn inject (lifetime : di :: ServiceLifetime) -> di :: InjectBuilder { ",
+            "di :: InjectBuilder :: new (",
+            "di :: Activator :: new :: < dyn Pair < TKey , TValue > , Self , _ , _ > (",
+            "| sp : & di :: ServiceProvider | di :: ServiceRef :: new (Self :: new (sp . get_required :: < TKey > () , sp . get_required :: < TValue > ())) , ",
+            "| sp : & di :: ServiceProvider | di :: ServiceRef :: new (std :: sync :: Mutex :: new (Self :: new (sp . get_required :: < TKey > () , sp . get_required :: < TValue > ())))) , ",
+            "lifetime) ",
             ". depends_on (di :: ServiceDependency :: new (di :: Type :: of :: < TKey > () , di :: ServiceCardinality :: ExactlyOne)) ",
             ". depends_on (di :: ServiceDependency :: new (di :: Type :: of :: < TValue > () , di :: ServiceCardinality :: ExactlyOne)) ",
-            ". from (| sp : & di :: ServiceProvider | di :: ServiceRef :: new (Self :: new (\
-                sp . get_required :: < TKey > () , \
-                sp . get_required :: < TValue > ()))) ",
             "} ",
             "}");
 
