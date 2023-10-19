@@ -1,4 +1,4 @@
-use std::any::{type_name, Any};
+use std::any::type_name;
 use std::collections::hash_map::DefaultHasher;
 use std::fmt::{Display, Formatter, Result as FormatResult};
 use std::hash::{Hash, Hasher};
@@ -13,16 +13,21 @@ pub struct Type {
 
 impl Type {
     /// Initializes a new instance of a type.
-    pub fn of<T: Any + ?Sized>() -> Self {
+    pub fn of<T: ?Sized>() -> Self {
         Type::new(type_name::<T>().to_string(), None)
     }
 
     /// Initializes a new instance of a type based on another type as a key.
-    pub fn keyed<TKey, TType: Any + ?Sized>() -> Self {
+    pub fn keyed<TKey, TType: ?Sized>() -> Self {
         Type::new(
             type_name::<TType>().to_string(),
             Some(type_name::<TKey>().to_string()),
         )
+    }
+
+    /// Initializes a new instance for an unknown type.
+    pub fn unknown() -> Self {
+        Self::of::<()>()
     }
 
     /// Creates and returns a new type based on the specified key.
