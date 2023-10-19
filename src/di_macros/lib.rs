@@ -5,7 +5,7 @@ extern crate proc_macro;
 use crate::internal::*;
 use internal::{Constructor, DeriveContext, InjectableTrait};
 use proc_macro2::TokenStream;
-use syn::{spanned::Spanned, *};
+use syn::{punctuated::Punctuated, spanned::Spanned, token::PathSep, *};
 
 /// Represents the metadata used to identify an injected function.
 ///
@@ -182,12 +182,51 @@ fn derive_from_struct(
     attribute: InjectableAttribute,
     original: TokenStream,
 ) -> Result<TokenStream> {
-    let path = syn::Path::from(struct_.ident.clone());
-    let imp = &path;
+    let imp = &build_path_from_struct(&struct_);
     let svc = attribute.trait_.as_ref().unwrap_or(imp);
     let context = DeriveContext::for_struct(&struct_.generics, imp, svc, &struct_);
 
     derive(context, original)
+}
+
+fn build_path_from_struct(struct_: &ItemStruct) -> Path {
+    let generics = &struct_.generics;
+    let mut segments = Punctuated::<PathSegment, PathSep>::new();
+    let segment = PathSegment {
+        ident: struct_.ident.clone(),
+        arguments: if generics.params.is_empty() {
+            PathArguments::None
+        } else {
+            let mut args = Punctuated::<GenericArgument, Token![,]>::new();
+
+            for param in &generics.params {
+                args.push(match param {
+                    GenericParam::Const(_) => continue,
+                    GenericParam::Type(type_) => GenericArgument::Type(Type::Path(TypePath {
+                        qself: None,
+                        path: Path::from(type_.ident.clone()),
+                    })),
+                    GenericParam::Lifetime(param) => {
+                        GenericArgument::Lifetime(param.lifetime.clone())
+                    }
+                });
+            }
+
+            PathArguments::AngleBracketed(AngleBracketedGenericArguments {
+                colon2_token: None,
+                gt_token: Default::default(),
+                args,
+                lt_token: Default::default(),
+            })
+        },
+    };
+
+    segments.push(segment);
+
+    Path {
+        leading_colon: None,
+        segments,
+    }
 }
 
 #[inline]
@@ -234,7 +273,7 @@ mod test {
             "impl di :: Injectable for FooImpl { ",
             "fn inject (lifetime : di :: ServiceLifetime) -> di :: InjectBuilder { ",
             "di :: InjectBuilder :: new (",
-            "di :: Activator :: new :: < dyn Foo , Self , _ , _ > (",
+            "di :: Activator :: new :: < dyn Foo , Self > (",
             "| sp : & di :: ServiceProvider | di :: ServiceRef :: new (Self :: new ()) , ",
             "| sp : & di :: ServiceProvider | di :: ServiceRef :: new (std :: sync :: Mutex :: new (Self :: new ()))) , ",
             "lifetime) ",
@@ -274,7 +313,7 @@ mod test {
             "impl di :: Injectable for FooImpl { ",
             "fn inject (lifetime : di :: ServiceLifetime) -> di :: InjectBuilder { ",
             "di :: InjectBuilder :: new (",
-            "di :: Activator :: new :: < dyn Foo , Self , _ , _ > (",
+            "di :: Activator :: new :: < dyn Foo , Self > (",
             "| sp : & di :: ServiceProvider | di :: ServiceRef :: new (Self :: create ()) , ",
             "| sp : & di :: ServiceProvider | di :: ServiceRef :: new (std :: sync :: Mutex :: new (Self :: create ()))) , ",
             "lifetime) ",
@@ -312,7 +351,7 @@ mod test {
             "impl di :: Injectable for FooImpl { ",
             "fn inject (lifetime : di :: ServiceLifetime) -> di :: InjectBuilder { ",
             "di :: InjectBuilder :: new (",
-            "di :: Activator :: new :: < dyn Foo , Self , _ , _ > (",
+            "di :: Activator :: new :: < dyn Foo , Self > (",
             "| sp : & di :: ServiceProvider | di :: ServiceRef :: new (Self :: new (sp . get_required :: < dyn Bar > ())) , ",
             "| sp : & di :: ServiceProvider | di :: ServiceRef :: new (std :: sync :: Mutex :: new (Self :: new (sp . get_required :: < dyn Bar > ())))) , ",
             "lifetime) ",
@@ -351,7 +390,7 @@ mod test {
             "impl di :: Injectable for FooImpl { ",
             "fn inject (lifetime : di :: ServiceLifetime) -> di :: InjectBuilder { ",
             "di :: InjectBuilder :: new (",
-            "di :: Activator :: new :: < dyn Foo , Self , _ , _ > (",
+            "di :: Activator :: new :: < dyn Foo , Self > (",
             "| sp : & di :: ServiceProvider | di :: ServiceRef :: new (Self :: new (sp . get :: < dyn Bar > ())) , ",
             "| sp : & di :: ServiceProvider | di :: ServiceRef :: new (std :: sync :: Mutex :: new (Self :: new (sp . get :: < dyn Bar > ())))) , ",
             "lifetime) ",
@@ -390,7 +429,7 @@ mod test {
             "impl di :: Injectable for FooImpl { ",
             "fn inject (lifetime : di :: ServiceLifetime) -> di :: InjectBuilder { ",
             "di :: InjectBuilder :: new (",
-            "di :: Activator :: new :: < dyn Foo , Self , _ , _ > (",
+            "di :: Activator :: new :: < dyn Foo , Self > (",
             "| sp : & di :: ServiceProvider | di :: ServiceRef :: new (Self :: new (sp . get_all :: < dyn Bar > () . collect ())) , ",
             "| sp : & di :: ServiceProvider | di :: ServiceRef :: new (std :: sync :: Mutex :: new (Self :: new (sp . get_all :: < dyn Bar > () . collect ())))) , ",
             "lifetime) ",
@@ -431,7 +470,7 @@ mod test {
             "impl di :: Injectable for ThingImpl { ",
             "fn inject (lifetime : di :: ServiceLifetime) -> di :: InjectBuilder { ",
             "di :: InjectBuilder :: new (",
-            "di :: Activator :: new :: < dyn Thing , Self , _ , _ > (",
+            "di :: Activator :: new :: < dyn Thing , Self > (",
             "| sp : & di :: ServiceProvider | di :: ServiceRef :: new (Self :: create_new (sp . get_required :: < dyn Foo > () , sp . get :: < dyn Bar > ())) , ",
             "| sp : & di :: ServiceProvider | di :: ServiceRef :: new (std :: sync :: Mutex :: new (Self :: create_new (sp . get_required :: < dyn Foo > () , sp . get :: < dyn Bar > ())))) , ",
             "lifetime) ",
@@ -471,7 +510,7 @@ mod test {
             "impl di :: Injectable for FooImpl { ",
             "fn inject (lifetime : di :: ServiceLifetime) -> di :: InjectBuilder { ",
             "di :: InjectBuilder :: new (",
-            "di :: Activator :: new :: < Self , Self , _ , _ > (",
+            "di :: Activator :: new :: < Self , Self > (",
             "| sp : & di :: ServiceProvider | di :: ServiceRef :: new (Self :: new ()) , ",
             "| sp : & di :: ServiceProvider | di :: ServiceRef :: new (std :: sync :: Mutex :: new (Self :: new ()))) , ",
             "lifetime) ",
@@ -509,7 +548,7 @@ mod test {
             "impl di :: Injectable for FooImpl { ",
             "fn inject (lifetime : di :: ServiceLifetime) -> di :: InjectBuilder { ",
             "di :: InjectBuilder :: new (",
-            "di :: Activator :: new :: < dyn Foo , Self , _ , _ > (",
+            "di :: Activator :: new :: < dyn Foo , Self > (",
             "| sp : & di :: ServiceProvider | di :: ServiceRef :: new (Self :: new (sp . get_required :: < Bar > ())) , ",
             "| sp : & di :: ServiceProvider | di :: ServiceRef :: new (std :: sync :: Mutex :: new (Self :: new (sp . get_required :: < Bar > ())))) , ",
             "lifetime) ",
@@ -548,7 +587,7 @@ mod test {
             "impl < T : Default > di :: Injectable for GenericBar < T > { ",
             "fn inject (lifetime : di :: ServiceLifetime) -> di :: InjectBuilder { ",
             "di :: InjectBuilder :: new (",
-            "di :: Activator :: new :: < Self , Self , _ , _ > (",
+            "di :: Activator :: new :: < Self , Self > (",
             "| sp : & di :: ServiceProvider | di :: ServiceRef :: new (Self :: new ()) , ",
             "| sp : & di :: ServiceProvider | di :: ServiceRef :: new (std :: sync :: Mutex :: new (Self :: new ()))) , ",
             "lifetime) ",
@@ -598,7 +637,7 @@ mod test {
             "{ ",
             "fn inject (lifetime : di :: ServiceLifetime) -> di :: InjectBuilder { ",
             "di :: InjectBuilder :: new (",
-            "di :: Activator :: new :: < dyn Pair < TKey , TValue > , Self , _ , _ > (",
+            "di :: Activator :: new :: < dyn Pair < TKey , TValue > , Self > (",
             "| sp : & di :: ServiceProvider | di :: ServiceRef :: new (Self :: new (sp . get_required :: < TKey > () , sp . get_required :: < TValue > ())) , ",
             "| sp : & di :: ServiceProvider | di :: ServiceRef :: new (std :: sync :: Mutex :: new (Self :: new (sp . get_required :: < TKey > () , sp . get_required :: < TValue > ())))) , ",
             "lifetime) ",
