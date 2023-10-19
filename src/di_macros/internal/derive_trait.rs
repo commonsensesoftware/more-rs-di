@@ -28,10 +28,10 @@ impl InjectableTrait {
         } else {
             quote! { Self }
         };
-        let implementation = context.implementation;
+
+        let implementation = &context.implementation;
         let depends_on = quote! { #(.depends_on(#deps))* };
-        let generics = &context.generics;
-        let where_ = &generics.where_clause;
+        let (generics, _, where_) = context.generics.split_for_impl();
         let activate = match *context.target() {
             MacroTarget::Method(method) => {
                 let fn_ = &method.ident;
@@ -51,7 +51,7 @@ impl InjectableTrait {
             impl#generics di::Injectable for #implementation #where_ {
                 fn inject(lifetime: di::ServiceLifetime) -> di::InjectBuilder {
                     di::InjectBuilder::new(
-                        di::Activator::new::<#service, Self, _, _>(
+                        di::Activator::new::<#service, Self>(
                             |sp: &di::ServiceProvider| di::ServiceRef::new(#activate),
                             |sp: &di::ServiceProvider| di::ServiceRef::new(std::sync::Mutex::new(#activate2))
                         ),
