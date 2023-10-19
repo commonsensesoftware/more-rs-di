@@ -36,7 +36,7 @@ impl Foo {
     }
 }
 
-pub struct GenericBar<T: Default + 'static> {
+pub struct GenericBar<T: Default> {
     _phantom: PhantomData<T>,
 }
 
@@ -106,4 +106,8 @@ pub struct NormalStruct {
 }
 
 #[injectable]
-pub struct Record(pub ServiceRef<UnitStruct>, pub Lazy<ServiceRef<UnitStruct>>, pub usize);
+pub struct Record(
+    pub ServiceRef<UnitStruct>,
+    pub Lazy<ServiceRef<UnitStruct>>,
+    pub usize,
+);
