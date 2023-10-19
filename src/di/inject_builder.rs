@@ -38,7 +38,7 @@ impl InjectBuilder {
     }
 
     /// Applies a key to the injected service.
-    pub fn with_key<TKey: 'static>(mut self) -> Self {
+    pub fn with_key<TKey>(mut self) -> Self {
         self.key_type = Some(Type::of::<TKey>());
         self
     }

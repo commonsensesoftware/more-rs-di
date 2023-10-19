@@ -98,11 +98,10 @@ impl ServiceProvider {
     }
 
     /// Gets all of the services of the specified key and type.
-    pub fn get_all_by_key<TKey, TSvc>(
-        &self,
+    pub fn get_all_by_key<'a, TKey: 'a, TSvc>(
+        &'a self,
     ) -> impl Iterator<Item = KeyedServiceRef<TKey, TSvc>> + '_
     where
-        TKey: 'static,
         TSvc: Any + ?Sized,
     {
         let key = Type::keyed::<TKey, TSvc>();
@@ -115,11 +114,10 @@ impl ServiceProvider {
     }
 
     /// Gets all of the mutable services of the specified key and type.
-    pub fn get_all_by_key_mut<TKey, TSvc>(
-        &self,
+    pub fn get_all_by_key_mut<'a, TKey: 'a, TSvc>(
+        &'a self,
     ) -> impl Iterator<Item = KeyedServiceRefMut<TKey, TSvc>> + '_
     where
-        TKey: 'static,
         TSvc: Any + ?Sized,
     {
         self.get_all_by_key::<TKey, Mutex<TSvc>>()
@@ -704,7 +702,7 @@ mod tests {
     struct Holder<T: Send + Sync + Clone>(T);
 
     #[cfg(feature = "async")]
-    fn inject<V: Send + Sync + Clone + 'static>(value: V) -> Holder<V> {
+    fn inject<V: Send + Sync + Clone>(value: V) -> Holder<V> {
         Holder(value)
     }
 
