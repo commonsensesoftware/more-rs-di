@@ -27,12 +27,12 @@ impl CallSite {
         let args = Self::visit_first_of(
             context,
             &[
-                "ServiceRef",
-                "Rc",
-                "Arc",
-                "KeyedServiceRef",
-                "ServiceRefMut",
-                "KeyedServiceRefMut",
+                ("ServiceRef", true),
+                ("Rc", true),
+                ("Arc", true),
+                ("KeyedServiceRef", true),
+                ("ServiceRefMut", false),
+                ("KeyedServiceRefMut", false),
             ],
         );
         let count = args.len();
@@ -112,37 +112,34 @@ impl CallSite {
 
             if let Some(inner) = Self::try_visit_option(type_) {
                 if let Type::Path(path) = inner {
-                    builder.is_optional();
-                    builder.has_type(path);
-
                     if read_only && Self::is_mutable_type(path) {
                         builder.is_mutable();
                     }
 
+                    builder.is_optional();
+                    builder.has_type(path);
                     Ok(builder.build())
                 } else {
                     Err(Error::new(inner.span(), SUPPORTED_TYPES))
                 }
             } else if let Some(inner) = Self::try_visit_vector(type_) {
                 if let Type::Path(path) = inner {
-                    builder.has_many();
-                    builder.has_type(path);
-
                     if read_only && Self::is_mutable_type(path) {
                         builder.is_mutable();
                     }
 
+                    builder.has_many();
+                    builder.has_type(path);
                     Ok(builder.build())
                 } else {
                     Err(Error::new(inner.span(), SUPPORTED_TYPES))
                 }
             } else {
-                builder.has_type(type_);
-
                 if read_only && Self::is_mutable_type(type_) {
                     builder.is_mutable();
                 }
 
+                builder.has_type(type_);
                 Ok(builder.build())
             }
         } else {
@@ -202,11 +199,20 @@ impl CallSite {
         }
     }
 
-    fn visit_first_of<'a>(context: &CallSiteContext<'a>, names: &[&str]) -> Vec<&'a Type> {
-        for name in names {
-            let args = Self::visit_generic_type_args(context.type_, name);
+    fn visit_first_of<'a>(context: &CallSiteContext<'a>, names: &[(&str, bool)]) -> Vec<&'a Type> {
+        for (name, mutable) in names {
+            let mut args = Self::visit_generic_type_args(context.type_, name);
 
-            if args.len() > 0 {
+            if let Some(mut arg) = args.pop() {
+                if *mutable {
+                    if let Type::Path(path) = arg {
+                        if let Some(ty) = Self::visit_generic_type_arg(path, "Mutex") {
+                            arg = ty;
+                        }
+                    }
+                }
+
+                args.push(arg);
                 return args;
             }
         }
