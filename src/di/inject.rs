@@ -45,7 +45,7 @@ mod tests {
     impl Injectable for TestServiceImpl {
         fn inject(lifetime: ServiceLifetime) -> InjectBuilder {
             InjectBuilder::new(
-                Activator::new::<dyn TestService, Self, _, _>(
+                Activator::new::<dyn TestService, Self>(
                     |_| ServiceRef::new(Self::default()),
                     |_| ServiceRef::new(Mutex::new(Self::default())),
                 ),
@@ -63,7 +63,7 @@ mod tests {
     impl Injectable for OtherTestServiceImpl {
         fn inject(lifetime: ServiceLifetime) -> InjectBuilder {
             InjectBuilder::new(
-                Activator::new::<dyn OtherTestService, Self, _, _>(
+                Activator::new::<dyn OtherTestService, Self>(
                     |sp| ServiceRef::new(Self::new(sp.get_required::<dyn TestService>())),
                     |sp| {
                         ServiceRef::new(Mutex::new(Self::new(sp.get_required::<dyn TestService>())))

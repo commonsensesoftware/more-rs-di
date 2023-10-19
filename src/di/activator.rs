@@ -46,12 +46,9 @@ impl Activator {
     ///
     /// * `factory` - The factory method used to create a service instance
     /// * `factory_mut` - The factory method used to create a mutable service instance
-    pub fn new<TSvc, TImpl, F1, F2>(factory: F1, factory_mut: F2) -> Self
-    where
-        TSvc: Any + ?Sized,
-        TImpl: 'static,
-        F1: Fn(&ServiceProvider) -> ServiceRef<TSvc> + 'static,
-        F2: Fn(&ServiceProvider) -> ServiceRefMut<TSvc> + 'static,
+    pub fn new<TSvc: Any + ?Sized, TImpl>(
+        factory: fn(&ServiceProvider) -> ServiceRef<TSvc>,
+        factory_mut: fn(&ServiceProvider) -> ServiceRefMut<TSvc>) -> Self
     {
         Self {
             service_type: Type::of::<TSvc>(),
