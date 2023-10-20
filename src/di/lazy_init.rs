@@ -1,4 +1,4 @@
-use crate::{ServiceProvider, ServiceRef, KeyedServiceRef};
+use crate::{KeyedServiceRef, ServiceProvider, ServiceRef, ServiceRefMut, KeyedServiceRefMut};
 use spin::Once;
 use std::any::Any;
 
@@ -28,8 +28,20 @@ fn to_vec<T: Any + ?Sized>(services: &ServiceProvider) -> Vec<ServiceRef<T>> {
     services.get_all::<T>().collect()
 }
 
-fn to_keyed_vec<TKey, TSvc: Any + ?Sized>(services: &ServiceProvider) -> Vec<KeyedServiceRef<TKey, TSvc>> {
+fn to_vec_mut<T: Any + ?Sized>(services: &ServiceProvider) -> Vec<ServiceRefMut<T>> {
+    services.get_all_mut::<T>().collect()
+}
+
+fn to_keyed_vec<TKey, TSvc: Any + ?Sized>(
+    services: &ServiceProvider,
+) -> Vec<KeyedServiceRef<TKey, TSvc>> {
     services.get_all_by_key::<TKey, TSvc>().collect()
+}
+
+fn to_keyed_vec_mut<TKey, TSvc: Any + ?Sized>(
+    services: &ServiceProvider,
+) -> Vec<KeyedServiceRefMut<TKey, TSvc>> {
+    services.get_all_by_key_mut::<TKey, TSvc>().collect()
 }
 
 /// Creates and returns a holder for a lazily-initialized, required service.
@@ -42,14 +54,38 @@ pub fn exactly_one<T: Any + ?Sized>(services: ServiceProvider) -> Lazy<ServiceRe
     Lazy::new(services, ServiceProvider::get_required::<T>)
 }
 
+/// Creates and returns a holder for a lazily-initialized, required, mutable service.
+///
+/// # Arguments
+///
+/// * `services` - The [service provider](struct.ServiceProvider.html) used to resolve the service
+#[inline]
+pub fn exactly_one_mut<T: Any + ?Sized>(services: ServiceProvider) -> Lazy<ServiceRefMut<T>> {
+    Lazy::new(services, ServiceProvider::get_required_mut::<T>)
+}
+
 /// Creates and returns a holder for a lazily-initialized, keyed, required service.
 ///
 /// # Arguments
 ///
 /// * `services` - The [service provider](struct.ServiceProvider.html) used to resolve the service
 #[inline]
-pub fn exactly_one_with_key<TKey, TSvc: Any + ?Sized>(services: ServiceProvider) -> Lazy<KeyedServiceRef<TKey, TSvc>> {
+pub fn exactly_one_with_key<TKey, TSvc: Any + ?Sized>(
+    services: ServiceProvider,
+) -> Lazy<KeyedServiceRef<TKey, TSvc>> {
     Lazy::new(services, ServiceProvider::get_required_by_key::<TKey, TSvc>)
+}
+
+/// Creates and returns a holder for a lazily-initialized, keyed, required, mutable service.
+///
+/// # Arguments
+///
+/// * `services` - The [service provider](struct.ServiceProvider.html) used to resolve the service
+#[inline]
+pub fn exactly_one_with_key_mut<TKey, TSvc: Any + ?Sized>(
+    services: ServiceProvider,
+) -> Lazy<KeyedServiceRefMut<TKey, TSvc>> {
+    Lazy::new(services, ServiceProvider::get_required_by_key_mut::<TKey, TSvc>)
 }
 
 /// Creates and returns a holder for a lazily-initialized, optional service.
@@ -58,10 +94,20 @@ pub fn exactly_one_with_key<TKey, TSvc: Any + ?Sized>(services: ServiceProvider)
 ///
 /// * `services` - The [service provider](struct.ServiceProvider.html) used to resolve the service
 #[inline]
-pub fn zero_or_one<T: Any + ?Sized>(
-    services: ServiceProvider,
-) -> Lazy<Option<ServiceRef<T>>> {
+pub fn zero_or_one<T: Any + ?Sized>(services: ServiceProvider) -> Lazy<Option<ServiceRef<T>>> {
     Lazy::new(services, ServiceProvider::get::<T>)
+}
+
+/// Creates and returns a holder for a lazily-initialized, optional, mutable service.
+///
+/// # Arguments
+///
+/// * `services` - The [service provider](struct.ServiceProvider.html) used to resolve the service
+#[inline]
+pub fn zero_or_one_mut<T: Any + ?Sized>(
+    services: ServiceProvider,
+) -> Lazy<Option<ServiceRefMut<T>>> {
+    Lazy::new(services, ServiceProvider::get_mut::<T>)
 }
 
 /// Creates and returns a holder for a lazily-initialized, keyed, optional service.
@@ -76,6 +122,18 @@ pub fn zero_or_one_with_key<TKey, TSvc: Any + ?Sized>(
     Lazy::new(services, ServiceProvider::get_by_key::<TKey, TSvc>)
 }
 
+/// Creates and returns a holder for a lazily-initialized, keyed, optional, mutable service.
+///
+/// # Arguments
+///
+/// * `services` - The [service provider](struct.ServiceProvider.html) used to resolve the service
+#[inline]
+pub fn zero_or_one_with_key_mut<TKey, TSvc: Any + ?Sized>(
+    services: ServiceProvider,
+) -> Lazy<Option<KeyedServiceRefMut<TKey, TSvc>>> {
+    Lazy::new(services, ServiceProvider::get_by_key_mut::<TKey, TSvc>)
+}
+
 /// Creates and returns a holder for multiple, lazily-initialized services.
 ///
 /// # Arguments
@@ -86,14 +144,38 @@ pub fn zero_or_more<T: Any + ?Sized>(services: ServiceProvider) -> Lazy<Vec<Serv
     Lazy::new(services, to_vec::<T>)
 }
 
+/// Creates and returns a holder for multiple, lazily-initialized, mutable services.
+///
+/// # Arguments
+///
+/// * `services` - The [service provider](struct.ServiceProvider.html) used to resolve the services
+#[inline]
+pub fn zero_or_more_mut<T: Any + ?Sized>(services: ServiceProvider) -> Lazy<Vec<ServiceRefMut<T>>> {
+    Lazy::new(services, to_vec_mut::<T>)
+}
+
 /// Creates and returns a holder for multiple, lazily-initialized, keyed services.
 ///
 /// # Arguments
 ///
 /// * `services` - The [service provider](struct.ServiceProvider.html) used to resolve the services
 #[inline]
-pub fn zero_or_more_with_key<TKey, TSvc: Any + ?Sized>(services: ServiceProvider) -> Lazy<Vec<KeyedServiceRef<TKey, TSvc>>> {
+pub fn zero_or_more_with_key<TKey, TSvc: Any + ?Sized>(
+    services: ServiceProvider,
+) -> Lazy<Vec<KeyedServiceRef<TKey, TSvc>>> {
     Lazy::new(services, to_keyed_vec::<TKey, TSvc>)
+}
+
+/// Creates and returns a holder for multiple, lazily-initialized, keyed, mutable services.
+///
+/// # Arguments
+///
+/// * `services` - The [service provider](struct.ServiceProvider.html) used to resolve the services
+#[inline]
+pub fn zero_or_more_with_key_mut<TKey, TSvc: Any + ?Sized>(
+    services: ServiceProvider,
+) -> Lazy<Vec<KeyedServiceRefMut<TKey, TSvc>>> {
+    Lazy::new(services, to_keyed_vec_mut::<TKey, TSvc>)
 }
 
 /// Creates and return a holder for a lazy-initialized, optional service that is missing.
@@ -105,7 +187,10 @@ pub fn missing<T: Any + ?Sized>() -> Lazy<Option<ServiceRef<T>>> {
 /// Creates and return a holder for a lazy-initialized, keyed, optional service that is missing.
 #[inline]
 pub fn missing_with_key<TKey, TSvc: Any + ?Sized>() -> Lazy<Option<KeyedServiceRef<TKey, TSvc>>> {
-    Lazy::new(ServiceProvider::default(), ServiceProvider::get_by_key::<TKey, TSvc>)
+    Lazy::new(
+        ServiceProvider::default(),
+        ServiceProvider::get_by_key::<TKey, TSvc>,
+    )
 }
 
 /// Creates and return a holder for any empty collection of lazy-initialized services.
@@ -123,8 +208,7 @@ pub fn empty_with_key<TKey, TSvc: Any + ?Sized>() -> Lazy<Vec<KeyedServiceRef<TK
 #[cfg(test)]
 mod tests {
 
-    use crate::lazy::{self, Lazy};
-    use crate::*;
+    use crate::{lazy::*, *};
 
     #[derive(Default)]
     struct Bar;
@@ -173,7 +257,7 @@ mod tests {
             .add(transient_as_self::<Bar>().from(|_| ServiceRef::new(Bar::default())))
             .add(
                 transient_as_self::<Foo>()
-                    .depends_on(exactly_one::<Bar>())
+                    .depends_on(crate::exactly_one::<Bar>())
                     .from(|sp| ServiceRef::new(Foo::new(lazy::exactly_one::<Bar>(sp.clone())))),
             )
             .build_provider()
@@ -193,7 +277,7 @@ mod tests {
             .add(transient_as_self::<Bar>().from(|_| ServiceRef::new(Bar::default())))
             .add(
                 transient_as_self::<Foo2>()
-                    .depends_on(zero_or_one::<Bar>())
+                    .depends_on(crate::zero_or_one::<Bar>())
                     .from(|sp| ServiceRef::new(Foo2::new(lazy::zero_or_one::<Bar>(sp.clone())))),
             )
             .build_provider()
@@ -212,7 +296,7 @@ mod tests {
         let provider = ServiceCollection::new()
             .add(
                 transient_as_self::<Foo2>()
-                    .depends_on(zero_or_one::<Bar>())
+                    .depends_on(crate::zero_or_one::<Bar>())
                     .from(|sp| ServiceRef::new(Foo2::new(lazy::zero_or_one::<Bar>(sp.clone())))),
             )
             .build_provider()
@@ -257,12 +341,12 @@ mod tests {
             .add(scoped_factory(|_| ServiceRef::new(Bar::default())))
             .add(
                 transient_as_self::<Foo>()
-                    .depends_on(exactly_one::<Bar>())
+                    .depends_on(crate::exactly_one::<Bar>())
                     .from(|sp| ServiceRef::new(Foo::new(lazy::exactly_one::<Bar>(sp.clone())))),
             )
             .build_provider()
             .unwrap();
-        
+
         // act
         let foo = provider.get_required::<Foo>();
         let bar1 = provider.get_required::<Bar>();

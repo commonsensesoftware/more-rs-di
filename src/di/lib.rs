@@ -52,9 +52,11 @@ pub use di_macros::{inject, injectable};
 /// Contains support for lazy service resolution.
 #[cfg(feature = "lazy")]
 pub mod lazy {
-    use super::*;
-    pub use lazy_init::{
-        empty, empty_with_key, exactly_one, exactly_one_with_key, missing, missing_with_key,
-        zero_or_more, zero_or_more_with_key, zero_or_one, zero_or_one_with_key, Lazy,
-    };
+    // use super::*;
+    use super::lazy_init;
+    // pub use lazy_init::{
+    //     empty, empty_with_key, exactly_one, exactly_one_mut, exactly_one_with_key, missing, missing_with_key,
+    //     zero_or_more, zero_or_more_with_key, zero_or_one, zero_or_one_with_key, Lazy,
+    // };
+    pub use lazy_init::*;
 }

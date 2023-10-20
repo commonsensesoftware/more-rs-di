@@ -15,7 +15,11 @@ pub trait CallSiteInjector<'a> {
         if let Some(key) = self.key() {
             InjectedCallSite {
                 resolve: if context.lazy {
-                    quote! { di::lazy::zero_or_one_with_key::<#key, #svc>(sp.clone()) }
+                    if context.mutable {
+                        quote! { di::lazy::zero_or_one_with_key_mut::<#key, #svc>(sp.clone()) }
+                    } else {
+                        quote! { di::lazy::zero_or_one_with_key::<#key, #svc>(sp.clone()) }
+                    }
                 } else if context.mutable {
                     quote! { sp.get_by_key_mut::<#key, #svc>() }
                 } else {
@@ -28,7 +32,11 @@ pub trait CallSiteInjector<'a> {
         } else {
             InjectedCallSite {
                 resolve: if context.lazy {
-                    quote! { di::lazy::zero_or_one::<#svc>(sp.clone()) }
+                    if context.mutable {
+                        quote! { di::lazy::zero_or_one_mut::<#svc>(sp.clone()) }
+                    } else {
+                        quote! { di::lazy::zero_or_one::<#svc>(sp.clone()) }
+                    }
                 } else if context.mutable {
                     quote! { sp.get_mut::<#svc>() }
                 } else {
@@ -47,7 +55,11 @@ pub trait CallSiteInjector<'a> {
         if let Some(key) = self.key() {
             InjectedCallSite {
                 resolve: if context.lazy {
-                    quote! { di::lazy::exactly_one_with_key::<#key, #svc>(sp.clone()) }
+                    if context.mutable {
+                        quote! { di::lazy::exactly_one_with_key_mut::<#key, #svc>(sp.clone()) }
+                    } else {
+                        quote! { di::lazy::exactly_one_with_key::<#key, #svc>(sp.clone()) }
+                    }
                 } else if context.mutable {
                     quote! { sp.get_required_by_key_mut::<#key, #svc>() }
                 } else {
@@ -60,7 +72,11 @@ pub trait CallSiteInjector<'a> {
         } else {
             InjectedCallSite {
                 resolve: if context.lazy {
-                    quote! { di::lazy::exactly_one::<#svc>(sp.clone()) }
+                    if context.mutable {
+                        quote! { di::lazy::exactly_one_mut::<#svc>(sp.clone()) }
+                    } else {
+                        quote! { di::lazy::exactly_one::<#svc>(sp.clone()) }
+                    }
                 } else if context.mutable {
                     quote! { sp.get_required_mut::<#svc>() }
                 } else {
@@ -79,7 +95,11 @@ pub trait CallSiteInjector<'a> {
         if let Some(key) = self.key() {
             InjectedCallSite {
                 resolve: if context.lazy {
-                    quote! { di::lazy::zero_or_more_with_key::<#key, #svc>(sp.clone()) }
+                    if context.mutable {
+                        quote! { di::lazy::zero_or_more_with_key_mut::<#key, #svc>(sp.clone()) }
+                    } else {
+                        quote! { di::lazy::zero_or_more_with_key::<#key, #svc>(sp.clone()) }
+                    }
                 } else if context.iterator {
                     if context.mutable {
                         quote! { sp.get_all_by_key_mut::<#key, #svc>() }
@@ -100,7 +120,11 @@ pub trait CallSiteInjector<'a> {
         } else {
             InjectedCallSite {
                 resolve: if context.lazy {
-                    quote! { di::lazy::zero_or_more::<#svc>(sp.clone()) }
+                    if context.mutable {
+                        quote! { di::lazy::zero_or_more_mut::<#svc>(sp.clone()) }
+                    } else {
+                        quote! { di::lazy::zero_or_more::<#svc>(sp.clone()) }
+                    }
                 } else if context.iterator {
                     if context.mutable {
                         quote! { sp.get_all_mut::<#svc>() }
