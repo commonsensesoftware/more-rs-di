@@ -1,3 +1,9 @@
+// this file tests code generation for #[injectable] using
+// mutable dependencies. if the project compiles, then code
+// generation completed successfully
+
+#![allow(dead_code)]
+
 use di::{injectable, lazy::Lazy, ServiceRef, ServiceRefMut};
 use std::sync::Mutex;
 
