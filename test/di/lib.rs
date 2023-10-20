@@ -6,6 +6,7 @@
 // RUSTFLAGS='--cfg test' cargo expand
 
 mod containers;
+mod keyed;
 mod mutable;
 mod scenarios;
 mod structs;
