@@ -11,6 +11,9 @@ mod validation;
 #[cfg(feature = "builder")]
 mod builder;
 
+#[cfg(feature = "builder")]
+mod descriptor_builder;
+
 #[cfg(feature = "inject")]
 mod activator;
 
@@ -36,6 +39,9 @@ pub use validation::*;
 
 #[cfg(feature = "builder")]
 pub use builder::*;
+
+#[cfg(feature = "builder")]
+pub use descriptor_builder::*;
 
 #[cfg(feature = "inject")]
 pub use activator::*;
