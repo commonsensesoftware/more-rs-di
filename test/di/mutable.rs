@@ -1,5 +1,5 @@
-use di::{injectable, lazy::Lazy, ServiceRefMut};
-use std::{rc::Rc, sync::Mutex};
+use di::{injectable, lazy::Lazy, ServiceRef, ServiceRefMut};
+use std::sync::Mutex;
 
 #[injectable]
 pub struct MutDep(usize);
@@ -16,8 +16,8 @@ pub struct MutTupleStruct(pub ServiceRefMut<MutDep>);
 pub struct MutTupleGeneric<T: 'static>(pub ServiceRefMut<T>);
 
 #[injectable]
-pub struct MutStructRc {
-    pub dep: Rc<Mutex<MutDep>>,
+pub struct MutStructRef {
+    pub dep: ServiceRef<Mutex<MutDep>>,
 }
 
 pub struct MutStructImpl {
@@ -31,13 +31,13 @@ impl MutStructImpl {
     }
 }
 
-pub struct MutStructImplRc {
-    dep: Rc<Mutex<MutDep>>,
+pub struct MutStructImplRef {
+    dep: ServiceRef<Mutex<MutDep>>,
 }
 
 #[injectable]
-impl MutStructImplRc {
-    fn new(dep: Rc<Mutex<MutDep>>) -> Self {
+impl MutStructImplRef {
+    fn new(dep: ServiceRef<Mutex<MutDep>>) -> Self {
         Self { dep }
     }
 }
@@ -60,15 +60,31 @@ impl MutStructIter {
     }
 }
 
-pub struct MutStructIterRc {
-    pub vec: Vec<Rc<Mutex<MutDep>>>,
+pub struct MutStructIterRef {
+    pub vec: Vec<ServiceRef<Mutex<MutDep>>>,
 }
 
 #[injectable]
-impl MutStructIterRc {
-    pub fn new(deps: impl Iterator<Item = Rc<Mutex<MutDep>>>) -> Self {
+impl MutStructIterRef {
+    pub fn new(deps: impl Iterator<Item = ServiceRef<Mutex<MutDep>>>) -> Self {
         Self {
             vec: deps.collect(),
         }
+    }
+}
+
+#[injectable]
+pub struct MutStructLazy {
+    pub dep: Lazy<ServiceRefMut<MutDep>>,
+}
+
+pub struct MutStructLazyImpl {
+    dep: Lazy<ServiceRefMut<MutDep>>,
+}
+
+#[injectable]
+impl MutStructLazyImpl {
+    fn new(dep: Lazy<ServiceRefMut<MutDep>>) -> Self {
+        Self { dep }
     }
 }

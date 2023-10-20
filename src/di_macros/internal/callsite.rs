@@ -148,6 +148,8 @@ impl CallSite {
     }
 
     fn is_mutable_type(type_: &TypePath) -> bool {
+        // ServiceRefMut<T> = ServiceRef<Mutex<T>>
+        // KeyedServiceRefMut<K,T> = KeyedServiceRef<K,Mutex<T>>
         if let Some(name) = type_.path.segments.last() {
             if name.ident == Ident::new("ServiceRefMut", Span::call_site())
                 || name.ident == Ident::new("KeyedServiceRefMut", Span::call_site())
@@ -155,11 +157,17 @@ impl CallSite {
                 return true;
             }
 
-            if name.ident == Ident::new("Rc", Span::call_site())
+            // Rc<Mutex<T>>
+            // Arc<Mutex<T>>
+            // ServiceRef<Mutex<T>>
+            // KeyedServiceRef<K,Mutex<T>>
+            if name.ident == Ident::new("ServiceRef", Span::call_site())
+                || name.ident == Ident::new("KeyedServiceRef", Span::call_site())
+                || name.ident == Ident::new("Rc", Span::call_site())
                 || name.ident == Ident::new("Arc", Span::call_site())
             {
                 if let PathArguments::AngleBracketed(ref generics) = name.arguments {
-                    if let GenericArgument::Type(arg) = generics.args.first().unwrap() {
+                    if let GenericArgument::Type(arg) = generics.args.last().unwrap() {
                         if let Type::Path(ty) = arg {
                             if let Some(name) = ty.path.segments.last() {
                                 return name.ident == Ident::new("Mutex", Span::call_site());
