@@ -11,3 +11,6 @@ Cargo.lock
 
 # These files are copied from the root with build scripts
 /src/**/README.md
+
+# Generated book output
+guide/book
