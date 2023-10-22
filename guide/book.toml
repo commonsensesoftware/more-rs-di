@@ -1,0 +1,28 @@
+[book]
+title = "More DI Documentation"
+authors = ["Chris Martinez"]
+language = "en"
+
+[rust]
+edition = "2018"
+
+[output.html]
+site-url = "/more-di/"
+git-repository-url = "https://github.com/commonsensesoftware/more-rs-di/tree/main/guide"
+edit-url-template = "https://github.com/commonsensesoftware/more-rs-di/edit/main/guide/{path}"
+default-theme = "Ayu"
+additional-css = ["theme/custom.css"]
+
+[output.html.playground]
+editable = true
+line-numbers = true
+runnable = false         # not currently supported in the Rust Playground
+
+[output.html.search]
+limit-results = 20
+use-boolean-and = true
+boost-title = 2
+boost-hierarchy = 2
+boost-paragraph = 1
+expand = true
+heading-split-level = 2
