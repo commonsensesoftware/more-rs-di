@@ -2,9 +2,11 @@ use crate::{
     KeyedServiceRef, KeyedServiceRefMut, ServiceDescriptor, ServiceRef, ServiceRefMut, Type,
 };
 use std::any::{type_name, Any};
+use std::borrow::Borrow;
 use std::collections::HashMap;
 use std::iter::empty;
 use std::marker::PhantomData;
+use std::ops::Deref;
 use std::sync::Mutex;
 
 /// Represents a service provider.
@@ -183,6 +185,49 @@ impl ServiceProvider {
     }
 }
 
+/// Represents a scoped service provider.
+/// 
+/// # Remarks
+/// 
+/// This struct has the exact same functionality as
+/// [ServiceProvider](struct.ServiceProvider.html).
+/// When a new instance is created, it also creates
+/// a new scope from the source
+/// [ServiceProvider](struct.ServiceProvider.html).
+/// The primary use case for this struct is to
+/// explicitly declare that a new scope should be
+/// created at the injection call site.
+#[derive(Clone, Default)]
+pub struct ScopedServiceProvider {
+    sp: ServiceProvider
+}
+
+impl From<&ServiceProvider> for ScopedServiceProvider {
+    fn from(value: &ServiceProvider) -> Self {
+        Self { sp: value.create_scope() }
+    }
+}
+
+impl AsRef<ServiceProvider> for ScopedServiceProvider {
+    fn as_ref(&self) -> &ServiceProvider {
+        &self.sp
+    }
+}
+
+impl Borrow<ServiceProvider> for ScopedServiceProvider {
+    fn borrow(&self) -> &ServiceProvider {
+        &self.sp
+    }
+}
+
+impl Deref for ScopedServiceProvider {
+    type Target = ServiceProvider;
+
+    fn deref(&self) -> &Self::Target {
+        &self.sp
+    }
+}
+
 struct ServiceIterator<'a, T>
 where
     T: Any + ?Sized,
@@ -331,7 +376,7 @@ mod tests {
         // arrange
         let services = ServiceCollection::new()
             .add(
-                keyed_singleton::<key::Thingy, dyn Thing, Thing1>()
+                singleton_with_key::<key::Thingy, dyn Thing, Thing1>()
                     .from(|_| ServiceRef::new(Thing1::default())),
             )
             .add(singleton::<dyn Thing, Thing1>().from(|_| ServiceRef::new(Thing1::default())))
@@ -368,7 +413,7 @@ mod tests {
         // arrange
         let services = ServiceCollection::new()
             .add(
-                keyed_singleton::<key::Thingy, dyn Thing, Thing3>()
+                singleton_with_key::<key::Thingy, dyn Thing, Thing3>()
                     .from(|_| ServiceRef::new(Thing3::default())),
             )
             .add(singleton::<dyn Thing, Thing1>().from(|_| ServiceRef::new(Thing1::default())))
@@ -490,15 +535,15 @@ mod tests {
 
         collection
             .add(
-                keyed_singleton::<key::Thingies, dyn Thing, Thing1>()
+                singleton_with_key::<key::Thingies, dyn Thing, Thing1>()
                     .from(|_| ServiceRef::new(Thing1::default())),
             )
             .add(
-                keyed_singleton::<key::Thingies, dyn Thing, Thing2>()
+                singleton_with_key::<key::Thingies, dyn Thing, Thing2>()
                     .from(|_| ServiceRef::new(Thing2::default())),
             )
             .add(
-                keyed_singleton::<key::Thingies, dyn Thing, Thing3>()
+                singleton_with_key::<key::Thingies, dyn Thing, Thing3>()
                     .from(|_| ServiceRef::new(Thing3::default())),
             );
 
