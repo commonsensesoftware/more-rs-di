@@ -293,7 +293,7 @@ mod tests {
                     }),
             )
             .add(
-                keyed_transient::<key::Thing2, dyn Thing, Thing2>()
+                transient_with_key::<key::Thing2, dyn Thing, Thing2>()
                     .from(|_| ServiceRef::new(Thing2::default())),
             );
 
@@ -344,7 +344,7 @@ mod tests {
                     }),
             )
             .add(
-                keyed_transient::<key::Thing1, dyn Thing, Thing1>()
+                transient_with_key::<key::Thing1, dyn Thing, Thing1>()
                     .from(|_| ServiceRef::new(Thing1::default())),
             );
 

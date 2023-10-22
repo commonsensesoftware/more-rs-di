@@ -18,7 +18,7 @@ pub fn singleton<TSvc: Any + ?Sized, TImpl>() -> ServiceDescriptorBuilder<TSvc, 
 
 /// Initializes a new keyed singleton service descriptor builder.
 #[inline]
-pub fn keyed_singleton<TKey, TSvc, TImpl>() -> ServiceDescriptorBuilder<TSvc, TImpl>
+pub fn singleton_with_key<TKey, TSvc, TImpl>() -> ServiceDescriptorBuilder<TSvc, TImpl>
 where
     TSvc: Any + ?Sized,
 {
@@ -43,7 +43,7 @@ pub fn singleton_factory<T: Any + ?Sized>(
 ///
 /// * `factory` - The factory method used to create the service
 #[inline]
-pub fn keyed_singleton_factory<TKey, TSvc: Any + ?Sized>(
+pub fn singleton_with_key_factory<TKey, TSvc: Any + ?Sized>(
     factory: fn(&ServiceProvider) -> ServiceRef<TSvc>,
 ) -> ServiceDescriptor {
     Builder::<TSvc, ()>::keyed::<TKey>(ServiceLifetime::Singleton, Type::unknown()).from(factory)
@@ -67,7 +67,7 @@ pub fn scoped<TSvc: Any + ?Sized, TImpl>() -> ServiceDescriptorBuilder<TSvc, TIm
 
 /// Initializes a new scoped keyed service descriptor builder.
 #[inline]
-pub fn keyed_scoped<TKey, TSvc, TImpl>() -> ServiceDescriptorBuilder<TSvc, TImpl>
+pub fn scoped_with_key<TKey, TSvc, TImpl>() -> ServiceDescriptorBuilder<TSvc, TImpl>
 where
     TSvc: Any + ?Sized,
 {
@@ -93,7 +93,7 @@ where
 ///
 /// * `factory` - The factory method used to create the service
 #[inline]
-pub fn keyed_scoped_factory<TKey, TSvc>(
+pub fn scoped_with_key_factory<TKey, TSvc>(
     factory: fn(&ServiceProvider) -> ServiceRef<TSvc>,
 ) -> ServiceDescriptor
 where
@@ -110,7 +110,7 @@ pub fn transient<TSvc: Any + ?Sized, TImpl>() -> ServiceDescriptorBuilder<TSvc, 
 
 /// Initializes a new keyed transient service descriptor builder.
 #[inline]
-pub fn keyed_transient<TKey, TSvc: Any + ?Sized, TImpl>() -> ServiceDescriptorBuilder<TSvc, TImpl> {
+pub fn transient_with_key<TKey, TSvc: Any + ?Sized, TImpl>() -> ServiceDescriptorBuilder<TSvc, TImpl> {
     Builder::keyed::<TKey>(ServiceLifetime::Transient, Type::of::<TImpl>())
 }
 
@@ -133,7 +133,7 @@ where
 ///
 /// * `factory` - The factory method used to create the service
 #[inline]
-pub fn keyed_transient_factory<TKey, TSvc: Any + ?Sized>(
+pub fn transient_with_key_factory<TKey, TSvc: Any + ?Sized>(
     factory: fn(&ServiceProvider) -> ServiceRef<TSvc>,
 ) -> ServiceDescriptor {
     Builder::<TSvc, ()>::keyed::<TKey>(ServiceLifetime::Transient, Type::unknown()).from(factory)
@@ -155,7 +155,7 @@ pub fn transient_as_self<T: Any>() -> ServiceDescriptorBuilder<T, T> {
 ///
 /// This function maps a concrete type to itself rather than a trait
 #[inline]
-pub fn keyed_transient_as_self<TKey, TSvc: Any>() -> ServiceDescriptorBuilder<TSvc, TSvc> {
+pub fn transient_with_key_as_self<TKey, TSvc: Any>() -> ServiceDescriptorBuilder<TSvc, TSvc> {
     Builder::keyed::<TKey>(ServiceLifetime::Transient, Type::of::<TSvc>())
 }
 
