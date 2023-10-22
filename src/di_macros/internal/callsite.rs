@@ -71,8 +71,9 @@ impl CallSite {
                     format!("Expected 1-2 type arguments, but found {}.", count),
                 )),
             }
-        } else if context.type_.path.segments.last().unwrap().ident
-            == Ident::new("ServiceProvider", Span::call_site())
+        } else if context.scoped
+            || context.type_.path.segments.last().unwrap().ident
+                == Ident::new("ServiceProvider", Span::call_site())
         {
             Ok(Box::new(ServiceProviderInjector))
         } else if allow_default {
@@ -137,6 +138,12 @@ impl CallSite {
             } else {
                 if read_only && Self::is_mutable_type(type_) {
                     builder.is_mutable();
+                }
+
+                if type_.path.segments.last().unwrap().ident
+                    == Ident::new("ScopedServiceProvider", Span::call_site())
+                {
+                    builder.is_scoped();
                 }
 
                 builder.has_type(type_);

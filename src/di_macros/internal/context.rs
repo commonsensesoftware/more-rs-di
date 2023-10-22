@@ -7,6 +7,7 @@ pub struct CallSiteContext<'a> {
     pub lazy: bool,
     pub iterator: bool,
     pub mutable: bool,
+    pub scoped: bool,
 }
 
 impl<'a> CallSiteContext<'a> {
@@ -23,6 +24,7 @@ pub struct CallSiteContextBuilder<'a> {
     lazy: bool,
     iterator: bool,
     mutable: bool,
+    scoped: bool,
 }
 
 impl<'a> CallSiteContextBuilder<'a> {
@@ -51,6 +53,10 @@ impl<'a> CallSiteContextBuilder<'a> {
         self.mutable = true
     }
 
+    pub fn is_scoped(&mut self) {
+        self.scoped = true
+    }
+
     pub fn build(self) -> CallSiteContext<'a> {
         CallSiteContext {
             type_: self.type_.unwrap(),
@@ -59,6 +65,7 @@ impl<'a> CallSiteContextBuilder<'a> {
             lazy: self.lazy,
             iterator: self.iterator,
             mutable: self.mutable,
+            scoped: self.scoped,
         }
     }
 }
