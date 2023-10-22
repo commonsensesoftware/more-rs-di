@@ -16,7 +16,7 @@ A `trait` or `struct` can be used as the injected type.
 
 This crate provides the following features:
 
-- _Default_ - Provides the abstractions for dependency injection, plus the **builder** and **inject** features
+- _default_ - Provides the abstractions for dependency injection, plus the **builder** and **inject** features
 - **builder** - Provides utility functions for configuring service descriptors
 - **async** - Provides features for using dependencies in an asynchronous context
 - **inject** - Provides constructor injection
