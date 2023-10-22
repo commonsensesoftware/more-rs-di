@@ -423,3 +423,21 @@ fn inject_should_resolve_keyed_mut() {
     // assert
     // no panic!
 }
+
+#[test]
+fn inject_should_support_multiple_traits() {
+    // arrange
+    let provider = ServiceCollection::new()
+        .add(MultiService::singleton())
+        .add(transient_factory::<dyn Service1>(|sp| sp.get_required::<MultiService>()))
+        .add(transient_factory::<dyn Service2>(|sp| sp.get_required::<MultiService>()))
+        .build_provider()
+        .unwrap();
+
+    // act
+    let _svc1 = provider.get_required::<dyn Service1>();
+    let _svc2 = provider.get_required::<dyn Service2>();
+
+    // assert
+    // no panic!
+}
