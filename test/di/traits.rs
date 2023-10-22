@@ -255,3 +255,15 @@ impl MoreThingies {
         self.things.len()
     }
 }
+
+
+pub trait Service1 { }
+
+pub trait Service2 { }
+
+#[injectable]
+pub struct MultiService;
+
+impl Service1 for MultiService { }
+
+impl Service2 for MultiService { }
