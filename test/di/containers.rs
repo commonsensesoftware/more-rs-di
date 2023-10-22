@@ -1,5 +1,7 @@
+#![allow(dead_code)]
+
 use crate::traits::*;
-use di::{inject, injectable, ServiceProvider, ServiceRef};
+use di::{inject, injectable, ServiceProvider, ServiceRef, ScopedServiceProvider};
 
 pub struct Container {
     provider: ServiceProvider,
@@ -33,6 +35,17 @@ impl ScopedContainer {
         }
     }
 
+    pub fn foo(&self) -> ServiceRef<dyn Foo> {
+        self.provider.get_required::<dyn Foo>()
+    }
+}
+
+#[injectable]
+pub struct ScopedContainer2 {
+    provider: ScopedServiceProvider
+}
+
+impl ScopedContainer2 {
     pub fn foo(&self) -> ServiceRef<dyn Foo> {
         self.provider.get_required::<dyn Foo>()
     }
