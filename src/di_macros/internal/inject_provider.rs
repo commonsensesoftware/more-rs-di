@@ -4,9 +4,13 @@ use quote::quote;
 pub struct ServiceProviderInjector;
 
 impl InjectionStrategy for ServiceProviderInjector {
-    fn inject(&self, _context: &CallSiteContext) -> InjectedCallSite {
+    fn inject(&self, context: &CallSiteContext) -> InjectedCallSite {
         InjectedCallSite {
-            resolve: quote! { sp.clone() },
+            resolve: if context.scoped {
+                quote! { sp.into() } // ServiceProvider.into() -> ScopedServiceProvider
+            } else {
+                quote! { sp.clone() } // ServiceProvider.clone() -> ServiceProvider
+            },
             dependency: None,
         }
     }
