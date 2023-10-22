@@ -144,17 +144,7 @@ impl ServiceCollection {
     ///
     /// * `descriptor` - The replacement [service descriptor](struct.ServiceDescriptor.html).
     pub fn try_replace<T: Into<ServiceDescriptor>>(&mut self, descriptor: T) -> &mut Self {
-        let new_item = descriptor.into();
-        let service_type = new_item.service_type();
-
-        for item in &self.items {
-            if item.service_type() == service_type {
-                return self;
-            }
-        }
-
-        self.items.push(new_item);
-        self
+        self.try_add(descriptor)
     }
 
     /// Removes all specified descriptors of the specified type.
@@ -173,27 +163,27 @@ impl ServiceCollection {
     /// Builds and returns a new [service provider](struct.ServiceProvider.html).
     pub fn build_provider(&self) -> Result<ServiceProvider, ValidationError> {
         if let Err(error) = validate(self) {
-            Err(error)
-        } else {
-            let mut services = HashMap::with_capacity(self.items.len());
-
-            for item in &self.items {
-                let key = item.service_type().clone();
-                let descriptors = services.entry(key).or_insert_with(Vec::new);
-
-                // note: dependencies are only interesting for validation. after a ServiceProvider
-                // is created, no further validation occurs. prevent copying unnecessary memory
-                // and allow it to potentially be freed if the ServiceCollection is dropped.
-                descriptors.push(item.clone_with(false));
-            }
-
-            for values in services.values_mut() {
-                values.shrink_to_fit();
-            }
-
-            services.shrink_to_fit();
-            Ok(ServiceProvider::new(services))
+            return Err(error);
         }
+
+        let mut services = HashMap::with_capacity(self.items.len());
+
+        for item in &self.items {
+            let key = item.service_type().clone();
+            let descriptors = services.entry(key).or_insert_with(Vec::new);
+
+            // note: dependencies are only interesting for validation. after a ServiceProvider
+            // is created, no further validation occurs. prevent copying unnecessary memory
+            // and allow it to potentially be freed if the ServiceCollection is dropped.
+            descriptors.push(item.clone_with(false));
+        }
+
+        for values in services.values_mut() {
+            values.shrink_to_fit();
+        }
+
+        services.shrink_to_fit();
+        Ok(ServiceProvider::new(services))
     }
 
     /// Gets a read-only iterator for the collection
