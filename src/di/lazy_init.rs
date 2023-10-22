@@ -1,6 +1,6 @@
-use crate::{KeyedServiceRef, ServiceProvider, ServiceRef, ServiceRefMut, KeyedServiceRefMut};
+use crate::{KeyedServiceRef, KeyedServiceRefMut, ServiceProvider, ServiceRef, ServiceRefMut};
 use spin::Once;
-use std::any::Any;
+use std::{any::Any, sync::Mutex};
 
 /// Represents a holder for lazily-initialized service resolution.
 pub struct Lazy<T> {
@@ -85,7 +85,10 @@ pub fn exactly_one_with_key<TKey, TSvc: Any + ?Sized>(
 pub fn exactly_one_with_key_mut<TKey, TSvc: Any + ?Sized>(
     services: ServiceProvider,
 ) -> Lazy<KeyedServiceRefMut<TKey, TSvc>> {
-    Lazy::new(services, ServiceProvider::get_required_by_key_mut::<TKey, TSvc>)
+    Lazy::new(
+        services,
+        ServiceProvider::get_required_by_key_mut::<TKey, TSvc>,
+    )
 }
 
 /// Creates and returns a holder for a lazily-initialized, optional service.
@@ -205,8 +208,54 @@ pub fn empty_with_key<TKey, TSvc: Any + ?Sized>() -> Lazy<Vec<KeyedServiceRef<TK
     Lazy::new(ServiceProvider::default(), to_keyed_vec::<TKey, TSvc>)
 }
 
+/// Creates and returns a holder from an existing instance.
+pub fn init<T: Any + ?Sized>(instance: Box<T>) -> Lazy<ServiceRef<T>> {
+    Lazy {
+        resolve: |_| unimplemented!(),
+        services: ServiceProvider::default(),
+        value: Once::initialized(ServiceRef::from(instance)),
+    }
+}
+
+/// Creates and returns a holder from an existing, mutable instance.
+pub fn init_mut<T: Any + ?Sized>(instance: Box<Mutex<T>>) -> Lazy<ServiceRefMut<T>> {
+    Lazy {
+        resolve: |_| unimplemented!(),
+        services: ServiceProvider::default(),
+        value: Once::initialized(ServiceRefMut::from(instance)),
+    }
+}
+
+/// Creates and returns a holder from an existing instance with a key.
+pub fn init_with_key<TKey, TSvc: Any + ?Sized>(
+    instance: Box<TSvc>,
+) -> Lazy<KeyedServiceRef<TKey, TSvc>> {
+    Lazy {
+        resolve: |_| unimplemented!(),
+        services: ServiceProvider::default(),
+        value: Once::initialized(KeyedServiceRef::<TKey, TSvc>::new(ServiceRef::from(
+            instance,
+        ))),
+    }
+}
+
+/// Creates and returns a holder from an existing, mutable instance with a key.
+pub fn init_with_key_mut<TKey, TSvc: Any + ?Sized>(
+    instance: Box<Mutex<TSvc>>,
+) -> Lazy<KeyedServiceRefMut<TKey, TSvc>> {
+    Lazy {
+        resolve: |_| unimplemented!(),
+        services: ServiceProvider::default(),
+        value: Once::initialized(KeyedServiceRefMut::<TKey, TSvc>::new(ServiceRef::from(
+            instance,
+        ))),
+    }
+}
+
 #[cfg(test)]
 mod tests {
+
+    use std::sync::Mutex;
 
     use crate::{lazy::*, *};
 
@@ -247,6 +296,18 @@ mod tests {
                 Some(bar) => Some(bar.echo()),
                 _ => None,
             }
+        }
+    }
+
+    trait IPityTheFoo {
+        fn speak(&self) -> &str;
+    }
+
+    struct FooImpl;
+
+    impl IPityTheFoo for FooImpl {
+        fn speak(&self) -> &str {
+            "I pity the foo!"
         }
     }
 
@@ -355,5 +416,53 @@ mod tests {
         // assert
         assert!(ServiceRef::ptr_eq(foo.bar.value(), &bar1));
         assert!(ServiceRef::ptr_eq(&bar1, &bar2));
+    }
+
+    #[test]
+    fn init_should_create_lazy_from_instance() {
+        // arrange
+        let instance: Box<dyn IPityTheFoo> = Box::new(FooImpl);
+
+        // act
+        let lazy = lazy::init(instance);
+
+        // assert
+        assert_eq!(lazy.value().speak(), "I pity the foo!");
+    }
+
+    #[test]
+    fn init_with_key_should_create_lazy_from_instance() {
+        // arrange
+        let instance = FooImpl;
+
+        // act
+        let lazy = lazy::init_with_key::<Bar, dyn IPityTheFoo>(Box::new(instance));
+
+        // assert
+        assert_eq!(lazy.value().speak(), "I pity the foo!");
+    }
+
+    #[test]
+    fn init_mut_should_create_lazy_from_instance() {
+        // arrange
+        let instance: Box<Mutex<dyn IPityTheFoo>> = Box::new(Mutex::new(FooImpl));
+
+        // act
+        let lazy = lazy::init_mut(instance);
+
+        // assert
+        assert_eq!(lazy.value().lock().unwrap().speak(), "I pity the foo!");
+    }
+
+    #[test]
+    fn init_with_key_mut_should_create_lazy_from_instance() {
+        // arrange
+        let instance: Box<Mutex<dyn IPityTheFoo>> = Box::new(Mutex::new(FooImpl));
+
+        // act
+        let lazy = lazy::init_with_key_mut::<Bar, _>(instance);
+
+        // assert
+        assert_eq!(lazy.value().lock().unwrap().speak(), "I pity the foo!");
     }
 }
