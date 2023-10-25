@@ -22,6 +22,7 @@ This crate provides the following features:
 - **async** - Provides features for using dependencies in an asynchronous context
 - **inject** - Code-generates common injection scenarios
 - **lazy** - Provides features for lazy-initialized service resolution
+- **fmt** - Provides features for output formatting
 
 ## Supported Lifetimes
 
