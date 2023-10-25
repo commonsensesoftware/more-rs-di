@@ -1,6 +1,11 @@
-use crate::{validate, ServiceDescriptor, ServiceProvider, Type, ValidationError};
+use crate::{
+    validate, ServiceCardinality, ServiceDescriptor, ServiceLifetime, ServiceProvider, Type,
+    ValidationError,
+};
+use colored::Colorize;
 use std::any::Any;
 use std::collections::HashMap;
+use std::fmt::{Display, Formatter, Result as FormatResult, Write};
 use std::iter::{DoubleEndedIterator, ExactSizeIterator};
 use std::ops::Index;
 use std::slice::{Iter, IterMut};
@@ -227,6 +232,469 @@ impl Index<usize> for ServiceCollection {
     fn index(&self, index: usize) -> &Self::Output {
         &self.items[index]
     }
+}
+
+impl std::fmt::Debug for ServiceCollection {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FormatResult {
+        print(self, TextRenderer::default(), f)
+    }
+}
+
+#[cfg(feature = "fmt")]
+impl Display for ServiceCollection {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FormatResult {
+        print(self, TerminalRenderer::default(), f)
+    }
+}
+
+trait Renderer {
+    fn write(&mut self, ch: char, f: &mut Formatter<'_>) -> FormatResult {
+        f.write_char(ch)
+    }
+
+    fn write_str<T: AsRef<str>>(&mut self, text: T, f: &mut Formatter<'_>) -> FormatResult {
+        f.write_str(text.as_ref())
+    }
+
+    fn service<T: AsRef<str>>(&mut self, text: T, f: &mut Formatter<'_>) -> FormatResult {
+        f.write_str(text.as_ref())
+    }
+
+    fn implementation<T: AsRef<str>>(&mut self, text: T, f: &mut Formatter<'_>) -> FormatResult {
+        f.write_str(text.as_ref())
+    }
+
+    fn keyword<T: AsRef<str>>(&mut self, text: T, f: &mut Formatter<'_>) -> FormatResult {
+        f.write_str(text.as_ref())
+    }
+
+    fn info<T: AsRef<str>>(&mut self, text: T, f: &mut Formatter<'_>) -> FormatResult {
+        f.write_str(text.as_ref())
+    }
+
+    fn warn<T: AsRef<str>>(&mut self, text: T, f: &mut Formatter<'_>) -> FormatResult {
+        f.write_str(text.as_ref())
+    }
+
+    fn error<T: AsRef<str>>(&mut self, text: T, f: &mut Formatter<'_>) -> FormatResult {
+        f.write_str(text.as_ref())
+    }
+
+    fn accent<T: AsRef<str>>(&mut self, text: T, f: &mut Formatter<'_>) -> FormatResult {
+        f.write_str(text.as_ref())
+    }
+}
+
+#[derive(Default)]
+struct TextRenderer;
+
+impl Renderer for TextRenderer {}
+
+#[cfg(feature = "fmt")]
+#[derive(Default)]
+struct TerminalRenderer;
+
+#[cfg(feature = "fmt")]
+impl Renderer for TerminalRenderer {
+    fn write(&mut self, ch: char, f: &mut Formatter<'_>) -> FormatResult {
+        f.write_char(ch)
+    }
+
+    fn write_str<T: AsRef<str>>(&mut self, text: T, f: &mut Formatter<'_>) -> FormatResult {
+        f.write_str(text.as_ref())
+    }
+
+    fn keyword<T: AsRef<str>>(&mut self, text: T, f: &mut Formatter<'_>) -> FormatResult {
+        text.as_ref().truecolor(75, 154, 214).fmt(f)
+    }
+
+    fn service<T: AsRef<str>>(&mut self, text: T, f: &mut Formatter<'_>) -> FormatResult {
+        text.as_ref().truecolor(158, 211, 163).fmt(f)
+    }
+
+    fn implementation<T: AsRef<str>>(&mut self, text: T, f: &mut Formatter<'_>) -> FormatResult {
+        text.as_ref().truecolor(78, 201, 176).fmt(f)
+    }
+
+    fn info<T: AsRef<str>>(&mut self, text: T, f: &mut Formatter<'_>) -> FormatResult {
+        text.as_ref().truecolor(118, 118, 118).fmt(f)
+    }
+
+    fn warn<T: AsRef<str>>(&mut self, text: T, f: &mut Formatter<'_>) -> FormatResult {
+        text.as_ref().truecolor(220, 220, 170).fmt(f)
+    }
+
+    fn error<T: AsRef<str>>(&mut self, text: T, f: &mut Formatter<'_>) -> FormatResult {
+        text.as_ref().truecolor(231, 72, 86).fmt(f)
+    }
+
+    fn accent<T: AsRef<str>>(&mut self, text: T, f: &mut Formatter<'_>) -> FormatResult {
+        text.as_ref().truecolor(218, 112, 179).fmt(f)
+    }
+}
+
+enum PrintItem<'a> {
+    One(&'a ServiceDescriptor),
+    Many((&'a Type, &'a str, &'a Vec<&'a ServiceDescriptor>)),
+    Warning((&'a Type, &'a str)),
+    Error((&'a Type, &'a str)),
+}
+
+struct PrintContext<'a> {
+    scope: ServiceLifetime,
+    visited: Vec<&'a ServiceDescriptor>,
+    lookup: &'a HashMap<&'a Type, Vec<&'a ServiceDescriptor>>,
+}
+
+impl<'a> PrintContext<'a> {
+    fn new(lookup: &'a HashMap<&'a Type, Vec<&'a ServiceDescriptor>>) -> Self {
+        Self {
+            scope: ServiceLifetime::Transient,
+            visited: Vec::new(),
+            lookup,
+        }
+    }
+
+    fn reset(&mut self, descriptor: &'a ServiceDescriptor) {
+        self.scope = descriptor.lifetime();
+        self.visited.clear();
+        self.visited.push(descriptor);
+    }
+
+    fn lookup(&self, key: &Type) -> Option<&'a Vec<&'a ServiceDescriptor>> {
+        self.lookup.get(key)
+    }
+
+    fn enter(&mut self, descriptor: &'a ServiceDescriptor) {
+        if self.scope != ServiceLifetime::Singleton
+            && descriptor.lifetime() == ServiceLifetime::Singleton
+        {
+            self.scope = ServiceLifetime::Singleton;
+        }
+
+        self.visited.push(descriptor);
+    }
+
+    fn exit(&mut self) {
+        self.visited.pop();
+
+        for item in self.visited.iter().rev() {
+            self.scope = item.lifetime();
+
+            if self.scope == ServiceLifetime::Singleton {
+                return;
+            }
+        }
+
+        self.scope = self
+            .visited
+            .last()
+            .map_or(ServiceLifetime::Transient, |s| s.lifetime());
+    }
+
+    fn is_circular_ref(&self, descriptor: &ServiceDescriptor) -> bool {
+        for item in self.visited.iter().rev() {
+            if item.service_type() == descriptor.service_type() {
+                return true;
+            }
+        }
+
+        false
+    }
+
+    fn is_invalid_lifetime(&self, descriptor: &ServiceDescriptor) -> bool {
+        self.scope == ServiceLifetime::Singleton && descriptor.lifetime() == ServiceLifetime::Scoped
+    }
+}
+
+fn print<R: Renderer>(
+    services: &ServiceCollection,
+    mut renderer: R,
+    f: &mut Formatter<'_>,
+) -> FormatResult {
+    let count = services.items.len();
+
+    if count == 0 {
+        return Ok(());
+    }
+
+    let last = count - 1;
+    let mut branches = Vec::<char>::new();
+    let mut lookup = HashMap::with_capacity(count);
+
+    for item in &services.items {
+        let key = item.service_type();
+        let descriptors = lookup.entry(key).or_insert_with(Vec::new);
+        descriptors.push(item);
+    }
+
+    let mut context = PrintContext::new(&lookup);
+
+    branches.push('│');
+    branches.push(' ');
+
+    for (index, descriptor) in services.items.iter().enumerate() {
+        if index == last {
+            renderer.write('└', f)?;
+            branches[0] = ' ';
+        } else if index == 0 {
+            renderer.write('┌', f)?;
+        } else {
+            renderer.write('├', f)?;
+        }
+
+        renderer.write(' ', f)?;
+        context.reset(descriptor);
+
+        print_item(
+            PrintItem::One(descriptor),
+            ServiceCardinality::ExactlyOne,
+            &mut context,
+            0,
+            &mut branches,
+            f,
+            &mut renderer,
+        )?;
+
+        if index != last {
+            renderer.write_str("│\n", f)?;
+        }
+    }
+
+    Ok(())
+}
+
+fn print_item<R: Renderer>(
+    item: PrintItem,
+    cardinality: ServiceCardinality,
+    context: &mut PrintContext,
+    depth: usize,
+    branches: &mut Vec<char>,
+    formatter: &mut Formatter,
+    renderer: &mut R,
+) -> FormatResult {
+    match item {
+        PrintItem::One(sd) => {
+            append_service(sd.service_type(), cardinality, renderer, formatter)?;
+
+            if context.is_invalid_lifetime(sd) {
+                renderer.error(
+                    format!(
+                        "⧗ {} [{:?}]",
+                        sd.implementation_type().name(),
+                        sd.lifetime()
+                    ),
+                    formatter,
+                )?;
+            } else {
+                append_implementation(sd, renderer, formatter)?;
+            }
+        }
+        PrintItem::Many((ty, impl_count, _)) => {
+            append_service(ty, cardinality, renderer, formatter)?;
+            renderer.write_str(impl_count, formatter)?;
+        }
+        PrintItem::Warning((sd, msg)) => {
+            append_service(sd, cardinality, renderer, formatter)?;
+            renderer.warn(msg, formatter)?;
+        }
+        PrintItem::Error((sd, msg)) => {
+            append_service(sd, cardinality, renderer, formatter)?;
+            renderer.error(msg, formatter)?;
+        }
+    }
+
+    renderer.write('\n', formatter)?;
+
+    match item {
+        PrintItem::One(child) => {
+            traverse_dependencies(child, context, depth, branches, formatter, renderer)
+        }
+        PrintItem::Many((_, _, children)) => {
+            traverse_services(children, context, depth, branches, formatter, renderer)
+        }
+        _ => Ok(()),
+    }
+}
+
+fn append_service<R: Renderer>(
+    ty: &Type,
+    cardinality: ServiceCardinality,
+    renderer: &mut R,
+    f: &mut Formatter,
+) -> FormatResult {
+    let (type_, key) = Type::deconstruct(ty);
+
+    if type_.starts_with("dyn") {
+        renderer.keyword("dyn", f)?;
+        renderer.write(' ', f)?;
+        renderer.service(&type_[(type_.char_indices().nth(4).unwrap().0)..], f)?;
+    } else {
+        renderer.implementation(type_, f)?;
+    }
+
+    if cardinality == ServiceCardinality::ZeroOrMore {
+        renderer.accent("*", f)?;
+    } else if cardinality == ServiceCardinality::ZeroOrOne {
+        renderer.accent("?", f)?;
+    }
+
+    if let Some(name) = key {
+        renderer.write(' ', f)?;
+        renderer.info("[⚿ ", f)?;
+        renderer.info(name, f)?;
+        renderer.info("]", f)?;
+    }
+
+    renderer.write_str(" → ", f)
+}
+
+fn append_implementation<R: Renderer>(
+    item: &ServiceDescriptor,
+    renderer: &mut R,
+    f: &mut Formatter,
+) -> FormatResult {
+    renderer.implementation(item.implementation_type().name(), f)?;
+    renderer.write(' ', f)?;
+
+    match item.lifetime() {
+        ServiceLifetime::Scoped => renderer.info("[Scoped]", f),
+        ServiceLifetime::Singleton => renderer.info("[Singleton]", f),
+        ServiceLifetime::Transient => renderer.info("[Transient]", f),
+    }
+}
+
+fn indent<R: Renderer>(
+    branches: &mut Vec<char>,
+    formatter: &mut Formatter,
+    renderer: &mut R,
+    last: bool,
+) -> FormatResult {
+    for i in 0..branches.len() {
+        renderer.write(branches[i], formatter)?;
+    }
+
+    if last {
+        renderer.write('└', formatter)?;
+    } else {
+        renderer.write('├', formatter)?;
+    }
+
+    renderer.write(' ', formatter)?;
+
+    if last {
+        branches.push(' ');
+    } else {
+        branches.push('│');
+    }
+
+    branches.push(' ');
+    Ok(())
+}
+
+fn unindent(branches: &mut Vec<char>) {
+    branches.pop();
+    branches.pop();
+}
+
+fn traverse_dependencies<R: Renderer>(
+    descriptor: &ServiceDescriptor,
+    context: &mut PrintContext,
+    depth: usize,
+    branches: &mut Vec<char>,
+    formatter: &mut Formatter,
+    renderer: &mut R,
+) -> FormatResult {
+    for (index, dependency) in descriptor.dependencies().iter().enumerate() {
+        let type_ = dependency.injected_type();
+        let cardinality = dependency.cardinality();
+        let last = index == descriptor.dependencies().len() - 1;
+
+        indent(branches, formatter, renderer, last)?;
+
+        if let Some(children) = context.lookup(type_) {
+            if cardinality == ServiceCardinality::ZeroOrMore {
+                print_item(
+                    PrintItem::Many((type_, &format!("Count: {}", children.len()), children)),
+                    cardinality,
+                    context,
+                    depth + 1,
+                    branches,
+                    formatter,
+                    renderer,
+                )?;
+            } else {
+                for child in children {
+                    let msg;
+                    let item = if context.is_circular_ref(child) {
+                        msg = format!("♺ {}", child.service_type().name());
+                        PrintItem::Error((child.service_type(), &msg))
+                    } else {
+                        PrintItem::One(child)
+                    };
+
+                    context.enter(child);
+                    print_item(
+                        item,
+                        cardinality,
+                        context,
+                        depth + 1,
+                        branches,
+                        formatter,
+                        renderer,
+                    )?;
+                    context.exit();
+                }
+            }
+        } else {
+            let item = match cardinality {
+                ServiceCardinality::ExactlyOne => PrintItem::Error((type_, "‼ Missing")),
+                ServiceCardinality::ZeroOrOne => PrintItem::Warning((type_, "▲ Missing")),
+                ServiceCardinality::ZeroOrMore => PrintItem::Warning((type_, "▲ Count: 0")),
+            };
+
+            print_item(
+                item,
+                cardinality,
+                context,
+                depth + 1,
+                branches,
+                formatter,
+                renderer,
+            )?;
+        }
+
+        unindent(branches);
+    }
+
+    Ok(())
+}
+
+fn traverse_services<R: Renderer>(
+    descriptors: &Vec<&ServiceDescriptor>,
+    context: &mut PrintContext,
+    depth: usize,
+    branches: &mut Vec<char>,
+    formatter: &mut Formatter,
+    renderer: &mut R,
+) -> FormatResult {
+    for (index, descriptor) in descriptors.iter().enumerate() {
+        let last = index == descriptors.len() - 1;
+
+        indent(branches, formatter, renderer, last)?;
+        print_item(
+            PrintItem::One(descriptor),
+            ServiceCardinality::ExactlyOne,
+            context,
+            depth + 1,
+            branches,
+            formatter,
+            renderer,
+        )?;
+        unindent(branches);
+    }
+
+    Ok(())
 }
 
 #[cfg(test)]
