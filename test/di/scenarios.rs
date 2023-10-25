@@ -378,7 +378,6 @@ fn inject_should_implement_many_for_struct_field() {
     assert_eq!(thingies.count(), 2);
 }
 
-
 #[test]
 fn inject_should_resolve_keyed() {
     // arrange
@@ -413,7 +412,11 @@ fn inject_should_resolve_mut() {
 fn inject_should_resolve_keyed_mut() {
     // arrange
     let provider = ServiceCollection::new()
-        .add(traits::Thing1::transient().with_key::<key::Thing2>().as_mut())
+        .add(
+            traits::Thing1::transient()
+                .with_key::<key::Thing2>()
+                .as_mut(),
+        )
         .build_provider()
         .unwrap();
 
@@ -429,8 +432,12 @@ fn inject_should_support_multiple_traits() {
     // arrange
     let provider = ServiceCollection::new()
         .add(MultiService::singleton())
-        .add(transient_factory::<dyn Service1>(|sp| sp.get_required::<MultiService>()))
-        .add(transient_factory::<dyn Service2>(|sp| sp.get_required::<MultiService>()))
+        .add(transient_factory::<dyn Service1>(|sp| {
+            sp.get_required::<MultiService>()
+        }))
+        .add(transient_factory::<dyn Service2>(|sp| {
+            sp.get_required::<MultiService>()
+        }))
         .build_provider()
         .unwrap();
 
