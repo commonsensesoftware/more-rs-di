@@ -1,3 +1,4 @@
+use crate::{ServiceProvider, ServiceRef};
 use std::any::type_name;
 use std::collections::hash_map::DefaultHasher;
 use std::fmt::{Display, Formatter, Result as FormatResult};
@@ -25,15 +26,24 @@ impl Type {
         )
     }
 
+    /// Initializes a new instance of a type for a factory function based
+    /// on the specified return type.
+    pub fn factory_of<TSvc: ?Sized>() -> Self {
+        Type::new(
+            type_name::<fn(&ServiceProvider) -> ServiceRef<TSvc>>().to_string(),
+            None,
+        )
+    }
+
     /// Initializes a new instance for an unknown type.
     pub fn unknown() -> Self {
         Self::of::<()>()
     }
 
     /// Creates and returns a new type based on the specified key.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `key` - The type to use as a key
     pub fn with_key(&self, key: &Self) -> Self {
         Type::new(self.name.clone(), Some(key.name.clone()))

@@ -34,7 +34,7 @@ where
 pub fn singleton_factory<T: Any + ?Sized>(
     factory: fn(&ServiceProvider) -> ServiceRef<T>,
 ) -> ServiceDescriptor {
-    Builder::<T, ()>::new(ServiceLifetime::Singleton, Type::unknown()).from(factory)
+    Builder::<T, ()>::new(ServiceLifetime::Singleton, Type::factory_of::<T>()).from(factory)
 }
 
 /// Initializes a new keyed singleton service descriptor.
@@ -46,7 +46,7 @@ pub fn singleton_factory<T: Any + ?Sized>(
 pub fn singleton_with_key_factory<TKey, TSvc: Any + ?Sized>(
     factory: fn(&ServiceProvider) -> ServiceRef<TSvc>,
 ) -> ServiceDescriptor {
-    Builder::<TSvc, ()>::keyed::<TKey>(ServiceLifetime::Singleton, Type::unknown()).from(factory)
+    Builder::<TSvc, ()>::keyed::<TKey>(ServiceLifetime::Singleton, Type::factory_of::<TSvc>()).from(factory)
 }
 
 /// Initializes a new singleton service descriptor builder.
@@ -84,7 +84,7 @@ pub fn scoped_factory<T>(factory: fn(&ServiceProvider) -> ServiceRef<T>) -> Serv
 where
     T: Any + ?Sized,
 {
-    Builder::<T, ()>::new(ServiceLifetime::Scoped, Type::unknown()).from(factory)
+    Builder::<T, ()>::new(ServiceLifetime::Scoped, Type::factory_of::<T>()).from(factory)
 }
 
 /// Initializes a new keyed scoped service descriptor.
@@ -99,7 +99,7 @@ pub fn scoped_with_key_factory<TKey, TSvc>(
 where
     TSvc: Any + ?Sized,
 {
-    Builder::<TSvc, ()>::keyed::<TKey>(ServiceLifetime::Scoped, Type::unknown()).from(factory)
+    Builder::<TSvc, ()>::keyed::<TKey>(ServiceLifetime::Scoped, Type::factory_of::<TSvc>()).from(factory)
 }
 
 /// Initializes a new transient service descriptor builder.
@@ -124,7 +124,7 @@ pub fn transient_factory<T>(factory: fn(&ServiceProvider) -> ServiceRef<T>) -> S
 where
     T: Any + ?Sized,
 {
-    Builder::<T, ()>::new(ServiceLifetime::Transient, Type::unknown()).from(factory)
+    Builder::<T, ()>::new(ServiceLifetime::Transient, Type::factory_of::<T>()).from(factory)
 }
 
 /// Initializes a new keyed transient service descriptor.
@@ -136,7 +136,7 @@ where
 pub fn transient_with_key_factory<TKey, TSvc: Any + ?Sized>(
     factory: fn(&ServiceProvider) -> ServiceRef<TSvc>,
 ) -> ServiceDescriptor {
-    Builder::<TSvc, ()>::keyed::<TKey>(ServiceLifetime::Transient, Type::unknown()).from(factory)
+    Builder::<TSvc, ()>::keyed::<TKey>(ServiceLifetime::Transient, Type::factory_of::<TSvc>()).from(factory)
 }
 
 /// Initializes a new transient service descriptor builder.
