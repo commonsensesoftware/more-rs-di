@@ -2,7 +2,6 @@ use crate::{
     ServiceCardinality, ServiceCollection, ServiceDependency, ServiceDescriptor, ServiceLifetime,
     Type,
 };
-use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use std::fmt::{Display, Formatter};
 
@@ -71,21 +70,21 @@ impl std::error::Error for ValidationError {
 }
 
 trait ValidationRule<'a> {
-    fn evaluate(&self, descriptor: &'a ServiceDescriptor, results: &mut Vec<ValidationResult>);
+    fn evaluate(&mut self, descriptor: &'a ServiceDescriptor, results: &mut Vec<ValidationResult>);
 }
 
 struct MissingRequiredType<'a> {
-    lookup: &'a HashMap<&'a Type, &'a ServiceDescriptor>,
+    lookup: &'a HashMap<&'a Type, Vec<&'a ServiceDescriptor>>,
 }
 
 impl<'a> MissingRequiredType<'a> {
-    fn new(lookup: &'a HashMap<&'a Type, &'a ServiceDescriptor>) -> Self {
+    fn new(lookup: &'a HashMap<&'a Type, Vec<&'a ServiceDescriptor>>) -> Self {
         Self { lookup }
     }
 }
 
 impl<'a> ValidationRule<'a> for MissingRequiredType<'a> {
-    fn evaluate(&self, descriptor: &'a ServiceDescriptor, results: &mut Vec<ValidationResult>) {
+    fn evaluate(&mut self, descriptor: &'a ServiceDescriptor, results: &mut Vec<ValidationResult>) {
         for dependency in descriptor.dependencies() {
             if dependency.cardinality() == ServiceCardinality::ExactlyOne
                 && !self.lookup.contains_key(dependency.injected_type())
@@ -101,44 +100,43 @@ impl<'a> ValidationRule<'a> for MissingRequiredType<'a> {
 }
 
 struct CircularDependency<'a> {
-    lookup: &'a HashMap<&'a Type, &'a ServiceDescriptor>,
-    visited: RefCell<HashSet<&'a Type>>,
-    queue: RefCell<Vec<&'a ServiceDependency>>,
+    lookup: &'a HashMap<&'a Type, Vec<&'a ServiceDescriptor>>,
+    visited: HashSet<&'a Type>,
+    queue: Vec<&'a ServiceDependency>,
 }
 
 impl<'a> CircularDependency<'a> {
-    fn new(lookup: &'a HashMap<&'a Type, &'a ServiceDescriptor>) -> Self {
+    fn new(lookup: &'a HashMap<&'a Type, Vec<&'a ServiceDescriptor>>) -> Self {
         Self {
             lookup,
-            visited: RefCell::new(HashSet::new()),
-            queue: RefCell::new(Vec::new()),
+            visited: HashSet::new(),
+            queue: Vec::new(),
         }
     }
 
     fn check_dependency_graph(
-        &self,
+        &mut self,
         root: &'a ServiceDescriptor,
         dependency: &'a ServiceDependency,
-        visited: &mut HashSet<&'a Type>,
         results: &mut Vec<ValidationResult>,
     ) {
-        let mut queue = self.queue.borrow_mut();
+        self.queue.clear();
+        self.queue.push(dependency);
 
-        queue.clear();
-        queue.push(dependency);
+        while let Some(current) = self.queue.pop() {
+            if let Some(descriptors) = self.lookup.get(current.injected_type()) {
+                for descriptor in descriptors {
+                    if self.visited.insert(descriptor.service_type()) {
+                        self.queue.extend(descriptor.dependencies());
+                    }
 
-        while let Some(current) = queue.pop() {
-            if let Some(descriptor) = self.lookup.get(current.injected_type()) {
-                if visited.insert(descriptor.service_type()) {
-                    queue.extend(descriptor.dependencies());
-                }
-
-                if descriptor.service_type() == root.service_type() {
-                    results.push(ValidationResult::fail(format!(
-                        "A circular dependency was detected for service {} on service '{}'",
-                        expand_type(descriptor.service_type()),
-                        root.implementation_type().name()
-                    )));
+                    if descriptor.service_type() == root.service_type() {
+                        results.push(ValidationResult::fail(format!(
+                            "A circular dependency was detected for service {} on service '{}'",
+                            expand_type(descriptor.service_type()),
+                            root.implementation_type().name()
+                        )));
+                    }
                 }
             }
         }
@@ -146,64 +144,62 @@ impl<'a> CircularDependency<'a> {
 }
 
 impl<'a> ValidationRule<'a> for CircularDependency<'a> {
-    fn evaluate(&self, descriptor: &'a ServiceDescriptor, results: &mut Vec<ValidationResult>) {
-        let mut visited = self.visited.borrow_mut();
-
+    fn evaluate(&mut self, descriptor: &'a ServiceDescriptor, results: &mut Vec<ValidationResult>) {
         for dependency in descriptor.dependencies() {
-            visited.clear();
-            visited.insert(descriptor.service_type());
-            self.check_dependency_graph(descriptor, dependency, &mut visited, results);
+            self.visited.clear();
+            self.visited.insert(descriptor.service_type());
+            self.check_dependency_graph(descriptor, dependency, results);
         }
     }
 }
 
 struct SingletonDependsOnScoped<'a> {
-    lookup: &'a HashMap<&'a Type, &'a ServiceDescriptor>,
-    visited: RefCell<HashSet<&'a Type>>,
-    queue: RefCell<Vec<&'a ServiceDescriptor>>,
+    lookup: &'a HashMap<&'a Type, Vec<&'a ServiceDescriptor>>,
+    visited: HashSet<&'a Type>,
+    queue: Vec<&'a ServiceDescriptor>,
 }
 
 impl<'a> SingletonDependsOnScoped<'a> {
-    fn new(lookup: &'a HashMap<&'a Type, &'a ServiceDescriptor>) -> Self {
+    fn new(lookup: &'a HashMap<&'a Type, Vec<&'a ServiceDescriptor>>) -> Self {
         Self {
             lookup,
-            visited: RefCell::new(HashSet::new()),
-            queue: RefCell::new(Vec::new()),
+            visited: HashSet::new(),
+            queue: Vec::new(),
         }
     }
 }
 
 impl<'a> ValidationRule<'a> for SingletonDependsOnScoped<'a> {
-    fn evaluate(&self, descriptor: &'a ServiceDescriptor, results: &mut Vec<ValidationResult>) {
+    fn evaluate(&mut self, descriptor: &'a ServiceDescriptor, results: &mut Vec<ValidationResult>) {
         if descriptor.lifetime() != ServiceLifetime::Singleton {
             return;
         }
 
         let mut level = "";
-        let mut visited = self.visited.borrow_mut();
-        let mut queue = self.queue.borrow_mut();
 
-        visited.clear();
-        queue.clear();
-        queue.push(descriptor);
+        self.visited.clear();
+        self.queue.clear();
+        self.queue.push(descriptor);
 
-        while let Some(current) = queue.pop() {
-            if !visited.insert(current.service_type()) {
+        while let Some(current) = self.queue.pop() {
+            if !self.visited.insert(current.service_type()) {
                 continue;
             }
 
             for dependency in current.dependencies() {
-                if let Some(next) = self.lookup.get(dependency.injected_type()) {
-                    queue.push(next);
+                if let Some(descriptors) = self.lookup.get(dependency.injected_type()) {
+                    for next in descriptors {
+                        self.queue.push(next);
 
-                    if next.lifetime() == ServiceLifetime::Scoped {
-                        results.push(ValidationResult::fail(format!(
-                            "The service {} has a singleton lifetime, \
-                             but its {}dependency '{}' has a scoped lifetime",
-                            expand_type(descriptor.implementation_type()),
-                            level,
-                            next.service_type().name()
-                        )));
+                        if next.lifetime() == ServiceLifetime::Scoped {
+                            results.push(ValidationResult::fail(format!(
+                                "The service {} has a singleton lifetime, \
+                                 but its {}dependency '{}' has a scoped lifetime",
+                                expand_type(descriptor.implementation_type()),
+                                level,
+                                next.service_type().name()
+                            )));
+                        }
                     }
                 }
             }
@@ -221,18 +217,24 @@ impl<'a> ValidationRule<'a> for SingletonDependsOnScoped<'a> {
 pub fn validate(services: &ServiceCollection) -> Result<(), ValidationError> {
     let mut lookup = HashMap::with_capacity(services.len());
 
-    for i in 0..services.len() {
-        lookup.insert(services[i].service_type(), &services[i]);
+    for item in services.iter() {
+        let key = item.service_type();
+        let descriptors = lookup.entry(key).or_insert_with(Vec::new);
+        descriptors.push(item);
     }
 
     let mut results = Vec::new();
-    let missing_type = MissingRequiredType::new(&lookup);
-    let circular_dep = CircularDependency::new(&lookup);
-    let scoped_in_singleton = SingletonDependsOnScoped::new(&lookup);
-    let rules: Vec<&dyn ValidationRule> = vec![&missing_type, &circular_dep, &scoped_in_singleton];
+    let mut missing_type = MissingRequiredType::new(&lookup);
+    let mut circular_dep = CircularDependency::new(&lookup);
+    let mut scoped_in_singleton = SingletonDependsOnScoped::new(&lookup);
+    let mut rules: Vec<&mut dyn ValidationRule> = vec![
+        &mut missing_type,
+        &mut circular_dep,
+        &mut scoped_in_singleton,
+    ];
 
     for descriptor in services {
-        for rule in &rules {
+        for rule in rules.iter_mut() {
             rule.evaluate(descriptor, &mut results);
         }
     }
