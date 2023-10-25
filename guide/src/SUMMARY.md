@@ -16,3 +16,4 @@
 - [Lazy Initialization](guide/lazy.md)
 - [Macros](guide/macros.md)
 - [Extensibility](guide/extensibility.md)
+- [Troubleshooting](guide/troubleshooting.md)
