@@ -31,9 +31,10 @@ where
 ///
 /// * `factory` - The factory method used to create the service
 #[inline]
-pub fn singleton_factory<T: Any + ?Sized>(
-    factory: fn(&ServiceProvider) -> ServiceRef<T>,
-) -> ServiceDescriptor {
+pub fn singleton_factory<T: Any + ?Sized, F>(factory: F) -> ServiceDescriptor
+where
+    F: Fn(&ServiceProvider) -> ServiceRef<T> + 'static,
+{
     Builder::<T, ()>::new(ServiceLifetime::Singleton, Type::factory_of::<T>()).from(factory)
 }
 
@@ -43,10 +44,12 @@ pub fn singleton_factory<T: Any + ?Sized>(
 ///
 /// * `factory` - The factory method used to create the service
 #[inline]
-pub fn singleton_with_key_factory<TKey, TSvc: Any + ?Sized>(
-    factory: fn(&ServiceProvider) -> ServiceRef<TSvc>,
-) -> ServiceDescriptor {
-    Builder::<TSvc, ()>::keyed::<TKey>(ServiceLifetime::Singleton, Type::factory_of::<TSvc>()).from(factory)
+pub fn singleton_with_key_factory<TKey, TSvc: Any + ?Sized, F>(factory: F) -> ServiceDescriptor
+where
+    F: Fn(&ServiceProvider) -> ServiceRef<TSvc> + 'static,
+{
+    Builder::<TSvc, ()>::keyed::<TKey>(ServiceLifetime::Singleton, Type::factory_of::<TSvc>())
+        .from(factory)
 }
 
 /// Initializes a new singleton service descriptor builder.
@@ -80,9 +83,10 @@ where
 ///
 /// * `factory` - The factory method used to create the service
 #[inline]
-pub fn scoped_factory<T>(factory: fn(&ServiceProvider) -> ServiceRef<T>) -> ServiceDescriptor
+pub fn scoped_factory<T, F>(factory: F) -> ServiceDescriptor
 where
     T: Any + ?Sized,
+    F: Fn(&ServiceProvider) -> ServiceRef<T> + 'static,
 {
     Builder::<T, ()>::new(ServiceLifetime::Scoped, Type::factory_of::<T>()).from(factory)
 }
@@ -93,13 +97,13 @@ where
 ///
 /// * `factory` - The factory method used to create the service
 #[inline]
-pub fn scoped_with_key_factory<TKey, TSvc>(
-    factory: fn(&ServiceProvider) -> ServiceRef<TSvc>,
-) -> ServiceDescriptor
+pub fn scoped_with_key_factory<TKey, TSvc, F>(factory: F) -> ServiceDescriptor
 where
     TSvc: Any + ?Sized,
+    F: Fn(&ServiceProvider) -> ServiceRef<TSvc> + 'static,
 {
-    Builder::<TSvc, ()>::keyed::<TKey>(ServiceLifetime::Scoped, Type::factory_of::<TSvc>()).from(factory)
+    Builder::<TSvc, ()>::keyed::<TKey>(ServiceLifetime::Scoped, Type::factory_of::<TSvc>())
+        .from(factory)
 }
 
 /// Initializes a new transient service descriptor builder.
@@ -110,7 +114,8 @@ pub fn transient<TSvc: Any + ?Sized, TImpl>() -> ServiceDescriptorBuilder<TSvc, 
 
 /// Initializes a new keyed transient service descriptor builder.
 #[inline]
-pub fn transient_with_key<TKey, TSvc: Any + ?Sized, TImpl>() -> ServiceDescriptorBuilder<TSvc, TImpl> {
+pub fn transient_with_key<TKey, TSvc: Any + ?Sized, TImpl>() -> ServiceDescriptorBuilder<TSvc, TImpl>
+{
     Builder::keyed::<TKey>(ServiceLifetime::Transient, Type::of::<TImpl>())
 }
 
@@ -120,9 +125,10 @@ pub fn transient_with_key<TKey, TSvc: Any + ?Sized, TImpl>() -> ServiceDescripto
 ///
 /// * `factory` - The factory method used to create the service
 #[inline]
-pub fn transient_factory<T>(factory: fn(&ServiceProvider) -> ServiceRef<T>) -> ServiceDescriptor
+pub fn transient_factory<T, F>(factory: F) -> ServiceDescriptor
 where
     T: Any + ?Sized,
+    F: Fn(&ServiceProvider) -> ServiceRef<T> + 'static,
 {
     Builder::<T, ()>::new(ServiceLifetime::Transient, Type::factory_of::<T>()).from(factory)
 }
@@ -133,10 +139,12 @@ where
 ///
 /// * `factory` - The factory method used to create the service
 #[inline]
-pub fn transient_with_key_factory<TKey, TSvc: Any + ?Sized>(
-    factory: fn(&ServiceProvider) -> ServiceRef<TSvc>,
-) -> ServiceDescriptor {
-    Builder::<TSvc, ()>::keyed::<TKey>(ServiceLifetime::Transient, Type::factory_of::<TSvc>()).from(factory)
+pub fn transient_with_key_factory<TKey, TSvc: Any + ?Sized, F>(factory: F) -> ServiceDescriptor
+where
+    F: Fn(&ServiceProvider) -> ServiceRef<TSvc> + 'static,
+{
+    Builder::<TSvc, ()>::keyed::<TKey>(ServiceLifetime::Transient, Type::factory_of::<TSvc>())
+        .from(factory)
 }
 
 /// Initializes a new transient service descriptor builder.

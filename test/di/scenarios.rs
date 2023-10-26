@@ -432,10 +432,10 @@ fn inject_should_support_multiple_traits() {
     // arrange
     let provider = ServiceCollection::new()
         .add(MultiService::singleton())
-        .add(transient_factory::<dyn Service1>(|sp| {
+        .add(transient_factory::<dyn Service1, _>(|sp| {
             sp.get_required::<MultiService>()
         }))
-        .add(transient_factory::<dyn Service2>(|sp| {
+        .add(transient_factory::<dyn Service2, _>(|sp| {
             sp.get_required::<MultiService>()
         }))
         .build_provider()

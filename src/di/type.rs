@@ -30,7 +30,7 @@ impl Type {
     /// on the specified return type.
     pub fn factory_of<TSvc: ?Sized>() -> Self {
         Type::new(
-            type_name::<fn(&ServiceProvider) -> ServiceRef<TSvc>>().to_string(),
+            type_name::<dyn Fn(&ServiceProvider) -> ServiceRef<TSvc>>().to_string(),
             None,
         )
     }

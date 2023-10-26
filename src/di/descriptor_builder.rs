@@ -21,7 +21,7 @@ impl<TSvc: Any + ?Sized, TImpl> ServiceDescriptorBuilder<TSvc, TImpl> {
     /// # Arguments
     ///
     /// * `factory` - The factory method used to create the service
-    pub fn from(mut self, factory: fn(&ServiceProvider) -> ServiceRef<TSvc>) -> ServiceDescriptor {
+    pub fn from(mut self, factory: impl Fn(&ServiceProvider) -> ServiceRef<TSvc> + 'static) -> ServiceDescriptor {
         ServiceDescriptor::new(
             self.lifetime,
             self.service_type,
