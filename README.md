@@ -5,7 +5,7 @@
 [mit-badge]: https://img.shields.io/badge/license-MIT-blueviolet.svg
 [mit-url]: https://github.com/commonsensesoftware/more-rs-di/blob/main/LICENSE
 
-More DI is a dependency injection (DI) for Rust. A `trait` or `struct` can be used as the injected type.
+More DI is a dependency injection (DI) library for Rust. A `trait` or `struct` can be used as the injected type.
 
 You may be looking for:
 
@@ -17,12 +17,12 @@ You may be looking for:
 
 This crate provides the following features:
 
-- _default_ - Provides the abstractions for dependency injection, plus the **builder** and **inject** features
-- **builder** - Provides functions for configuring service descriptors
-- **async** - Provides features for using dependencies in an asynchronous context
-- **inject** - Code-generates common injection scenarios
-- **lazy** - Provides features for lazy-initialized service resolution
-- **fmt** - Provides features for output formatting
+- _default_ - Abstractions for dependency injection, plus the **builder** and **inject** features
+- **builder** - Functions for configuring service descriptors
+- **async** - Use dependencies in an asynchronous context
+- **inject** - Code-generate common injection scenarios
+- **lazy** - Lazy-initialize service resolution
+- **fmt** - Additional output formatting
 
 ## Supported Lifetimes
 
@@ -36,7 +36,7 @@ A service can have the following lifetimes:
 
 Consider the following traits and structures.
 
->Proc macro attributes are not required, but they the fastest and simplest approach to add DI in your applications.
+>Proc macro attributes are not required, but they are the fastest and simplest approach to add DI in your applications.
 
 ```rust
 use di::*;

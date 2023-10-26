@@ -20,12 +20,12 @@ Any `trait` or `struct` can be used as an injected service.
 
 This crate provides the following features:
 
-- _default_ - Provides the abstractions for dependency injection, plus the **builder** and **inject** features
-- **builder** - Provides functions for configuring service descriptors
-- **async** - Provides features for using dependencies in an asynchronous context
-- **inject** - Code-generates common injection scenarios
-- **lazy** - Provides features for lazy-initialized service resolution
-- **fmt** - Provides features for output formatting
+- _default_ - Abstractions for dependency injection, plus the **builder** and **inject** features
+- **builder** - Functions for configuring service descriptors
+- **async** - Use dependencies in an asynchronous context
+- **inject** - Code-generate common injection scenarios
+- **lazy** - Lazy-initialize service resolution
+- **fmt** - Additional output formatting
 
 ## Contributing
 
