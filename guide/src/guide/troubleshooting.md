@@ -27,7 +27,7 @@ struct FooImpl {
 
 impl Foo for FooImpl {
     fn do_work(&self) {
-        self.bar.do_work()s
+        self.bar.do_work()
     }
 }
 
