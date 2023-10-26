@@ -2,14 +2,19 @@ use crate::{
     validate, ServiceCardinality, ServiceDescriptor, ServiceLifetime, ServiceProvider, Type,
     ValidationError,
 };
-use colored::Colorize;
 use std::any::Any;
 use std::collections::HashMap;
-use std::fmt::{Display, Formatter, Result as FormatResult, Write};
+use std::fmt::{Formatter, Result as FormatResult, Write};
 use std::iter::{DoubleEndedIterator, ExactSizeIterator};
 use std::ops::Index;
 use std::slice::{Iter, IterMut};
 use std::vec::IntoIter;
+
+#[cfg(feature = "fmt")]
+use colored::Colorize;
+
+#[cfg(feature = "fmt")]
+use std::fmt::Display;
 
 /// Represents a service collection.
 #[derive(Default)]
