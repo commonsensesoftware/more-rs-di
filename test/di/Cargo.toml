@@ -9,5 +9,9 @@ path = "lib.rs"
 doc = false
 doctest = false
 
+[features]
+async = ["more-di/async"]
+
 [dependencies]
 more-di = { path = "../../src/di", features = ["lazy"] }
+cfg-if = "1.0"

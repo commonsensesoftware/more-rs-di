@@ -5,7 +5,15 @@
 #![allow(dead_code)]
 
 use di::{injectable, lazy::Lazy, Ref, RefMut};
-use std::cell::RefCell;
+use cfg_if::cfg_if;
+
+cfg_if! {
+    if #[cfg(feature = "async")] {
+        use std::sync::Mutex;
+    } else {
+        use std::cell::RefCell;
+    }
+}
 
 #[injectable]
 pub struct MutDep(usize);
@@ -21,10 +29,20 @@ pub struct MutTupleStruct(pub RefMut<MutDep>);
 #[injectable]
 pub struct MutTupleGeneric<T: 'static>(pub RefMut<T>);
 
-#[injectable]
-pub struct MutStructRef {
-    pub dep: Ref<RefCell<MutDep>>,
+cfg_if! {
+    if #[cfg(feature = "async")] {
+        #[injectable]
+        pub struct MutStructRef {
+            pub dep: Ref<Mutex<MutDep>>,
+        }
+    } else {
+        #[injectable]
+        pub struct MutStructRef {
+            pub dep: Ref<RefCell<MutDep>>,
+        }
+    }
 }
+
 
 pub struct MutStructImpl {
     dep: RefMut<MutDep>,
@@ -37,14 +55,29 @@ impl MutStructImpl {
     }
 }
 
-pub struct MutStructImplRef {
-    dep: Ref<RefCell<MutDep>>,
-}
+cfg_if! {
+    if #[cfg(feature = "async")] {
+        pub struct MutStructImplRef {
+            dep: Ref<Mutex<MutDep>>,
+        }
 
-#[injectable]
-impl MutStructImplRef {
-    fn new(dep: Ref<RefCell<MutDep>>) -> Self {
-        Self { dep }
+        #[injectable]
+        impl MutStructImplRef {
+            fn new(dep: Ref<Mutex<MutDep>>) -> Self {
+                Self { dep }
+            }
+        }
+    } else {
+        pub struct MutStructImplRef {
+            dep: Ref<RefCell<MutDep>>,
+        }
+        
+        #[injectable]
+        impl MutStructImplRef {
+            fn new(dep: Ref<RefCell<MutDep>>) -> Self {
+                Self { dep }
+            }
+        }
     }
 }
 
@@ -66,18 +99,36 @@ impl MutStructIter {
     }
 }
 
-pub struct MutStructIterRef {
-    pub vec: Vec<Ref<RefCell<MutDep>>>,
-}
-
-#[injectable]
-impl MutStructIterRef {
-    pub fn new(deps: impl Iterator<Item = Ref<RefCell<MutDep>>>) -> Self {
-        Self {
-            vec: deps.collect(),
+cfg_if! {
+    if #[cfg(feature = "async")] {
+        pub struct MutStructIterRef {
+            pub vec: Vec<Ref<Mutex<MutDep>>>,
+        }
+        
+        #[injectable]
+        impl MutStructIterRef {
+            pub fn new(deps: impl Iterator<Item = Ref<Mutex<MutDep>>>) -> Self {
+                Self {
+                    vec: deps.collect(),
+                }
+            }
+        }
+    } else {
+        pub struct MutStructIterRef {
+            pub vec: Vec<Ref<RefCell<MutDep>>>,
+        }
+        
+        #[injectable]
+        impl MutStructIterRef {
+            pub fn new(deps: impl Iterator<Item = Ref<RefCell<MutDep>>>) -> Self {
+                Self {
+                    vec: deps.collect(),
+                }
+            }
         }
     }
 }
+
 
 #[injectable]
 pub struct MutStructLazy {
