@@ -1,9 +1,10 @@
-# More Dependency Injection &emsp; ![CI](https://github.com/commonsensesoftware/more-rs-di/actions/workflows/ci.yml/badge.svg) [![Crates.io][crates-badge]][crates-url] [![MIT licensed][mit-badge]][mit-url] 
+# More Dependency Injection &emsp; ![CI][ci-badge] [![Crates.io][crates-badge]][crates-url] [![MIT licensed][mit-badge]][mit-url] 
 
 [crates-badge]: https://img.shields.io/crates/v/more-di.svg
 [crates-url]: https://crates.io/crates/more-di
 [mit-badge]: https://img.shields.io/badge/license-MIT-blueviolet.svg
 [mit-url]: https://github.com/commonsensesoftware/more-rs-di/blob/main/LICENSE
+[ci-badge]: https://github.com/commonsensesoftware/more-rs-di/actions/workflows/ci.yml/badge.svg
 
 More DI is a dependency injection (DI) library for Rust. A `trait` or `struct` can be used as the injected type.
 
