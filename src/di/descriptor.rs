@@ -1,4 +1,4 @@
-use crate::{ServiceDependency, ServiceProvider, Type};
+use crate::{Mut, ServiceDependency, ServiceProvider, Type};
 use spin::Once;
 use std::any::Any;
 
@@ -24,7 +24,7 @@ pub type Ref<T> = std::rc::Rc<T>;
 pub type Ref<T> = std::sync::Arc<T>;
 
 /// Represents the type alias for a mutable service reference.
-pub type RefMut<T> = Ref<std::sync::Mutex<T>>;
+pub type RefMut<T> = Ref<Mut<T>>;
 
 /// Represents the callback function used to create a service.
 pub type ServiceFactory = dyn Fn(&ServiceProvider) -> Ref<dyn Any>;

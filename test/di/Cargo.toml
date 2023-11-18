@@ -10,4 +10,4 @@ doc = false
 doctest = false
 
 [dependencies]
-more-di = { path = "../../src/di" }
+more-di = { path = "../../src/di", features = ["lazy"] }

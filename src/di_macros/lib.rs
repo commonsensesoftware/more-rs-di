@@ -64,9 +64,9 @@ pub fn inject(
 /// * `ScopedServiceProvider`
 ///
 /// `Ref<T>` is a type alias for `Rc<T>` or `Arc<T>` and RefMut<T>` is a
-/// type alias for `Rc<Mutex<T>>` or `Arc<Mutex<T>>` depending on whether
+/// type alias for `Rc<RefCell<T>>` or `Arc<Mutex<T>>` depending on whether
 /// the **async** feature is activated; therefore, `Rc<T>` and `Arc<T>`
-/// are allowed any place `Ref<T>` is allowed and `Rc<Mutex<T>>`
+/// are allowed any place `Ref<T>` is allowed and `Rc<RefCell<T>>`
 /// and `Arc<Mutex<T>>` are allowed any place `RefMut<T>` is allowed.
 ///
 /// # Examples
@@ -276,7 +276,7 @@ mod test {
             "di :: InjectBuilder :: new (",
             "di :: Activator :: new :: < dyn Foo , Self > (",
             "| sp : & di :: ServiceProvider | di :: Ref :: new (Self :: new ()) , ",
-            "| sp : & di :: ServiceProvider | di :: Ref :: new (std :: sync :: Mutex :: new (Self :: new ()))) , ",
+            "| sp : & di :: ServiceProvider | di :: RefMut :: new (Self :: new () . into ())) , ",
             "lifetime) ",
             "} ",
             "}");
@@ -316,7 +316,7 @@ mod test {
             "di :: InjectBuilder :: new (",
             "di :: Activator :: new :: < dyn Foo , Self > (",
             "| sp : & di :: ServiceProvider | di :: Ref :: new (Self :: create ()) , ",
-            "| sp : & di :: ServiceProvider | di :: Ref :: new (std :: sync :: Mutex :: new (Self :: create ()))) , ",
+            "| sp : & di :: ServiceProvider | di :: RefMut :: new (Self :: create () . into ())) , ",
             "lifetime) ",
             "} ",
             "}");
@@ -354,7 +354,7 @@ mod test {
             "di :: InjectBuilder :: new (",
             "di :: Activator :: new :: < dyn Foo , Self > (",
             "| sp : & di :: ServiceProvider | di :: Ref :: new (Self :: new (sp . get_required :: < dyn Bar > ())) , ",
-            "| sp : & di :: ServiceProvider | di :: Ref :: new (std :: sync :: Mutex :: new (Self :: new (sp . get_required :: < dyn Bar > ())))) , ",
+            "| sp : & di :: ServiceProvider | di :: RefMut :: new (Self :: new (sp . get_required :: < dyn Bar > ()) . into ())) , ",
             "lifetime) ",
             ". depends_on (di :: ServiceDependency :: new (di :: Type :: of :: < dyn Bar > () , di :: ServiceCardinality :: ExactlyOne)) ",
             "} ",
@@ -393,7 +393,7 @@ mod test {
             "di :: InjectBuilder :: new (",
             "di :: Activator :: new :: < dyn Foo , Self > (",
             "| sp : & di :: ServiceProvider | di :: Ref :: new (Self :: new (sp . get :: < dyn Bar > ())) , ",
-            "| sp : & di :: ServiceProvider | di :: Ref :: new (std :: sync :: Mutex :: new (Self :: new (sp . get :: < dyn Bar > ())))) , ",
+            "| sp : & di :: ServiceProvider | di :: RefMut :: new (Self :: new (sp . get :: < dyn Bar > ()) . into ())) , ",
             "lifetime) ",
             ". depends_on (di :: ServiceDependency :: new (di :: Type :: of :: < dyn Bar > () , di :: ServiceCardinality :: ZeroOrOne)) ",
             "} ",
@@ -432,7 +432,7 @@ mod test {
             "di :: InjectBuilder :: new (",
             "di :: Activator :: new :: < dyn Foo , Self > (",
             "| sp : & di :: ServiceProvider | di :: Ref :: new (Self :: new (sp . get_all :: < dyn Bar > () . collect ())) , ",
-            "| sp : & di :: ServiceProvider | di :: Ref :: new (std :: sync :: Mutex :: new (Self :: new (sp . get_all :: < dyn Bar > () . collect ())))) , ",
+            "| sp : & di :: ServiceProvider | di :: RefMut :: new (Self :: new (sp . get_all :: < dyn Bar > () . collect ()) . into ())) , ",
             "lifetime) ",
             ". depends_on (di :: ServiceDependency :: new (di :: Type :: of :: < dyn Bar > () , di :: ServiceCardinality :: ZeroOrMore)) ",
             "} ",
@@ -473,7 +473,7 @@ mod test {
             "di :: InjectBuilder :: new (",
             "di :: Activator :: new :: < dyn Thing , Self > (",
             "| sp : & di :: ServiceProvider | di :: Ref :: new (Self :: create_new (sp . get_required :: < dyn Foo > () , sp . get :: < dyn Bar > ())) , ",
-            "| sp : & di :: ServiceProvider | di :: Ref :: new (std :: sync :: Mutex :: new (Self :: create_new (sp . get_required :: < dyn Foo > () , sp . get :: < dyn Bar > ())))) , ",
+            "| sp : & di :: ServiceProvider | di :: RefMut :: new (Self :: create_new (sp . get_required :: < dyn Foo > () , sp . get :: < dyn Bar > ()) . into ())) , ",
             "lifetime) ",
             ". depends_on (di :: ServiceDependency :: new (di :: Type :: of :: < dyn Foo > () , di :: ServiceCardinality :: ExactlyOne)) ",
             ". depends_on (di :: ServiceDependency :: new (di :: Type :: of :: < dyn Bar > () , di :: ServiceCardinality :: ZeroOrOne)) ",
@@ -513,7 +513,7 @@ mod test {
             "di :: InjectBuilder :: new (",
             "di :: Activator :: new :: < Self , Self > (",
             "| sp : & di :: ServiceProvider | di :: Ref :: new (Self :: new ()) , ",
-            "| sp : & di :: ServiceProvider | di :: Ref :: new (std :: sync :: Mutex :: new (Self :: new ()))) , ",
+            "| sp : & di :: ServiceProvider | di :: RefMut :: new (Self :: new () . into ())) , ",
             "lifetime) ",
             "} ",
             "}");
@@ -551,7 +551,7 @@ mod test {
             "di :: InjectBuilder :: new (",
             "di :: Activator :: new :: < dyn Foo , Self > (",
             "| sp : & di :: ServiceProvider | di :: Ref :: new (Self :: new (sp . get_required :: < Bar > ())) , ",
-            "| sp : & di :: ServiceProvider | di :: Ref :: new (std :: sync :: Mutex :: new (Self :: new (sp . get_required :: < Bar > ())))) , ",
+            "| sp : & di :: ServiceProvider | di :: RefMut :: new (Self :: new (sp . get_required :: < Bar > ()) . into ())) , ",
             "lifetime) ",
             ". depends_on (di :: ServiceDependency :: new (di :: Type :: of :: < Bar > () , di :: ServiceCardinality :: ExactlyOne)) ",
             "} ",
@@ -590,7 +590,7 @@ mod test {
             "di :: InjectBuilder :: new (",
             "di :: Activator :: new :: < Self , Self > (",
             "| sp : & di :: ServiceProvider | di :: Ref :: new (Self :: new ()) , ",
-            "| sp : & di :: ServiceProvider | di :: Ref :: new (std :: sync :: Mutex :: new (Self :: new ()))) , ",
+            "| sp : & di :: ServiceProvider | di :: RefMut :: new (Self :: new () . into ())) , ",
             "lifetime) ",
             "} ",
             "}");
@@ -640,7 +640,7 @@ mod test {
             "di :: InjectBuilder :: new (",
             "di :: Activator :: new :: < dyn Pair < TKey , TValue > , Self > (",
             "| sp : & di :: ServiceProvider | di :: Ref :: new (Self :: new (sp . get_required :: < TKey > () , sp . get_required :: < TValue > ())) , ",
-            "| sp : & di :: ServiceProvider | di :: Ref :: new (std :: sync :: Mutex :: new (Self :: new (sp . get_required :: < TKey > () , sp . get_required :: < TValue > ())))) , ",
+            "| sp : & di :: ServiceProvider | di :: RefMut :: new (Self :: new (sp . get_required :: < TKey > () , sp . get_required :: < TValue > ()) . into ())) , ",
             "lifetime) ",
             ". depends_on (di :: ServiceDependency :: new (di :: Type :: of :: < TKey > () , di :: ServiceCardinality :: ExactlyOne)) ",
             ". depends_on (di :: ServiceDependency :: new (di :: Type :: of :: < TValue > () , di :: ServiceCardinality :: ExactlyOne)) ",

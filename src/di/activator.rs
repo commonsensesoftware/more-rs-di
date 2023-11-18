@@ -1,5 +1,5 @@
-use crate::{ServiceFactory, ServiceProvider, Ref, RefMut, Type};
-use std::{any::Any, sync::Mutex};
+use crate::{Mut, Ref, RefMut, ServiceFactory, ServiceProvider, Type};
+use std::any::Any;
 
 /// Represents an activator for a service instance.
 pub struct Activator {
@@ -48,11 +48,11 @@ impl Activator {
     /// * `factory_mut` - The factory method used to create a mutable service instance
     pub fn new<TSvc: Any + ?Sized, TImpl>(
         factory: fn(&ServiceProvider) -> Ref<TSvc>,
-        factory_mut: fn(&ServiceProvider) -> RefMut<TSvc>) -> Self
-    {
+        factory_mut: fn(&ServiceProvider) -> RefMut<TSvc>,
+    ) -> Self {
         Self {
             service_type: Type::of::<TSvc>(),
-            service_type_mut: Type::of::<Mutex<TSvc>>(),
+            service_type_mut: Type::of::<Mut<TSvc>>(),
             implementation_type: Type::of::<TImpl>(),
             factory: Ref::new(move |sp| Ref::new(factory(sp))),
             factory_mut: Ref::new(move |sp| Ref::new(factory_mut(sp))),

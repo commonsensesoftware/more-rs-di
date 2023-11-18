@@ -1,5 +1,5 @@
 use crate::{
-    KeyedRef, KeyedRefMut, ServiceDescriptor, Ref, RefMut, Type,
+    KeyedRef, KeyedRefMut, Mut, ServiceDescriptor, Ref, RefMut, Type,
 };
 use std::any::{type_name, Any};
 use std::borrow::Borrow;
@@ -7,7 +7,6 @@ use std::collections::HashMap;
 use std::iter::empty;
 use std::marker::PhantomData;
 use std::ops::Deref;
-use std::sync::Mutex;
 
 /// Represents a service provider.
 #[derive(Clone)]
@@ -54,7 +53,7 @@ impl ServiceProvider {
 
     /// Gets a mutable service of the specified type.
     pub fn get_mut<T: Any + ?Sized>(&self) -> Option<RefMut<T>> {
-        self.get::<Mutex<T>>()
+        self.get::<Mut<T>>()
     }
 
     /// Gets a keyed service of the specified type.
@@ -80,7 +79,7 @@ impl ServiceProvider {
     pub fn get_by_key_mut<TKey, TSvc: Any + ?Sized>(
         &self,
     ) -> Option<KeyedRefMut<TKey, TSvc>> {
-        self.get_by_key::<TKey, Mutex<TSvc>>()
+        self.get_by_key::<TKey, Mut<TSvc>>()
     }
 
     /// Gets all of the services of the specified type.
@@ -96,7 +95,7 @@ impl ServiceProvider {
 
     /// Gets all of the mutable services of the specified type.
     pub fn get_all_mut<T: Any + ?Sized>(&self) -> impl Iterator<Item = RefMut<T>> + '_ {
-        self.get_all::<Mutex<T>>()
+        self.get_all::<Mut<T>>()
     }
 
     /// Gets all of the services of the specified key and type.
@@ -122,7 +121,7 @@ impl ServiceProvider {
     where
         TSvc: Any + ?Sized,
     {
-        self.get_all_by_key::<TKey, Mutex<TSvc>>()
+        self.get_all_by_key::<TKey, Mut<TSvc>>()
     }
 
     /// Gets a required service of the specified type.
@@ -147,7 +146,7 @@ impl ServiceProvider {
     ///
     /// The requested service of type `T` does not exist.
     pub fn get_required_mut<T: Any + ?Sized>(&self) -> RefMut<T> {
-        self.get_required::<Mutex<T>>()
+        self.get_required::<Mut<T>>()
     }
 
     /// Gets a required keyed service of the specified type.
@@ -175,7 +174,7 @@ impl ServiceProvider {
     pub fn get_required_by_key_mut<TKey, TSvc: Any + ?Sized>(
         &self,
     ) -> KeyedRefMut<TKey, TSvc> {
-        self.get_required_by_key::<TKey, Mutex<TSvc>>()
+        self.get_required_by_key::<TKey, Mut<TSvc>>()
     }
 
     /// Creates and returns a new service provider that is used to resolve

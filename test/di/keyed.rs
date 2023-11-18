@@ -5,7 +5,7 @@
 #![allow(dead_code)]
 
 use di::{injectable, lazy::Lazy, KeyedRef, KeyedRefMut};
-use std::sync::Mutex;
+use std::cell::RefCell;
 
 pub mod key {
     pub struct Key1;
@@ -29,7 +29,7 @@ pub struct KeyedTupleGeneric<T: 'static>(pub KeyedRef<key::Key1, T>);
 
 #[injectable]
 pub struct KeyedStructRef {
-    pub dep: KeyedRef<key::Key1, Mutex<KeyedDep>>,
+    pub dep: KeyedRef<key::Key1, RefCell<KeyedDep>>,
 }
 
 pub struct KeyedStructImpl {
@@ -44,12 +44,12 @@ impl KeyedStructImpl {
 }
 
 pub struct KeyedStructImplRef {
-    dep: KeyedRef<key::Key1, Mutex<KeyedDep>>,
+    dep: KeyedRef<key::Key1, RefCell<KeyedDep>>,
 }
 
 #[injectable]
 impl KeyedStructImplRef {
-    fn new(dep: KeyedRef<key::Key1, Mutex<KeyedDep>>) -> Self {
+    fn new(dep: KeyedRef<key::Key1, RefCell<KeyedDep>>) -> Self {
         Self { dep }
     }
 }
@@ -73,12 +73,12 @@ impl KeyedStructIter {
 }
 
 pub struct KeyedStructIterRef {
-    pub vec: Vec<KeyedRef<key::Key1, Mutex<KeyedDep>>>,
+    pub vec: Vec<KeyedRef<key::Key1, RefCell<KeyedDep>>>,
 }
 
 #[injectable]
 impl KeyedStructIterRef {
-    pub fn new(deps: impl Iterator<Item = KeyedRef<key::Key1, Mutex<KeyedDep>>>) -> Self {
+    pub fn new(deps: impl Iterator<Item = KeyedRef<key::Key1, RefCell<KeyedDep>>>) -> Self {
         Self {
             vec: deps.collect(),
         }

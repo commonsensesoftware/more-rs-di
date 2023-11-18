@@ -29,7 +29,6 @@ pub trait Injectable: Sized {
 mod tests {
     use super::*;
     use crate::*;
-    use std::sync::Mutex;
 
     trait TestService {}
     trait OtherTestService {}
@@ -47,7 +46,7 @@ mod tests {
             InjectBuilder::new(
                 Activator::new::<dyn TestService, Self>(
                     |_| Ref::new(Self::default()),
-                    |_| Ref::new(Mutex::new(Self::default())),
+                    |_| Ref::new(Mut::new(Self::default())),
                 ),
                 lifetime,
             )
@@ -66,7 +65,7 @@ mod tests {
                 Activator::new::<dyn OtherTestService, Self>(
                     |sp| Ref::new(Self::new(sp.get_required::<dyn TestService>())),
                     |sp| {
-                        Ref::new(Mutex::new(Self::new(sp.get_required::<dyn TestService>())))
+                        Ref::new(Mut::new(Self::new(sp.get_required::<dyn TestService>())))
                     },
                 ),
                 lifetime,

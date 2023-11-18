@@ -133,7 +133,10 @@ impl CallSite {
         }
     }
 
-    fn new_context<'a>(arg: &'a Type, known_types: &'a Vec<KnownType>) -> Result<CallSiteContext<'a>> {
+    fn new_context<'a>(
+        arg: &'a Type,
+        known_types: &'a Vec<KnownType>,
+    ) -> Result<CallSiteContext<'a>> {
         let mut builder = CallSiteContextBuilder::default();
         let mut read_only = true;
         let input = if let Some(ty) = Self::try_visit_iterator(arg) {
@@ -210,23 +213,25 @@ impl CallSite {
                 .iter()
                 .find(|t| name.ident == Ident::new(&t.name, Span::call_site()))
             {
-                // Rc<Mutex<T>>
-                // Arc<Mutex<T>>
-                // Ref<Mutex<T>>
-                // KeyedRef<K,Mutex<T>>
+                // Mut<T> = RefCell<T> | Mutex<T>
+                // Rc<Mut<T>>
+                // Arc<Mut<T>>
+                // Ref<Mut<T>>
+                // KeyedRef<K,Mut<T>>
                 if known_type.mutable {
                     if let PathArguments::AngleBracketed(ref generics) = name.arguments {
                         if let GenericArgument::Type(arg) = generics.args.last().unwrap() {
                             if let Type::Path(ty) = arg {
                                 if let Some(name) = ty.path.segments.last() {
-                                    return name.ident == Ident::new("Mutex", Span::call_site());
+                                    return name.ident == Ident::new("RefCell", Span::call_site())
+                                        || name.ident == Ident::new("Mutex", Span::call_site());
                                 }
                             }
                         }
                     }
                 } else {
-                    // RefMut<T> = Ref<Mutex<T>>
-                    // KeyedRefMut<K,T> = KeyedRef<K,Mutex<T>>
+                    // RefMut<T> = Ref<Mut<T>>
+                    // KeyedRefMut<K,T> = KeyedRef<K,Mut<T>>
                     return true;
                 }
             }
@@ -271,7 +276,9 @@ impl CallSite {
             if let Some(mut arg) = args.pop() {
                 if *mutable {
                     if let Type::Path(path) = arg {
-                        if let Some(ty) = Self::visit_generic_type_arg(path, "Mutex") {
+                        if let Some(ty) = Self::visit_generic_type_arg(path, "RefCell") {
+                            arg = ty;
+                        } else if let Some(ty) = Self::visit_generic_type_arg(path, "Mutex") {
                             arg = ty;
                         }
                     }

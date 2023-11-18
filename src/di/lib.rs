@@ -1,5 +1,11 @@
 #![doc = include_str!("README.md")]
 
+#[cfg(not(feature = "async"))]
+pub(crate) type Mut<T> = std::cell::RefCell<T>;
+
+#[cfg(feature = "async")]
+pub(crate) type Mut<T> = std::sync::Mutex<T>;
+
 mod collection;
 mod dependency;
 mod descriptor;

@@ -5,7 +5,7 @@
 #![allow(dead_code)]
 
 use di::{injectable, lazy::Lazy, Ref, RefMut};
-use std::sync::Mutex;
+use std::cell::RefCell;
 
 #[injectable]
 pub struct MutDep(usize);
@@ -23,7 +23,7 @@ pub struct MutTupleGeneric<T: 'static>(pub RefMut<T>);
 
 #[injectable]
 pub struct MutStructRef {
-    pub dep: Ref<Mutex<MutDep>>,
+    pub dep: Ref<RefCell<MutDep>>,
 }
 
 pub struct MutStructImpl {
@@ -38,12 +38,12 @@ impl MutStructImpl {
 }
 
 pub struct MutStructImplRef {
-    dep: Ref<Mutex<MutDep>>,
+    dep: Ref<RefCell<MutDep>>,
 }
 
 #[injectable]
 impl MutStructImplRef {
-    fn new(dep: Ref<Mutex<MutDep>>) -> Self {
+    fn new(dep: Ref<RefCell<MutDep>>) -> Self {
         Self { dep }
     }
 }
@@ -67,12 +67,12 @@ impl MutStructIter {
 }
 
 pub struct MutStructIterRef {
-    pub vec: Vec<Ref<Mutex<MutDep>>>,
+    pub vec: Vec<Ref<RefCell<MutDep>>>,
 }
 
 #[injectable]
 impl MutStructIterRef {
-    pub fn new(deps: impl Iterator<Item = Ref<Mutex<MutDep>>>) -> Self {
+    pub fn new(deps: impl Iterator<Item = Ref<RefCell<MutDep>>>) -> Self {
         Self {
             vec: deps.collect(),
         }

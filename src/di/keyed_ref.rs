@@ -1,5 +1,5 @@
-use crate::Ref;
-use std::{any::Any, borrow::Borrow, marker::PhantomData, ops::Deref, sync::Mutex};
+use crate::{Mut, Ref};
+use std::{any::Any, borrow::Borrow, marker::PhantomData, ops::Deref};
 
 /// Represents a holder for a keyed service.
 #[derive(Clone)]
@@ -9,7 +9,7 @@ pub struct KeyedRef<TKey, TSvc: Any + ?Sized> {
 }
 
 /// Represents a holder for a keyed, mutable service.
-pub type KeyedRefMut<TKey, TSvc> = KeyedRef<TKey, Mutex<TSvc>>;
+pub type KeyedRefMut<TKey, TSvc> = KeyedRef<TKey, Mut<TSvc>>;
 
 impl<TKey, TSvc: Any + ?Sized> KeyedRef<TKey, TSvc> {
     /// Initializes a new holder for the specified keyed service.

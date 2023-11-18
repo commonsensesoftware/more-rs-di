@@ -53,7 +53,7 @@ impl InjectableTrait {
                     di::InjectBuilder::new(
                         di::Activator::new::<#service, Self>(
                             |sp: &di::ServiceProvider| di::Ref::new(#activate),
-                            |sp: &di::ServiceProvider| di::Ref::new(std::sync::Mutex::new(#activate2))
+                            |sp: &di::ServiceProvider| di::RefMut::new(#activate2.into())
                         ),
                         lifetime
                     )#depends_on
