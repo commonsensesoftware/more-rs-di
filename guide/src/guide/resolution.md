@@ -46,11 +46,11 @@ use crate::*;
 use di::*;
 
 let provider = ServiceCollection::new()
-    .add(transient_as_self::<Thing1>().from(|_| ServiceRef::new(Thing1)))
-    .add(transient::<dyn Thing, Thing1>().from(|_| ServiceRef::new(Thing1)))
-    .add(transient::<dyn Thing, Thing2>().from(|_| ServiceRef::new(Thing2)))
+    .add(transient_as_self::<Thing1>().from(|_| Ref::new(Thing1)))
+    .add(transient::<dyn Thing, Thing1>().from(|_| Ref::new(Thing1)))
+    .add(transient::<dyn Thing, Thing2>().from(|_| Ref::new(Thing2)))
     .add(transient_mut::<dyn Thing, Thing3>()
-         .from(|_| ServiceRefMut::new(Mutex::new(Thing3))))
+         .from(|_| RefMut::new(Mutex::new(Thing3))))
     .build_provider()
     .unwrap();
 

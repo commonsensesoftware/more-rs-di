@@ -24,7 +24,7 @@ pub struct Bar;
 
 #[injectable]
 pub struct Foo {
-    bar: ServiceRef<Bar>
+    bar: Ref<Bar>
 }
 ```
 
@@ -50,7 +50,7 @@ let foo1 = provider.get_required::<Foo>();
     let scope = provider.create_scope();
     let foo2 = scope.get_required::<Foo>();
 
-    assert!(ServiceRef::ptr_eq(&foo1, &foo2));
+    assert!(Ref::ptr_eq(&foo1, &foo2));
 }
 ```
 
@@ -73,7 +73,7 @@ let foo1;
 }
 
 let foo2 = provider.get_required::<Foo>();
-assert!(ServiceRef::ptr_eq(&foo1, &foo2));
+assert!(Ref::ptr_eq(&foo1, &foo2));
 ```
 
 ## Service Provider Scopes
@@ -98,7 +98,7 @@ let foo2;
     let foo3 = scope.get_required::<Foo>();
 
     // foo2 == foo3 because they have the same scope
-    assert!(ServiceRef::ptr_eq(&foo2, &foo3));
+    assert!(Ref::ptr_eq(&foo2, &foo3));
 } // ← all instances owned by 'scope' are dropped here
 
 // 'foo2' outlived the scope because we held onto it for
@@ -108,5 +108,5 @@ let foo2;
 // the ServiceProvider they were resolved from
 //
 // foo1 != foo2 because they came from different scopes
-assert!(!ServiceRef::ptr_eq(&foo1, &foo2));
+assert!(!Ref::ptr_eq(&foo1, &foo2));
 ```

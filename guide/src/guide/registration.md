@@ -101,9 +101,9 @@ The borrowing rules imposed by Rust places limitations on creating mutable servi
 
 1. Use _Interior Mutability_ within your service implementation
 2. Design your service as a factory which is shared within DI, but can create instances owned outside the factory that are idiomatically mutable
-3. Decorate your service with `Mutex<T>`
+3. Decorate your service with `RefCell<T>` or, if the **async** feature is activated, `Mutex<T>`
 
-**Option 3** is the only method provided out-of-the-box as the other options are subjective design choices within the scope of your application. One of the consequences of this approach is that the type `Mutex<T>` itself becomes part of the service registration; `ServiceRef<T>` and `ServiceRef<Mutex<T>>` (or `ServiceRefMut<T>` for short) are considered different services. In most cases, this is probably not a problem. Your service is either entirely read-only or it is read-write. If you need both and two different service instances will not work for you or you want finer-grained control over synchronization, you should consider _Interior Mutability_ instead.
+**Option 3** is the only method provided out-of-the-box as the other options are subjective design choices within the scope of your application. One of the consequences of this approach is that the types `RefCell<T>` and `Mutex<T>` themselves become part of the service registration; `Ref<T>` and `Ref<RefCell<T>>` (or `RefMut<T>` for short) are considered different services. In most use cases, this is not a problem. Your service is either entirely read-only or it is read-write. If you need both and two different service instances will not work for you or you want finer-grained control over synchronization, you should consider _Interior Mutability_ instead.
 
 ## Builder
 
@@ -254,8 +254,8 @@ impl ToString for Thing2 {
 
 #[injectable]
 pub struct CatInTheHat {
-    pub thing1: ServiceRef<dyn Thing>,
-    pub thing2: ServiceRef<dyn Thing>,
+    pub thing1: Ref<dyn Thing>,
+    pub thing2: Ref<dyn Thing>,
 }
 ```
 
@@ -269,7 +269,7 @@ A keyed service allows a service to be resolved in conjunction with a key. In ma
 - No name collisions (because types are unique)
 - No changes to `ServiceDescriptor`
 
-In the previous code example there is nothing in place that restricts or defines which `dyn Thing` needs to be mapped. By definition, any `dyn Thing` _could_ be used, but a specific mapping is expected. To address that, we can refactor to use a `KeyedServiceRef<K,T>`.
+In the previous code example there is nothing in place that restricts or defines which `dyn Thing` needs to be mapped. By definition, any `dyn Thing` _could_ be used, but a specific mapping is expected. To address that, we can refactor to use a `KeyedRef<K,T>`.
 
 We also need to define some _keys_. A key is just a type used as a marker. A zero-sized `struct` is perfect for this case. For all intents and purposes, this struct acts like an enumeration. A key difference is that the required value is defined as part of the requested type, which an enumeration cannot do.
 
@@ -286,29 +286,29 @@ pub mod key {
 
 #[injectable]
 pub struct CatInTheHat {
-    pub thing1: KeyedServiceRef<key::Thing1, dyn Thing>,
-    pub thing2: KeyedServiceRef<key::Thing2, dyn Thing>,
+    pub thing1: KeyedRef<key::Thing1, dyn Thing>,
+    pub thing2: KeyedRef<key::Thing2, dyn Thing>,
 }
 ```
 
 Introducing a key means that we can no longer provide just any `dyn Thing`; a specific registration must be mapped. Although it is still possible to configure the wrong key, the key specified will never collide with a key defined by another crate. The compiler will enforce the key specified exists and the configuration will be validated when the `ServiceProvider` is created. Key types do not be need to be public or in nested modules unless you want them to be.
 
-It's important to know that we only need the key at the injection call site. We can safely convert down to `ServiceRef` if we use an injected constructor as follows:
+It's important to know that we only need the key at the injection call site. We can safely convert down to `Ref` if we use an injected constructor as follows:
 
 ```rust
 use crate::*;
 use di::*;
 
 pub struct CatInTheHat {
-    pub thing1: ServiceRef<dyn Thing>,
-    pub thing2: ServiceRef<dyn Thing>,
+    pub thing1: Ref<dyn Thing>,
+    pub thing2: Ref<dyn Thing>,
 }
 
 #[injectable]
 impl CatInTheHat {
     pub fn new(
-        thing1: KeyedServiceRef<key::Thing1, dyn Thing>,
-        thing2: KeyedServiceRef<key::Thing2, dyn Thing>) -> Self {
+        thing1: KeyedRef<key::Thing1, dyn Thing>,
+        thing2: KeyedRef<key::Thing2, dyn Thing>) -> Self {
         // the key isn't useful after the correct service is injected
         Self {
             thing1: thing1.into(),
@@ -337,4 +337,22 @@ println!("Hi from {}", cat.thing1.to_string());
 println!("Hi from {}", cat.thing2.to_string());
 ```
 
->If you're not using #[injectable], the long-form [builder](#builder) functions provide variants that support specifying a key while creating a `ServiceDescriptor`.
+>If you're not using `#[injectable]`, the long-form [builder](#builder) functions provide variants that support specifying a key while creating a `ServiceDescriptor`.
+
+Creating a keyed service explicitly is still possible and useful for some scenarios such as testing:
+
+```rust
+#[test]
+fn setup_cat_in_the_hat() {
+    // arrange
+    let thing1 = KeyedRef::<key::Thing1, dyn Thing>::new(Ref::new(Thing1::default()));
+    let thing2 = KeyedRef::<key::Thing2, dyn Thing>::new(Ref::new(Thing2::default()));
+    let cat = CatInTheHat::new(thing1, thing2);
+
+    // act
+    let name = cat.thing1.to_string();
+
+    // assert
+    assert_eq!(&name, "crate::Thing1");
+}
+```

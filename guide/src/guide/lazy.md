@@ -28,11 +28,11 @@ impl Expensive {
 }
 
 pub struct Needy {
-    expensive: Lazy<ServiceRef<Expensive>>
+    expensive: Lazy<Ref<Expensive>>
 }
 
 impl Needy {
-    pub fn new(expensive: Lazy<ServiceRef<Expensive>>) -> Self {
+    pub fn new(expensive: Lazy<Ref<Expensive>>) -> Self {
         Self { expensive }
     }
 

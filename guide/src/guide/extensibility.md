@@ -1,6 +1,6 @@
 # Extensibility
 
-Using dependency injection in your own application is certainly useful; however, the strength of the `more-di` crate really starts to shine when you enable DI composition across different crates. It effectively enables a DI ecosystem that crate library authors can elect to make required or opt into as as a conditional feature.
+Using dependency injection in your own application is certainly useful; however, the strength of the `more-di` crate really starts to shine when you enable DI composition across different crates. It effectively enables a DI ecosystem that crate library authors can elect to make required or opt into as a conditional feature.
 
 ## Configuration
 
@@ -46,7 +46,7 @@ pub mod ext {
 }
 ```
 
-The extensions will then look something like the following and applied to `ServiceCollection`.
+The extensions will then look something like the following and apply to `ServiceCollection`.
 
 #### di_ext.rs
 
@@ -79,7 +79,7 @@ This crate would include the core abstractions common to all extenders.
 ```rust
 // map to DI type when enabled
 #[cfg(feature = "di")]
-pub type Ref<T> = di::ServiceRef<T>;
+pub type Ref<T> = di::Ref<T>;
 
 // default to Rc<T>
 #[cfg(not(feature = "di"))]
@@ -139,7 +139,7 @@ This crate would provide a logger which writes to the console.
 #[cfg_attr(feature = "di", di::injectable(LoggerSource))]
 pub struct ConsoleLogger;
 
-impl LoggerSource {
+impl LoggerSource for ConsoleLogger {
     fn log(&self, text: &str) {
         println!("{}", text)
     }
@@ -180,7 +180,7 @@ impl FileLogger {
     }
 }
 
-impl LoggerSource {
+impl LoggerSource for FileLogger {
     fn log(&self, text: &str) {
         self.file.write_all(text.as_bytes()).ok()
     }
@@ -198,7 +198,7 @@ pub mod ext {
         fn add_file_logging<S: AsRef<str>>(&mut self, filename: S) -> &mut Self {
             let path = filename.as_ref().clone();
             self.try_add(transient::<dyn LoggerSource, FileLogger>()
-                         .from(move |_| ServiceRef::new(FileLogger::new(path))))
+                         .from(move |_| Ref::new(FileLogger::new(path))))
         }
     }
 }

@@ -22,7 +22,7 @@ trait Foo {
 
 #[injectable(Foo)]
 struct FooImpl {
-    bar: ServiceRef<Bar>,
+    bar: Ref<Bar>,
 }
 
 impl Foo for FooImpl {
@@ -83,5 +83,7 @@ A distinct difference between validation and display is that validation will onl
 ## Example Output
 
 The following example demonstrates outputting an entire service hierarchy, including warnings and errors.
+
+>Colorization is supported when the **fmt** feature is activated
 
 ![Display](../img/display-fmt.png)

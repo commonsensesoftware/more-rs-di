@@ -36,7 +36,7 @@ use di::*;
 pub struct Bar;
 
 pub struct Foo {
-    pub bar: ServiceRef<Bar>
+    pub bar: Ref<Bar>
 }
 ```
 
@@ -46,7 +46,7 @@ Let's assume that we forgot to register `Bar`:
 use di::*;
 
 let services = Services::new()
-    .add(transient_as_self::<Foo>().from(|_| ServiceRef::new(Foo)))
+    .add(transient_as_self::<Foo>().from(|_| Ref::new(Foo)))
     .build_provider()
     .unwrap(); // ← this will not panic
 
@@ -64,7 +64,7 @@ use di::*;
 let services = Services::new()
     .add(transient_as_self::<Foo>()
          .depends_on(exactly_one::<Bar>()) // ← indicate a Bar is required
-         .from(|_| ServiceRef::new(Foo)))
+         .from(|_| Ref::new(Foo)))
     .build_provider()
     .unwrap(); // ← now panics because Bar is an unregistered dependency
 ```

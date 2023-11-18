@@ -32,15 +32,15 @@ use di::*;
 pub struct Bar;
 
 pub struct Foo {
-    bar: ServiceRef<Bar>
+    bar: Ref<Bar>
 }
 
 impl Injectable for Bar {
   fn inject(lifetime: ServiceLifetime) -> InjectBuilder {
     InjectBuilder::new(
       Activator::new::<Self, Self>(
-        |_| ServiceRef::new(Self),
-        |_| ServiceRef::new(Mutex::new(Self)),
+        |_| Ref::new(Self),
+        |_| RefMut::new(Self.into()),
       ),
       lifetime,
     )
@@ -51,8 +51,8 @@ impl Injectable for Foo {
   fn inject(lifetime: ServiceLifetime) -> InjectBuilder {
     InjectBuilder::new(
       Activator::new::<Self, Self>(
-        |sp| ServiceRef::new(Self { bar: sp.get_required::<Bar>() }),
-        |sp| ServiceRef::new(Mutex::new(Self { bar: sp.get_required::<Bar>() })),
+        |sp| Ref::new(Self { bar: sp.get_required::<Bar>() }),
+        |sp| RefMut::new(Self { bar: sp.get_required::<Bar>() }.into()),
       ),
       lifetime,
     )
@@ -78,7 +78,7 @@ pub struct Bar;
 
 #[injectable]
 pub struct Foo {
-    bar: ServiceRef<Bar>
+    bar: Ref<Bar>
 }
 ```
 
@@ -106,11 +106,11 @@ use di::*;
 pub struct Simple;
 
 #[injectable]
-pub struct Tuple(pub ServiceRef<Simple>);
+pub struct Tuple(pub Ref<Simple>);
 
 #[injectable]
 pub struct Generic<T: 'static> {
-    value: ServiceRef<T>,
+    value: Ref<T>,
 }
 ```
 
@@ -121,8 +121,8 @@ use di::*;
 
 #[injectable]
 pub struct Complex {
-    simple: ServiceRef<Simple>, // ← ServiceProvider.get_required::<Simple>()
-    counter: usize,             // ← Default::default()
+    simple: Ref<Simple>, // ← ServiceProvider.get_required::<Simple>()
+    counter: usize,      // ← Default::default()
 }
 ```
 
@@ -136,14 +136,14 @@ The following basic example uses a constructor:
 use di::*;
 
 pub struct Complex2 {
-    simple: ServiceRef<Simple>
+    simple: Ref<Simple>
     counter: usize
 }
 
 #[injectable]
 impl Complex2 {
     // assumed to be the injection constructor by naming convention
-    pub fn new(simple: ServiceRef<Simple>) -> Self {
+    pub fn new(simple: Ref<Simple>) -> Self {
         Self {
             simple,
             counter: 0,
@@ -173,18 +173,18 @@ pub trait Runner {
 }
 
 pub struct DefaultRunner {
-    input: ServiceRef<dyn Input>,
-    translator: Option<ServiceRef<dyn Input>>,
-    loggers: Vec<ServiceRef<dyn Logger>>,
+    input: Ref<dyn Input>,
+    translator: Option<Ref<dyn Input>>,
+    loggers: Vec<Ref<dyn Logger>>,
 }
 
 #[injectable(Runner)]
 impl DefaultRunner {
     #[inject] // ↓ use 'create' instead of inferring 'new'
     pub fn create(
-        input: ServiceRef<dyn Input>,
-        translator: Option<ServiceRef<dyn Input>>,
-        loggers: Vec<ServiceRef<dyn Logger>>) -> Self {
+        input: Ref<dyn Input>,
+        translator: Option<Ref<dyn Input>>,
+        loggers: Vec<Ref<dyn Logger>>) -> Self {
         Self {
             input,
             translator,
@@ -207,17 +207,16 @@ impl Injectable for DefaultRunner {
     fn inject(lifetime: ServiceLifetime) -> InjectBuilder {
         InjectBuilder::new(
             Activator::new::<dyn Runner, Self>(
-                |sp| ServiceRef::new(
-                    Self::create(
-                        sp.get_required::<dyn Input>(),
-                        sp.get::<dyn Input>(),
-                        sp.get_all::<dyn Logger>().collect())),
-                |sp| ServiceRef::new(
-                    Mutex::new(
+                |sp| Ref::new(
                         Self::create(
                             sp.get_required::<dyn Input>(),
                             sp.get::<dyn Input>(),
-                            sp.get_all::<dyn Logger>().collect()))),
+                            sp.get_all::<dyn Logger>().collect())),
+                |sp| RefMut::new(
+                        Self::create(
+                            sp.get_required::<dyn Input>(),
+                            sp.get::<dyn Input>(),
+                            sp.get_all::<dyn Logger>().collect()).into()),
             )
         )
         .depends_on(
@@ -238,17 +237,17 @@ impl Injectable for DefaultRunner {
 
 ## Builder
 
-`InjectBuilder` is similar to, but not exactly the same as, `ServiceDescriptorBuilder<TSvc,TImpl>`. `InjectBuilder` is part of the **inject** feature, while `ServiceDescriptorBuilder<TSvc,TImpl>` part of the **builder** feature. The key implementation differences are a non-generic type, mutable construction (`as_mut`), and deferred key configuration (`with_key<TKey>`). This enables multiple registration scenarios with a single implementation. 
+`InjectBuilder` is similar to, but not exactly the same as, `ServiceDescriptorBuilder<TSvc,TImpl>`. `InjectBuilder` is part of the **inject** feature, while `ServiceDescriptorBuilder<TSvc,TImpl>` is part of the **builder** feature. The key implementation differences are a non-generic type, mutable construction (`as_mut`), and deferred key configuration (`with_key<TKey>`). This enables multiple registration scenarios with a single implementation. 
 
 ```rust
 let provider = ServiceCollection::new()
-    .add(Simple::transient())          // ← ServiceRef<Simple>
-    .add(Simple::transient().as_mut()) // ← ServiceRefMut<Simple>
+    .add(Simple::transient())          // ← Ref<Simple>
+    .add(Simple::transient().as_mut()) // ← RefMut<Simple>
     .add(Simple::transient()
-         .with_key::<key::Alt>())      // ← KeyedServiceRef<Simple>
+         .with_key::<key::Alt>())      // ← KeyedRef<key::Alt, Simple>
     .add(Simple::transient()
          .with_key::<key::Alt>()
-         .as_mut())                    // ← KeyedServiceRefMut<key::Alt, Simple>
+         .as_mut())                    // ← KeyedRefMut<key::Alt, Simple>
     .build_provider()
     .unwrap();
 ```
