@@ -2,7 +2,7 @@
 name = "more-di"
 version = "3.0.0"
 edition = "2018"
-authors = ["Chris Martinez <chris_martinez_77@hotmail.com>"]
+authors = ["Chris Martinez <chris.s.martinez@hotmail.com>"]
 description = "Provides support for dependency injection (DI)"
 keywords = ["more", "di", "dependency", "injection", "ioc"]
 license = "MIT"
