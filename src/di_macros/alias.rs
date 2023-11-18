@@ -1,14 +1,6 @@
 #[cfg(feature = "alias")]
 use serde::Deserialize;
 
-use std::env::var;
-use std::fs::File;
-use std::io::Read;
-use std::path::PathBuf;
-
-#[cfg(feature = "alias")]
-use toml;
-
 #[cfg_attr(feature = "alias", derive(Deserialize))]
 pub(crate) struct Aliases {
     pub r#ref: Option<String>,
@@ -28,12 +20,14 @@ impl Aliases {
     }
 }
 
-#[cfg_attr(feature = "alias", derive(Deserialize))]
+#[cfg(feature = "alias")]
+#[derive(Deserialize)]
 pub(crate) struct Dependency {
     pub aliases: Option<Aliases>,
 }
 
-#[cfg_attr(feature = "alias", derive(Deserialize))]
+#[cfg(feature = "alias")]
+#[derive(Deserialize)]
 pub(crate) struct Dependencies {
     #[cfg_attr(feature = "alias", serde(alias = "more-di"))]
     pub di: Option<Dependency>,
@@ -42,7 +36,8 @@ pub(crate) struct Dependencies {
     pub di_macros: Option<Dependency>,
 }
 
-#[cfg_attr(feature = "alias", derive(Deserialize))]
+#[cfg(feature = "alias")]
+#[derive(Deserialize)]
 pub(crate) struct Manifest {
     pub dependencies: Option<Dependencies>,
 }
@@ -54,6 +49,11 @@ pub(crate) fn try_get_aliases() -> Option<Aliases> {
 
 #[cfg(feature = "alias")]
 pub(crate) fn try_get_aliases() -> Option<Aliases> {
+    use std::env::var;
+    use std::fs::File;
+    use std::io::Read;
+    use std::path::PathBuf;
+
     let path = PathBuf::from(var("CARGO_MANIFEST_DIR").unwrap_or_default()).join("Cargo.toml");
 
     if !path.exists() {

@@ -256,14 +256,13 @@ impl MoreThingies {
     }
 }
 
+pub trait Service1 {}
 
-pub trait Service1 { }
-
-pub trait Service2 { }
+pub trait Service2 {}
 
 #[injectable]
 pub struct MultiService;
 
-impl Service1 for MultiService { }
+impl Service1 for MultiService {}
 
-impl Service2 for MultiService { }
+impl Service2 for MultiService {}
