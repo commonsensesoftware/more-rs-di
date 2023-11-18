@@ -4,7 +4,7 @@
 
 #![allow(dead_code)]
 
-use di::{injectable, lazy::Lazy, KeyedServiceRef, KeyedServiceRefMut};
+use di::{injectable, lazy::Lazy, KeyedRef, KeyedRefMut};
 use std::sync::Mutex;
 
 pub mod key {
@@ -18,54 +18,54 @@ pub struct KeyedDep(usize);
 
 #[injectable]
 pub struct KeyedStruct {
-    pub dep: KeyedServiceRef<key::Key1, KeyedDep>,
+    pub dep: KeyedRef<key::Key1, KeyedDep>,
 }
 
 #[injectable]
-pub struct KeyedTupleStruct(pub KeyedServiceRef<key::Key1, KeyedDep>);
+pub struct KeyedTupleStruct(pub KeyedRef<key::Key1, KeyedDep>);
 
 #[injectable]
-pub struct KeyedTupleGeneric<T: 'static>(pub KeyedServiceRef<key::Key1, T>);
+pub struct KeyedTupleGeneric<T: 'static>(pub KeyedRef<key::Key1, T>);
 
 #[injectable]
 pub struct KeyedStructRef {
-    pub dep: KeyedServiceRef<key::Key1, Mutex<KeyedDep>>,
+    pub dep: KeyedRef<key::Key1, Mutex<KeyedDep>>,
 }
 
 pub struct KeyedStructImpl {
-    dep: KeyedServiceRef<key::Key1, KeyedDep>,
+    dep: KeyedRef<key::Key1, KeyedDep>,
 }
 
 #[injectable]
 impl KeyedStructImpl {
-    fn new(dep: KeyedServiceRef<key::Key1, KeyedDep>) -> Self {
+    fn new(dep: KeyedRef<key::Key1, KeyedDep>) -> Self {
         Self { dep }
     }
 }
 
 pub struct KeyedStructImplRef {
-    dep: KeyedServiceRef<key::Key1, Mutex<KeyedDep>>,
+    dep: KeyedRef<key::Key1, Mutex<KeyedDep>>,
 }
 
 #[injectable]
 impl KeyedStructImplRef {
-    fn new(dep: KeyedServiceRef<key::Key1, Mutex<KeyedDep>>) -> Self {
+    fn new(dep: KeyedRef<key::Key1, Mutex<KeyedDep>>) -> Self {
         Self { dep }
     }
 }
 
 #[injectable]
 pub struct KeyedStructVec {
-    pub vec: Vec<KeyedServiceRef<key::Key1, KeyedDep>>,
+    pub vec: Vec<KeyedRef<key::Key1, KeyedDep>>,
 }
 
 pub struct KeyedStructIter {
-    pub vec: Vec<KeyedServiceRef<key::Key1, KeyedDep>>,
+    pub vec: Vec<KeyedRef<key::Key1, KeyedDep>>,
 }
 
 #[injectable]
 impl KeyedStructIter {
-    pub fn new(deps: impl Iterator<Item = KeyedServiceRef<key::Key1, KeyedDep>>) -> Self {
+    pub fn new(deps: impl Iterator<Item = KeyedRef<key::Key1, KeyedDep>>) -> Self {
         Self {
             vec: deps.collect(),
         }
@@ -73,12 +73,12 @@ impl KeyedStructIter {
 }
 
 pub struct KeyedStructIterRef {
-    pub vec: Vec<KeyedServiceRef<key::Key1, Mutex<KeyedDep>>>,
+    pub vec: Vec<KeyedRef<key::Key1, Mutex<KeyedDep>>>,
 }
 
 #[injectable]
 impl KeyedStructIterRef {
-    pub fn new(deps: impl Iterator<Item = KeyedServiceRef<key::Key1, Mutex<KeyedDep>>>) -> Self {
+    pub fn new(deps: impl Iterator<Item = KeyedRef<key::Key1, Mutex<KeyedDep>>>) -> Self {
         Self {
             vec: deps.collect(),
         }
@@ -87,21 +87,21 @@ impl KeyedStructIterRef {
 
 #[injectable]
 pub struct KeyedStructLazy {
-    pub dep: Lazy<KeyedServiceRef<key::Key2, KeyedDep>>,
+    pub dep: Lazy<KeyedRef<key::Key2, KeyedDep>>,
 }
 
 pub struct KeyedStructLazyImpl {
-    dep: Lazy<KeyedServiceRef<key::Key2, KeyedDep>>,
+    dep: Lazy<KeyedRef<key::Key2, KeyedDep>>,
 }
 
 #[injectable]
 impl KeyedStructLazyImpl {
-    fn new(dep: Lazy<KeyedServiceRef<key::Key2, KeyedDep>>) -> Self {
+    fn new(dep: Lazy<KeyedRef<key::Key2, KeyedDep>>) -> Self {
         Self { dep }
     }
 }
 
 #[injectable]
 pub struct KeyedStructMut {
-    pub dep: KeyedServiceRefMut<key::Key3, KeyedDep>
+    pub dep: KeyedRefMut<key::Key3, KeyedDep>
 }

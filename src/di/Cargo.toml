@@ -23,6 +23,7 @@ async = []
 inject = ["more-di-macros"]
 lazy = []
 fmt = ["colored"]
+alias = ["more-di-macros/alias"]
 
 [dependencies.more-di-macros]
 path = "../di_macros"

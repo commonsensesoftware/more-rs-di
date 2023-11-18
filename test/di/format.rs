@@ -8,36 +8,36 @@ struct A;
 
 #[injectable]
 struct B {
-    a: ServiceRef<A>,
+    a: Ref<A>,
 }
 
 #[injectable]
 struct C {
-    b: ServiceRef<B>,
+    b: Ref<B>,
 }
 
 #[injectable]
 struct D {
-    a: ServiceRef<A>,
-    c: Option<ServiceRef<C>>,
-    cat: Option<ServiceRef<CatInTheHat>>, // use: missing + optional
-    thing: ServiceRef<Thing1>,            // use: missing + required
-    things: Vec<ServiceRef<dyn Thing>>,
+    a: Ref<A>,
+    c: Option<Ref<C>>,
+    cat: Option<Ref<CatInTheHat>>, // use: missing + optional
+    thing: Ref<Thing1>,            // use: missing + required
+    things: Vec<Ref<dyn Thing>>,
 }
 
 #[injectable]
 struct E {
-    f: ServiceRef<F>, // use: circular ref
+    f: Ref<F>, // use: circular ref
 }
 
 #[injectable]
 struct F {
-    e: ServiceRef<E>, // use: circular ref
+    e: Ref<E>, // use: circular ref
 }
 
 #[injectable(Thing)]
 struct Thing3 {
-    a: ServiceRef<A>,
+    a: Ref<A>,
 }
 
 // use: invalid lifetime
@@ -53,7 +53,7 @@ trait Logger {}
 
 #[injectable]
 struct G {
-    loggers: Vec<ServiceRef<dyn Logger>>, // use: empty list
+    loggers: Vec<Ref<dyn Logger>>, // use: empty list
 }
 
 #[test]

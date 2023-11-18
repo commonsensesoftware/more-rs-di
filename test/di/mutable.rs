@@ -4,7 +4,7 @@
 
 #![allow(dead_code)]
 
-use di::{injectable, lazy::Lazy, ServiceRef, ServiceRefMut};
+use di::{injectable, lazy::Lazy, Ref, RefMut};
 use std::sync::Mutex;
 
 #[injectable]
@@ -12,54 +12,54 @@ pub struct MutDep(usize);
 
 #[injectable]
 pub struct MutStruct {
-    pub dep: ServiceRefMut<MutDep>,
+    pub dep: RefMut<MutDep>,
 }
 
 #[injectable]
-pub struct MutTupleStruct(pub ServiceRefMut<MutDep>);
+pub struct MutTupleStruct(pub RefMut<MutDep>);
 
 #[injectable]
-pub struct MutTupleGeneric<T: 'static>(pub ServiceRefMut<T>);
+pub struct MutTupleGeneric<T: 'static>(pub RefMut<T>);
 
 #[injectable]
 pub struct MutStructRef {
-    pub dep: ServiceRef<Mutex<MutDep>>,
+    pub dep: Ref<Mutex<MutDep>>,
 }
 
 pub struct MutStructImpl {
-    dep: ServiceRefMut<MutDep>,
+    dep: RefMut<MutDep>,
 }
 
 #[injectable]
 impl MutStructImpl {
-    fn new(dep: ServiceRefMut<MutDep>) -> Self {
+    fn new(dep: RefMut<MutDep>) -> Self {
         Self { dep }
     }
 }
 
 pub struct MutStructImplRef {
-    dep: ServiceRef<Mutex<MutDep>>,
+    dep: Ref<Mutex<MutDep>>,
 }
 
 #[injectable]
 impl MutStructImplRef {
-    fn new(dep: ServiceRef<Mutex<MutDep>>) -> Self {
+    fn new(dep: Ref<Mutex<MutDep>>) -> Self {
         Self { dep }
     }
 }
 
 #[injectable]
 pub struct MutStructVec {
-    pub vec: Vec<ServiceRefMut<MutDep>>,
+    pub vec: Vec<RefMut<MutDep>>,
 }
 
 pub struct MutStructIter {
-    pub vec: Vec<ServiceRefMut<MutDep>>,
+    pub vec: Vec<RefMut<MutDep>>,
 }
 
 #[injectable]
 impl MutStructIter {
-    pub fn new(deps: impl Iterator<Item = ServiceRefMut<MutDep>>) -> Self {
+    pub fn new(deps: impl Iterator<Item = RefMut<MutDep>>) -> Self {
         Self {
             vec: deps.collect(),
         }
@@ -67,12 +67,12 @@ impl MutStructIter {
 }
 
 pub struct MutStructIterRef {
-    pub vec: Vec<ServiceRef<Mutex<MutDep>>>,
+    pub vec: Vec<Ref<Mutex<MutDep>>>,
 }
 
 #[injectable]
 impl MutStructIterRef {
-    pub fn new(deps: impl Iterator<Item = ServiceRef<Mutex<MutDep>>>) -> Self {
+    pub fn new(deps: impl Iterator<Item = Ref<Mutex<MutDep>>>) -> Self {
         Self {
             vec: deps.collect(),
         }
@@ -81,16 +81,16 @@ impl MutStructIterRef {
 
 #[injectable]
 pub struct MutStructLazy {
-    pub dep: Lazy<ServiceRefMut<MutDep>>,
+    pub dep: Lazy<RefMut<MutDep>>,
 }
 
 pub struct MutStructLazyImpl {
-    dep: Lazy<ServiceRefMut<MutDep>>,
+    dep: Lazy<RefMut<MutDep>>,
 }
 
 #[injectable]
 impl MutStructLazyImpl {
-    fn new(dep: Lazy<ServiceRefMut<MutDep>>) -> Self {
+    fn new(dep: Lazy<RefMut<MutDep>>) -> Self {
         Self { dep }
     }
 }

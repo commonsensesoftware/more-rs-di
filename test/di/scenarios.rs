@@ -80,7 +80,7 @@ fn inject_should_clone_service_provider_and_return_same_singleton() {
     let svc2 = provider.get_required::<dyn traits::Foo>();
 
     // assert
-    assert!(ServiceRef::ptr_eq(&svc1, &svc2));
+    assert!(Ref::ptr_eq(&svc1, &svc2));
 }
 
 #[test]
@@ -100,7 +100,7 @@ fn inject_should_clone_service_provider_and_return_different_scoped_instance() {
     let svc2 = provider.get_required::<dyn traits::Foo>();
 
     // assert
-    assert!(!ServiceRef::ptr_eq(&svc1, &svc2));
+    assert!(!Ref::ptr_eq(&svc1, &svc2));
 }
 
 #[test]

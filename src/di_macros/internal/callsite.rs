@@ -7,34 +7,84 @@ use syn::{
     spanned::Spanned, Error, GenericArgument, PathArguments, Result, Type, TypeParamBound, TypePath,
 };
 
-const SUPPORTED_TYPES: &str =
-    "Expected ServiceRef, ServiceRefMut, KeyedServiceRef, KeyedServiceRefMut, Rc, or Arc.";
+use crate::alias::{try_get_aliases, Aliases};
+
+const UNSUPPORTED_TYPE: &str = "Injection is unsupported for the specified type.";
 
 pub struct CallSite;
 
+struct KnownType {
+    name: String,
+    mutable: bool,
+}
+
+impl KnownType {
+    fn new<S: AsRef<str>>(name: S, mutable: bool) -> Self {
+        Self {
+            name: name.as_ref().into(),
+            mutable,
+        }
+    }
+}
+
 impl CallSite {
     pub fn visit(callsite: &Type, allow_default: bool) -> Result<InjectedCallSite> {
-        let context = Self::new_context(callsite)?;
-        let strategy = Self::get_strategy(callsite, &context, allow_default)?;
+        let types = Self::get_known_types();
+        let context = Self::new_context(callsite, &types)?;
+        let strategy = Self::get_strategy(callsite, &types, &context, allow_default)?;
         Ok(strategy.inject(&context))
+    }
+
+    fn get_known_types() -> Vec<KnownType> {
+        let mut types = vec![
+            KnownType::new("Ref", true),
+            KnownType::new("Rc", true),
+            KnownType::new("Arc", true),
+            KnownType::new("KeyedRef", true),
+            KnownType::new("RefMut", false),
+            KnownType::new("KeyedRefMut", false),
+        ];
+
+        Self::merge_type_aliases(&mut types);
+
+        types
+    }
+
+    fn merge_type_aliases(types: &mut Vec<KnownType>) {
+        let aliases = try_get_aliases().unwrap_or_else(Aliases::legacy);
+
+        if let Some(name) = &aliases.keyed_ref_mut {
+            if !types.iter().any(|t| &t.name == name) {
+                types.insert(0, KnownType::new(name, false))
+            }
+        }
+
+        if let Some(name) = &aliases.ref_mut {
+            if !types.iter().any(|t| &t.name == name) {
+                types.insert(0, KnownType::new(name, false))
+            }
+        }
+
+        if let Some(name) = &aliases.keyed_ref {
+            if !types.iter().any(|t| &t.name == name) {
+                types.insert(0, KnownType::new(name, true))
+            }
+        }
+
+        if let Some(name) = &aliases.r#ref {
+            if !types.iter().any(|t| &t.name == name) {
+                types.insert(0, KnownType::new(name, true))
+            }
+        }
     }
 
     fn get_strategy<'a>(
         arg: &Type,
+        known_types: &Vec<KnownType>,
         context: &CallSiteContext<'a>,
         allow_default: bool,
     ) -> Result<Box<dyn InjectionStrategy + 'a>> {
-        let args = Self::visit_first_of(
-            context,
-            &[
-                ("ServiceRef", true),
-                ("Rc", true),
-                ("Arc", true),
-                ("KeyedServiceRef", true),
-                ("ServiceRefMut", false),
-                ("KeyedServiceRefMut", false),
-            ],
-        );
+        let args = Self::visit_first_of(context, known_types);
         let count = args.len();
 
         if count > 0 {
@@ -79,11 +129,11 @@ impl CallSite {
         } else if allow_default {
             Ok(Box::new(DefaultInjector))
         } else {
-            Err(Error::new(context.type_.span(), SUPPORTED_TYPES))
+            Err(Error::new(context.type_.span(), UNSUPPORTED_TYPE))
         }
     }
 
-    fn new_context(arg: &Type) -> Result<CallSiteContext<'_>> {
+    fn new_context<'a>(arg: &'a Type, known_types: &'a Vec<KnownType>) -> Result<CallSiteContext<'a>> {
         let mut builder = CallSiteContextBuilder::default();
         let mut read_only = true;
         let input = if let Some(ty) = Self::try_visit_iterator(arg) {
@@ -94,7 +144,7 @@ impl CallSite {
         };
 
         if let Type::Path(outer) = input {
-            if Self::is_mutable_type(outer) {
+            if Self::is_mutable_type(outer, known_types) {
                 builder.is_mutable();
                 read_only = false;
             }
@@ -113,7 +163,7 @@ impl CallSite {
 
             if let Some(inner) = Self::try_visit_option(type_) {
                 if let Type::Path(path) = inner {
-                    if read_only && Self::is_mutable_type(path) {
+                    if read_only && Self::is_mutable_type(path, known_types) {
                         builder.is_mutable();
                     }
 
@@ -121,11 +171,11 @@ impl CallSite {
                     builder.has_type(path);
                     Ok(builder.build())
                 } else {
-                    Err(Error::new(inner.span(), SUPPORTED_TYPES))
+                    Err(Error::new(inner.span(), UNSUPPORTED_TYPE))
                 }
             } else if let Some(inner) = Self::try_visit_vector(type_) {
                 if let Type::Path(path) = inner {
-                    if read_only && Self::is_mutable_type(path) {
+                    if read_only && Self::is_mutable_type(path, known_types) {
                         builder.is_mutable();
                     }
 
@@ -133,10 +183,10 @@ impl CallSite {
                     builder.has_type(path);
                     Ok(builder.build())
                 } else {
-                    Err(Error::new(inner.span(), SUPPORTED_TYPES))
+                    Err(Error::new(inner.span(), UNSUPPORTED_TYPE))
                 }
             } else {
-                if read_only && Self::is_mutable_type(type_) {
+                if read_only && Self::is_mutable_type(type_, known_types) {
                     builder.is_mutable();
                 }
 
@@ -154,33 +204,30 @@ impl CallSite {
         }
     }
 
-    fn is_mutable_type(type_: &TypePath) -> bool {
-        // ServiceRefMut<T> = ServiceRef<Mutex<T>>
-        // KeyedServiceRefMut<K,T> = KeyedServiceRef<K,Mutex<T>>
+    fn is_mutable_type(type_: &TypePath, known_types: &Vec<KnownType>) -> bool {
         if let Some(name) = type_.path.segments.last() {
-            if name.ident == Ident::new("ServiceRefMut", Span::call_site())
-                || name.ident == Ident::new("KeyedServiceRefMut", Span::call_site())
+            if let Some(known_type) = known_types
+                .iter()
+                .find(|t| name.ident == Ident::new(&t.name, Span::call_site()))
             {
-                return true;
-            }
-
-            // Rc<Mutex<T>>
-            // Arc<Mutex<T>>
-            // ServiceRef<Mutex<T>>
-            // KeyedServiceRef<K,Mutex<T>>
-            if name.ident == Ident::new("ServiceRef", Span::call_site())
-                || name.ident == Ident::new("KeyedServiceRef", Span::call_site())
-                || name.ident == Ident::new("Rc", Span::call_site())
-                || name.ident == Ident::new("Arc", Span::call_site())
-            {
-                if let PathArguments::AngleBracketed(ref generics) = name.arguments {
-                    if let GenericArgument::Type(arg) = generics.args.last().unwrap() {
-                        if let Type::Path(ty) = arg {
-                            if let Some(name) = ty.path.segments.last() {
-                                return name.ident == Ident::new("Mutex", Span::call_site());
+                // Rc<Mutex<T>>
+                // Arc<Mutex<T>>
+                // Ref<Mutex<T>>
+                // KeyedRef<K,Mutex<T>>
+                if known_type.mutable {
+                    if let PathArguments::AngleBracketed(ref generics) = name.arguments {
+                        if let GenericArgument::Type(arg) = generics.args.last().unwrap() {
+                            if let Type::Path(ty) = arg {
+                                if let Some(name) = ty.path.segments.last() {
+                                    return name.ident == Ident::new("Mutex", Span::call_site());
+                                }
                             }
                         }
                     }
+                } else {
+                    // RefMut<T> = Ref<Mutex<T>>
+                    // KeyedRefMut<K,T> = KeyedRef<K,Mutex<T>>
+                    return true;
                 }
             }
         }
@@ -214,8 +261,11 @@ impl CallSite {
         }
     }
 
-    fn visit_first_of<'a>(context: &CallSiteContext<'a>, names: &[(&str, bool)]) -> Vec<&'a Type> {
-        for (name, mutable) in names {
+    fn visit_first_of<'a>(
+        context: &CallSiteContext<'a>,
+        known_types: &Vec<KnownType>,
+    ) -> Vec<&'a Type> {
+        for KnownType { name, mutable } in known_types {
             let mut args = Self::visit_generic_type_args(context.type_, name);
 
             if let Some(mut arg) = args.pop() {
@@ -239,10 +289,10 @@ impl CallSite {
      *
      * Rc<T>
      * Arc<T>
-     * ServiceRef<T>
-     * ServiceRefMut<T>
-     * KeyedServiceRef<K,T>
-     * KeyedServiceRefMut<K,T>
+     * Ref<T>
+     * RefMut<T>
+     * KeyedRef<K,T>
+     * KeyedRefMut<K,T>
      * Lazy<T>
      * Option<T>
      * Vec<T>

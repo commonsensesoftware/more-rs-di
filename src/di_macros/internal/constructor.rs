@@ -64,8 +64,7 @@ impl Constructor {
                 _ => {
                     return Err(Error::new(
                         input.span(),
-                        "The argument must be ServiceRef, KeyedServiceRef, Rc, or \
-                              Arc and optionally wrapped with Option or Vec.",
+                        "The argument must be a supported type and optionally wrapped with Option or Vec.",
                     ))
                 }
             };

@@ -1,5 +1,8 @@
-use di::{inject, injectable, lazy::Lazy, ServiceRef};
+use di::{inject, injectable, lazy::Lazy, Ref};
 use std::marker::PhantomData;
+
+// demonstrates using a user-defined alias for Ref<T>
+pub type ServiceRef<T> = Ref<T>;
 
 pub struct Bar;
 
@@ -57,7 +60,7 @@ pub struct GenericFoo<T>
 where
     T: Default + 'static,
 {
-    bar: ServiceRef<GenericBar<T>>,
+    bar: Ref<GenericBar<T>>,
 }
 
 #[injectable]
@@ -65,7 +68,7 @@ impl<T> GenericFoo<T>
 where
     T: Default + 'static,
 {
-    pub fn new(bar: ServiceRef<GenericBar<T>>) -> Self {
+    pub fn new(bar: Ref<GenericBar<T>>) -> Self {
         Self { bar }
     }
 
@@ -75,12 +78,12 @@ where
 }
 
 pub struct LazyFoo {
-    bar: Lazy<ServiceRef<Bar>>,
+    bar: Lazy<Ref<Bar>>,
 }
 
 #[injectable]
 impl LazyFoo {
-    pub fn new(bar: Lazy<ServiceRef<Bar>>) -> Self {
+    pub fn new(bar: Lazy<Ref<Bar>>) -> Self {
         Self { bar }
     }
 
@@ -100,14 +103,14 @@ impl UnitStruct {
 
 #[injectable]
 pub struct NormalStruct {
-    pub unit: ServiceRef<UnitStruct>,
-    pub lazy: Lazy<ServiceRef<UnitStruct>>,
+    pub unit: Ref<UnitStruct>,
+    pub lazy: Lazy<Ref<UnitStruct>>,
     pub count: usize,
 }
 
 #[injectable]
 pub struct Record(
-    pub ServiceRef<UnitStruct>,
-    pub Lazy<ServiceRef<UnitStruct>>,
+    pub Ref<UnitStruct>,
+    pub Lazy<Ref<UnitStruct>>,
     pub usize,
 );

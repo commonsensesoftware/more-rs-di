@@ -2,7 +2,7 @@
 name = "more-di-macros"
 version = "3.0.0"
 edition = "2018"
-authors = ["Chris Martinez <chris_martinez_77@hotmail.com>"]
+authors = ["Chris Martinez <chris.s.martinez@hotmail.com>"]
 description = "Macro implementation of #[injectable(Trait)]"
 license = "MIT"
 repository = "https://github.com/commonsensesoftware/more-rs-di"
@@ -14,14 +14,17 @@ path = "lib.rs"
 proc-macro = true
 doctest = false
 
+[features]
+default = []
+alias = ["toml", "serde"]
+
 [dependencies]
 proc-macro2 = "1.0"
 quote = "1.0"
+syn = { version = "2.0", features = ["full"] }
+toml = { version = "0.8", optional = true }
+serde = { version = "1.0", features = ["derive"], optional = true }
 
-[dependencies.syn]
-version = "2.0"
-features = ["full"]
-
-[dev-dependencies.syn]
-version = "2.0"
-features = ["full", "extra-traits"]
+[dev-dependencies]
+more-di-macros = { path = ".", features = ["alias"] }
+syn = { version = "2.0", features = ["full", "extra-traits"] }

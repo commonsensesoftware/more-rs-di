@@ -1,4 +1,4 @@
-use di::{inject, injectable, lazy::Lazy, KeyedServiceRef, ServiceRef};
+use di::{inject, injectable, lazy::Lazy, KeyedRef, Ref};
 use std::fmt::Debug;
 
 pub trait Foo {
@@ -28,7 +28,7 @@ impl BarImpl {
 }
 
 pub struct FooImpl {
-    bar: ServiceRef<dyn Bar>,
+    bar: Ref<dyn Bar>,
 }
 
 impl Foo for FooImpl {
@@ -42,7 +42,7 @@ impl Foo for FooImpl {
 impl FooImpl {
     // identifies injection call site different from 'new'
     #[inject]
-    pub fn create(bar: ServiceRef<dyn Bar>) -> Self {
+    pub fn create(bar: Ref<dyn Bar>) -> Self {
         Self { bar }
     }
 }
@@ -90,7 +90,7 @@ where
 }
 
 pub struct OneLazyFoo {
-    bar: Lazy<ServiceRef<dyn Bar>>,
+    bar: Lazy<Ref<dyn Bar>>,
 }
 
 impl Foo for OneLazyFoo {
@@ -101,13 +101,13 @@ impl Foo for OneLazyFoo {
 
 #[injectable(Foo)]
 impl OneLazyFoo {
-    pub fn new(bar: Lazy<ServiceRef<dyn Bar>>) -> Self {
+    pub fn new(bar: Lazy<Ref<dyn Bar>>) -> Self {
         Self { bar }
     }
 }
 
 pub struct MaybeLazyFoo {
-    bar: Lazy<Option<ServiceRef<dyn Bar>>>,
+    bar: Lazy<Option<Ref<dyn Bar>>>,
 }
 
 impl Foo for MaybeLazyFoo {
@@ -121,13 +121,13 @@ impl Foo for MaybeLazyFoo {
 
 #[injectable(Foo)]
 impl MaybeLazyFoo {
-    pub fn new(bar: Lazy<Option<ServiceRef<dyn Bar>>>) -> Self {
+    pub fn new(bar: Lazy<Option<Ref<dyn Bar>>>) -> Self {
         Self { bar }
     }
 }
 
 pub struct ManyLazyFoo {
-    bars: Lazy<Vec<ServiceRef<dyn Bar>>>,
+    bars: Lazy<Vec<Ref<dyn Bar>>>,
 }
 
 impl Foo for ManyLazyFoo {
@@ -144,7 +144,7 @@ impl Foo for ManyLazyFoo {
 
 #[injectable(Foo)]
 impl ManyLazyFoo {
-    pub fn new(bars: Lazy<Vec<ServiceRef<dyn Bar>>>) -> Self {
+    pub fn new(bars: Lazy<Vec<Ref<dyn Bar>>>) -> Self {
         Self { bars }
     }
 }
@@ -193,15 +193,15 @@ impl ToString for Thing2 {
 }
 
 pub struct CatInTheHat {
-    pub thing1: ServiceRef<dyn Thing>,
-    pub thing2: ServiceRef<dyn Thing>,
+    pub thing1: Ref<dyn Thing>,
+    pub thing2: Ref<dyn Thing>,
 }
 
 #[injectable]
 impl CatInTheHat {
     pub fn new(
-        thing1: KeyedServiceRef<key::Thing1, dyn Thing>,
-        thing2: KeyedServiceRef<key::Thing2, dyn Thing>,
+        thing1: KeyedRef<key::Thing1, dyn Thing>,
+        thing2: KeyedRef<key::Thing2, dyn Thing>,
     ) -> Self {
         Self {
             thing1: thing1.into(),
@@ -211,12 +211,12 @@ impl CatInTheHat {
 }
 
 pub struct Thingies {
-    items: Vec<ServiceRef<dyn Thing>>,
+    items: Vec<Ref<dyn Thing>>,
 }
 
 #[injectable]
 impl Thingies {
-    pub fn new(items: impl Iterator<Item = ServiceRef<dyn Thing>>) -> Self {
+    pub fn new(items: impl Iterator<Item = Ref<dyn Thing>>) -> Self {
         Self {
             items: items.collect(),
         }
@@ -237,7 +237,7 @@ impl Foo for FooToo {
 }
 
 #[injectable(Foo)]
-pub struct FooTwo(ServiceRef<dyn Bar>);
+pub struct FooTwo(Ref<dyn Bar>);
 
 impl Foo for FooTwo {
     fn echo(&self) -> &str {
@@ -247,7 +247,7 @@ impl Foo for FooTwo {
 
 #[injectable]
 pub struct MoreThingies {
-    things: Vec<ServiceRef<dyn Thing>>,
+    things: Vec<Ref<dyn Thing>>,
 }
 
 impl MoreThingies {
