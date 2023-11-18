@@ -23,9 +23,9 @@ impl<TKey, TSvc: Any + ?Sized> KeyedRef<TKey, TSvc> {
     }
 }
 
-impl<TKey, TSvc: Any + ?Sized> Into<Ref<TSvc>> for KeyedRef<TKey, TSvc> {
-    fn into(self) -> Ref<TSvc> {
-        self.service
+impl<TKey, TSvc: Any + ?Sized> From<KeyedRef<TKey, TSvc>> for Ref<TSvc> {
+    fn from(value: KeyedRef<TKey, TSvc>) -> Self {
+        value.service
     }
 }
 
