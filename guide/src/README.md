@@ -26,6 +26,7 @@ This crate provides the following features:
 - **inject** - Code-generate common injection scenarios
 - **lazy** - Lazy-initialize service resolution
 - **fmt** - Additional output formatting
+- **alias** - Use alternate type aliases
 
 ## Contributing
 
