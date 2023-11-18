@@ -1,5 +1,5 @@
 use crate::{
-    KeyedServiceRef, KeyedServiceRefMut, ServiceDescriptor, ServiceRef, ServiceRefMut, Type,
+    KeyedRef, KeyedRefMut, ServiceDescriptor, Ref, RefMut, Type,
 };
 use std::any::{type_name, Any};
 use std::borrow::Borrow;
@@ -12,7 +12,7 @@ use std::sync::Mutex;
 /// Represents a service provider.
 #[derive(Clone)]
 pub struct ServiceProvider {
-    services: ServiceRef<HashMap<Type, Vec<ServiceDescriptor>>>,
+    services: Ref<HashMap<Type, Vec<ServiceDescriptor>>>,
 }
 
 #[cfg(feature = "async")]
@@ -29,12 +29,12 @@ impl ServiceProvider {
     /// * `services` - The map of services descriptors encapsulated by the provider.
     pub fn new(services: HashMap<Type, Vec<ServiceDescriptor>>) -> Self {
         Self {
-            services: ServiceRef::new(services),
+            services: Ref::new(services),
         }
     }
 
     /// Gets a service of the specified type.
-    pub fn get<T: Any + ?Sized>(&self) -> Option<ServiceRef<T>> {
+    pub fn get<T: Any + ?Sized>(&self) -> Option<Ref<T>> {
         let key = Type::of::<T>();
 
         if let Some(descriptors) = self.services.get(&key) {
@@ -42,7 +42,7 @@ impl ServiceProvider {
                 return Some(
                     descriptor
                         .get(self)
-                        .downcast_ref::<ServiceRef<T>>()
+                        .downcast_ref::<Ref<T>>()
                         .unwrap()
                         .clone(),
                 );
@@ -53,20 +53,20 @@ impl ServiceProvider {
     }
 
     /// Gets a mutable service of the specified type.
-    pub fn get_mut<T: Any + ?Sized>(&self) -> Option<ServiceRefMut<T>> {
+    pub fn get_mut<T: Any + ?Sized>(&self) -> Option<RefMut<T>> {
         self.get::<Mutex<T>>()
     }
 
     /// Gets a keyed service of the specified type.
-    pub fn get_by_key<TKey, TSvc: Any + ?Sized>(&self) -> Option<KeyedServiceRef<TKey, TSvc>> {
+    pub fn get_by_key<TKey, TSvc: Any + ?Sized>(&self) -> Option<KeyedRef<TKey, TSvc>> {
         let key = Type::keyed::<TKey, TSvc>();
 
         if let Some(descriptors) = self.services.get(&key) {
             if let Some(descriptor) = descriptors.last() {
-                return Some(KeyedServiceRef::new(
+                return Some(KeyedRef::new(
                     descriptor
                         .get(self)
-                        .downcast_ref::<ServiceRef<TSvc>>()
+                        .downcast_ref::<Ref<TSvc>>()
                         .unwrap()
                         .clone(),
                 ));
@@ -79,12 +79,12 @@ impl ServiceProvider {
     /// Gets a keyed, mutable service of the specified type.
     pub fn get_by_key_mut<TKey, TSvc: Any + ?Sized>(
         &self,
-    ) -> Option<KeyedServiceRefMut<TKey, TSvc>> {
+    ) -> Option<KeyedRefMut<TKey, TSvc>> {
         self.get_by_key::<TKey, Mutex<TSvc>>()
     }
 
     /// Gets all of the services of the specified type.
-    pub fn get_all<T: Any + ?Sized>(&self) -> impl Iterator<Item = ServiceRef<T>> + '_ {
+    pub fn get_all<T: Any + ?Sized>(&self) -> impl Iterator<Item = Ref<T>> + '_ {
         let key = Type::of::<T>();
 
         if let Some(descriptors) = self.services.get(&key) {
@@ -95,14 +95,14 @@ impl ServiceProvider {
     }
 
     /// Gets all of the mutable services of the specified type.
-    pub fn get_all_mut<T: Any + ?Sized>(&self) -> impl Iterator<Item = ServiceRefMut<T>> + '_ {
+    pub fn get_all_mut<T: Any + ?Sized>(&self) -> impl Iterator<Item = RefMut<T>> + '_ {
         self.get_all::<Mutex<T>>()
     }
 
     /// Gets all of the services of the specified key and type.
     pub fn get_all_by_key<'a, TKey: 'a, TSvc>(
         &'a self,
-    ) -> impl Iterator<Item = KeyedServiceRef<TKey, TSvc>> + '_
+    ) -> impl Iterator<Item = KeyedRef<TKey, TSvc>> + '_
     where
         TSvc: Any + ?Sized,
     {
@@ -118,7 +118,7 @@ impl ServiceProvider {
     /// Gets all of the mutable services of the specified key and type.
     pub fn get_all_by_key_mut<'a, TKey: 'a, TSvc>(
         &'a self,
-    ) -> impl Iterator<Item = KeyedServiceRefMut<TKey, TSvc>> + '_
+    ) -> impl Iterator<Item = KeyedRefMut<TKey, TSvc>> + '_
     where
         TSvc: Any + ?Sized,
     {
@@ -130,7 +130,7 @@ impl ServiceProvider {
     /// # Panics
     ///
     /// The requested service of type `T` does not exist.
-    pub fn get_required<T: Any + ?Sized>(&self) -> ServiceRef<T> {
+    pub fn get_required<T: Any + ?Sized>(&self) -> Ref<T> {
         if let Some(service) = self.get::<T>() {
             service
         } else {
@@ -146,7 +146,7 @@ impl ServiceProvider {
     /// # Panics
     ///
     /// The requested service of type `T` does not exist.
-    pub fn get_required_mut<T: Any + ?Sized>(&self) -> ServiceRefMut<T> {
+    pub fn get_required_mut<T: Any + ?Sized>(&self) -> RefMut<T> {
         self.get_required::<Mutex<T>>()
     }
 
@@ -155,7 +155,7 @@ impl ServiceProvider {
     /// # Panics
     ///
     /// The requested service of type `TSvc` with key `TKey` does not exist.
-    pub fn get_required_by_key<TKey, TSvc: Any + ?Sized>(&self) -> KeyedServiceRef<TKey, TSvc> {
+    pub fn get_required_by_key<TKey, TSvc: Any + ?Sized>(&self) -> KeyedRef<TKey, TSvc> {
         if let Some(service) = self.get_by_key::<TKey, TSvc>() {
             service
         } else {
@@ -174,7 +174,7 @@ impl ServiceProvider {
     /// The requested service of type `TSvc` with key `TKey` does not exist.
     pub fn get_required_by_key_mut<TKey, TSvc: Any + ?Sized>(
         &self,
-    ) -> KeyedServiceRefMut<TKey, TSvc> {
+    ) -> KeyedRefMut<TKey, TSvc> {
         self.get_required_by_key::<TKey, Mutex<TSvc>>()
     }
 
@@ -261,13 +261,13 @@ impl<'a, T: Any + ?Sized> ServiceIterator<'a, T> {
 }
 
 impl<'a, T: Any + ?Sized> Iterator for ServiceIterator<'a, T> {
-    type Item = ServiceRef<T>;
+    type Item = Ref<T>;
     fn next(&mut self) -> Option<Self::Item> {
         if let Some(descriptor) = self.descriptors.next() {
             Some(
                 descriptor
                     .get(self.provider)
-                    .downcast_ref::<ServiceRef<T>>()
+                    .downcast_ref::<Ref<T>>()
                     .unwrap()
                     .clone(),
             )
@@ -292,13 +292,13 @@ impl<'a, TKey, TSvc: Any + ?Sized> KeyedServiceIterator<'a, TKey, TSvc> {
 }
 
 impl<'a, TKey, TSvc: Any + ?Sized> Iterator for KeyedServiceIterator<'a, TKey, TSvc> {
-    type Item = KeyedServiceRef<TKey, TSvc>;
+    type Item = KeyedRef<TKey, TSvc>;
     fn next(&mut self) -> Option<Self::Item> {
         if let Some(descriptor) = self.descriptors.next() {
-            Some(KeyedServiceRef::new(
+            Some(KeyedRef::new(
                 descriptor
                     .get(self.provider)
-                    .downcast_ref::<ServiceRef<TSvc>>()
+                    .downcast_ref::<Ref<TSvc>>()
                     .unwrap()
                     .clone(),
             ))
@@ -311,7 +311,7 @@ impl<'a, TKey, TSvc: Any + ?Sized> Iterator for KeyedServiceIterator<'a, TKey, T
 impl Default for ServiceProvider {
     fn default() -> Self {
         Self {
-            services: ServiceRef::new(HashMap::with_capacity(0)),
+            services: Ref::new(HashMap::with_capacity(0)),
         }
     }
 }
@@ -359,7 +359,7 @@ mod tests {
         let services = ServiceCollection::new()
             .add(
                 singleton::<dyn TestService, TestServiceImpl>()
-                    .from(|_| ServiceRef::new(TestServiceImpl::default())),
+                    .from(|_| Ref::new(TestServiceImpl::default())),
             )
             .build_provider()
             .unwrap();
@@ -377,9 +377,9 @@ mod tests {
         let services = ServiceCollection::new()
             .add(
                 singleton_with_key::<key::Thingy, dyn Thing, Thing1>()
-                    .from(|_| ServiceRef::new(Thing1::default())),
+                    .from(|_| Ref::new(Thing1::default())),
             )
-            .add(singleton::<dyn Thing, Thing1>().from(|_| ServiceRef::new(Thing1::default())))
+            .add(singleton::<dyn Thing, Thing1>().from(|_| Ref::new(Thing1::default())))
             .build_provider()
             .unwrap();
 
@@ -396,7 +396,7 @@ mod tests {
         let services = ServiceCollection::new()
             .add(
                 singleton::<dyn TestService, TestServiceImpl>()
-                    .from(|_| ServiceRef::new(TestServiceImpl::default())),
+                    .from(|_| Ref::new(TestServiceImpl::default())),
             )
             .build_provider()
             .unwrap();
@@ -414,9 +414,9 @@ mod tests {
         let services = ServiceCollection::new()
             .add(
                 singleton_with_key::<key::Thingy, dyn Thing, Thing3>()
-                    .from(|_| ServiceRef::new(Thing3::default())),
+                    .from(|_| Ref::new(Thing3::default())),
             )
-            .add(singleton::<dyn Thing, Thing1>().from(|_| ServiceRef::new(Thing1::default())))
+            .add(singleton::<dyn Thing, Thing1>().from(|_| Ref::new(Thing1::default())))
             .build_provider()
             .unwrap();
 
@@ -467,7 +467,7 @@ mod tests {
             )))
             .add(
                 singleton::<dyn OtherTestService, OtherTestServiceImpl>().from(|sp| {
-                    ServiceRef::new(OtherTestServiceImpl::new(
+                    Ref::new(OtherTestServiceImpl::new(
                         sp.get_required::<dyn TestService>(),
                     ))
                 }),
@@ -480,7 +480,7 @@ mod tests {
         let svc1 = services.get_required::<dyn OtherTestService>();
 
         // assert
-        assert!(ServiceRef::ptr_eq(&svc1, &svc2));
+        assert!(Ref::ptr_eq(&svc1, &svc2));
     }
 
     #[test]
@@ -490,7 +490,7 @@ mod tests {
         let services = ServiceCollection::new()
             .add(
                 transient::<dyn TestService, TestServiceImpl>()
-                    .from(|_| ServiceRef::new(TestServiceImpl::default())),
+                    .from(|_| Ref::new(TestServiceImpl::default())),
             )
             .build_provider()
             .unwrap();
@@ -500,7 +500,7 @@ mod tests {
         let svc2 = services.get_required::<dyn TestService>();
 
         // assert
-        assert!(!ServiceRef::ptr_eq(&svc1, &svc2));
+        assert!(!Ref::ptr_eq(&svc1, &svc2));
     }
 
     #[test]
@@ -511,11 +511,11 @@ mod tests {
         collection
             .add(
                 singleton::<dyn TestService, TestServiceImpl>()
-                    .from(|_| ServiceRef::new(TestServiceImpl { value: 1 })),
+                    .from(|_| Ref::new(TestServiceImpl { value: 1 })),
             )
             .add(
                 singleton::<dyn TestService, TestService2Impl>()
-                    .from(|_| ServiceRef::new(TestService2Impl { value: 2 })),
+                    .from(|_| Ref::new(TestService2Impl { value: 2 })),
             );
 
         let provider = collection.build_provider().unwrap();
@@ -536,15 +536,15 @@ mod tests {
         collection
             .add(
                 singleton_with_key::<key::Thingies, dyn Thing, Thing1>()
-                    .from(|_| ServiceRef::new(Thing1::default())),
+                    .from(|_| Ref::new(Thing1::default())),
             )
             .add(
                 singleton_with_key::<key::Thingies, dyn Thing, Thing2>()
-                    .from(|_| ServiceRef::new(Thing2::default())),
+                    .from(|_| Ref::new(Thing2::default())),
             )
             .add(
                 singleton_with_key::<key::Thingies, dyn Thing, Thing3>()
-                    .from(|_| ServiceRef::new(Thing3::default())),
+                    .from(|_| Ref::new(Thing3::default())),
             );
 
         let provider = collection.build_provider().unwrap();
@@ -571,7 +571,7 @@ mod tests {
         let services = ServiceCollection::new()
             .add(
                 scoped::<dyn TestService, TestServiceImpl>()
-                    .from(|_| ServiceRef::new(TestServiceImpl::default())),
+                    .from(|_| Ref::new(TestServiceImpl::default())),
             )
             .build_provider()
             .unwrap();
@@ -583,7 +583,7 @@ mod tests {
         let svc2 = scope2.get_required::<dyn TestService>();
 
         // assert
-        assert!(!ServiceRef::ptr_eq(&svc1, &svc2));
+        assert!(!Ref::ptr_eq(&svc1, &svc2));
     }
 
     #[test]
@@ -593,7 +593,7 @@ mod tests {
         let services = ServiceCollection::new()
             .add(
                 scoped::<dyn TestService, TestServiceImpl>()
-                    .from(|_| ServiceRef::new(TestServiceImpl::default())),
+                    .from(|_| Ref::new(TestServiceImpl::default())),
             )
             .build_provider()
             .unwrap();
@@ -605,7 +605,7 @@ mod tests {
         let svc2 = scope2.get_required::<dyn TestService>();
 
         // assert
-        assert!(!ServiceRef::ptr_eq(&svc1, &svc2));
+        assert!(!Ref::ptr_eq(&svc1, &svc2));
     }
 
     #[test]
@@ -615,7 +615,7 @@ mod tests {
         let services = ServiceCollection::new()
             .add(
                 singleton::<dyn TestService, TestServiceImpl>()
-                    .from(|_| ServiceRef::new(TestServiceImpl::default())),
+                    .from(|_| Ref::new(TestServiceImpl::default())),
             )
             .build_provider()
             .unwrap();
@@ -628,8 +628,8 @@ mod tests {
         let svc3 = scope2.get_required::<dyn TestService>();
 
         // assert
-        assert!(ServiceRef::ptr_eq(&svc1, &svc2));
-        assert!(ServiceRef::ptr_eq(&svc1, &svc3));
+        assert!(Ref::ptr_eq(&svc1, &svc2));
+        assert!(Ref::ptr_eq(&svc1, &svc3));
     }
 
     #[test]
@@ -639,7 +639,7 @@ mod tests {
         let services = ServiceCollection::new()
             .add(
                 singleton::<dyn TestService, TestServiceImpl>()
-                    .from(|_| ServiceRef::new(TestServiceImpl::default())),
+                    .from(|_| Ref::new(TestServiceImpl::default())),
             )
             .build_provider()
             .unwrap();
@@ -652,8 +652,8 @@ mod tests {
         let svc3 = scope2.get_required::<dyn TestService>();
 
         // assert
-        assert!(ServiceRef::ptr_eq(&svc1, &svc2));
-        assert!(ServiceRef::ptr_eq(&svc1, &svc3));
+        assert!(Ref::ptr_eq(&svc1, &svc2));
+        assert!(Ref::ptr_eq(&svc1, &svc3));
     }
 
     #[test]
@@ -684,7 +684,7 @@ mod tests {
             let provider = ServiceCollection::new()
                 .add(existing::<Path, PathBuf>(file.clone().into_boxed_path()))
                 .add(singleton_as_self().from(|sp| {
-                    ServiceRef::new(Droppable::new(sp.get_required::<Path>().to_path_buf()))
+                    Ref::new(Droppable::new(sp.get_required::<Path>().to_path_buf()))
                 }))
                 .build_provider()
                 .unwrap();
@@ -707,7 +707,7 @@ mod tests {
             let _ = ServiceCollection::new()
                 .add(existing::<Path, PathBuf>(file.clone().into_boxed_path()))
                 .add(singleton_as_self().from(|sp| {
-                    ServiceRef::new(Droppable::new(sp.get_required::<Path>().to_path_buf()))
+                    Ref::new(Droppable::new(sp.get_required::<Path>().to_path_buf()))
                 }))
                 .build_provider()
                 .unwrap();
@@ -726,7 +726,7 @@ mod tests {
         let provider1 = ServiceCollection::new()
             .add(
                 transient::<dyn TestService, TestServiceImpl>()
-                    .from(|_| ServiceRef::new(TestServiceImpl::default())),
+                    .from(|_| Ref::new(TestServiceImpl::default())),
             )
             .build_provider()
             .unwrap();
@@ -735,7 +735,7 @@ mod tests {
         let provider2 = provider1.clone();
 
         // assert
-        assert!(ServiceRef::ptr_eq(&provider1.services, &provider2.services));
+        assert!(Ref::ptr_eq(&provider1.services, &provider2.services));
         assert!(std::ptr::eq(
             provider1.services.as_ref(),
             provider2.services.as_ref()
@@ -758,7 +758,7 @@ mod tests {
         let provider = ServiceCollection::new()
             .add(
                 singleton::<dyn TestService, TestAsyncServiceImpl>()
-                    .from(|_| ServiceRef::new(TestAsyncServiceImpl::default())),
+                    .from(|_| Ref::new(TestAsyncServiceImpl::default())),
             )
             .build_provider()
             .unwrap();

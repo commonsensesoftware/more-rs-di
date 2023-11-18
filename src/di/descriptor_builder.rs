@@ -1,5 +1,5 @@
 use crate::{
-    ServiceDependency, ServiceDescriptor, ServiceLifetime, ServiceProvider, ServiceRef, Type,
+    ServiceDependency, ServiceDescriptor, ServiceLifetime, ServiceProvider, Ref, Type,
 };
 use spin::Once;
 use std::any::Any;
@@ -21,7 +21,7 @@ impl<TSvc: Any + ?Sized, TImpl> ServiceDescriptorBuilder<TSvc, TImpl> {
     /// # Arguments
     ///
     /// * `factory` - The factory method used to create the service
-    pub fn from(mut self, factory: impl Fn(&ServiceProvider) -> ServiceRef<TSvc> + 'static) -> ServiceDescriptor {
+    pub fn from(mut self, factory: impl Fn(&ServiceProvider) -> Ref<TSvc> + 'static) -> ServiceDescriptor {
         ServiceDescriptor::new(
             self.lifetime,
             self.service_type,
@@ -33,7 +33,7 @@ impl<TSvc: Any + ?Sized, TImpl> ServiceDescriptorBuilder<TSvc, TImpl> {
                 self.dependencies
             },
             Once::new(),
-            ServiceRef::new(move |sp| ServiceRef::new(factory(sp))),
+            Ref::new(move |sp| Ref::new(factory(sp))),
         )
     }
 

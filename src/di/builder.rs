@@ -6,8 +6,8 @@ use std::mem::MaybeUninit;
 type Builder<TSvc, TImpl> = ServiceDescriptorBuilder<TSvc, TImpl>;
 
 #[inline(always)]
-fn no_op(_services: &ServiceProvider) -> ServiceRef<dyn Any> {
-    ServiceRef::new(MaybeUninit::<Box<dyn Any>>::uninit())
+fn no_op(_services: &ServiceProvider) -> Ref<dyn Any> {
+    Ref::new(MaybeUninit::<Box<dyn Any>>::uninit())
 }
 
 /// Initializes a new singleton service descriptor builder.
@@ -33,7 +33,7 @@ where
 #[inline]
 pub fn singleton_factory<T: Any + ?Sized, F>(factory: F) -> ServiceDescriptor
 where
-    F: Fn(&ServiceProvider) -> ServiceRef<T> + 'static,
+    F: Fn(&ServiceProvider) -> Ref<T> + 'static,
 {
     Builder::<T, ()>::new(ServiceLifetime::Singleton, Type::factory_of::<T>()).from(factory)
 }
@@ -46,7 +46,7 @@ where
 #[inline]
 pub fn singleton_with_key_factory<TKey, TSvc: Any + ?Sized, F>(factory: F) -> ServiceDescriptor
 where
-    F: Fn(&ServiceProvider) -> ServiceRef<TSvc> + 'static,
+    F: Fn(&ServiceProvider) -> Ref<TSvc> + 'static,
 {
     Builder::<TSvc, ()>::keyed::<TKey>(ServiceLifetime::Singleton, Type::factory_of::<TSvc>())
         .from(factory)
@@ -86,7 +86,7 @@ where
 pub fn scoped_factory<T, F>(factory: F) -> ServiceDescriptor
 where
     T: Any + ?Sized,
-    F: Fn(&ServiceProvider) -> ServiceRef<T> + 'static,
+    F: Fn(&ServiceProvider) -> Ref<T> + 'static,
 {
     Builder::<T, ()>::new(ServiceLifetime::Scoped, Type::factory_of::<T>()).from(factory)
 }
@@ -100,7 +100,7 @@ where
 pub fn scoped_with_key_factory<TKey, TSvc, F>(factory: F) -> ServiceDescriptor
 where
     TSvc: Any + ?Sized,
-    F: Fn(&ServiceProvider) -> ServiceRef<TSvc> + 'static,
+    F: Fn(&ServiceProvider) -> Ref<TSvc> + 'static,
 {
     Builder::<TSvc, ()>::keyed::<TKey>(ServiceLifetime::Scoped, Type::factory_of::<TSvc>())
         .from(factory)
@@ -128,7 +128,7 @@ pub fn transient_with_key<TKey, TSvc: Any + ?Sized, TImpl>() -> ServiceDescripto
 pub fn transient_factory<T, F>(factory: F) -> ServiceDescriptor
 where
     T: Any + ?Sized,
-    F: Fn(&ServiceProvider) -> ServiceRef<T> + 'static,
+    F: Fn(&ServiceProvider) -> Ref<T> + 'static,
 {
     Builder::<T, ()>::new(ServiceLifetime::Transient, Type::factory_of::<T>()).from(factory)
 }
@@ -141,7 +141,7 @@ where
 #[inline]
 pub fn transient_with_key_factory<TKey, TSvc: Any + ?Sized, F>(factory: F) -> ServiceDescriptor
 where
-    F: Fn(&ServiceProvider) -> ServiceRef<TSvc> + 'static,
+    F: Fn(&ServiceProvider) -> Ref<TSvc> + 'static,
 {
     Builder::<TSvc, ()>::keyed::<TKey>(ServiceLifetime::Transient, Type::factory_of::<TSvc>())
         .from(factory)
@@ -183,8 +183,8 @@ pub fn existing<TSvc: Any + ?Sized, TImpl>(instance: Box<TSvc>) -> ServiceDescri
         Type::of::<TSvc>(),
         Type::of::<TImpl>(),
         Vec::with_capacity(0),
-        Once::initialized(ServiceRef::new(ServiceRef::<TSvc>::from(instance))),
-        ServiceRef::new(no_op),
+        Once::initialized(Ref::new(Ref::<TSvc>::from(instance))),
+        Ref::new(no_op),
     )
 }
 
@@ -204,8 +204,8 @@ pub fn existing_as_self<T: Any>(instance: T) -> ServiceDescriptor {
         Type::of::<T>(),
         Type::of::<T>(),
         Vec::with_capacity(0),
-        Once::initialized(ServiceRef::new(ServiceRef::from(instance))),
-        ServiceRef::new(no_op),
+        Once::initialized(Ref::new(Ref::from(instance))),
+        Ref::new(no_op),
     )
 }
 
@@ -227,8 +227,8 @@ pub fn existing_with_key<TKey, TSvc: Any + ?Sized, TImpl>(
         Type::keyed::<TKey, TSvc>(),
         Type::of::<TImpl>(),
         Vec::with_capacity(0),
-        Once::initialized(ServiceRef::new(ServiceRef::<TSvc>::from(instance))),
-        ServiceRef::new(no_op),
+        Once::initialized(Ref::new(Ref::<TSvc>::from(instance))),
+        Ref::new(no_op),
     )
 }
 
@@ -248,8 +248,8 @@ pub fn existing_with_key_as_self<TKey, TSvc: Any>(instance: TSvc) -> ServiceDesc
         Type::keyed::<TKey, TSvc>(),
         Type::of::<TSvc>(),
         Vec::with_capacity(0),
-        Once::initialized(ServiceRef::new(ServiceRef::from(instance))),
-        ServiceRef::new(no_op),
+        Once::initialized(Ref::new(Ref::from(instance))),
+        Ref::new(no_op),
     )
 }
 

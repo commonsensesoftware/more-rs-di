@@ -17,17 +17,17 @@ pub enum ServiceLifetime {
 
 /// Represents the type alias for a service reference.
 #[cfg(not(feature = "async"))]
-pub type ServiceRef<T> = std::rc::Rc<T>;
+pub type Ref<T> = std::rc::Rc<T>;
 
 /// Represents the type alias for a service reference.
 #[cfg(feature = "async")]
-pub type ServiceRef<T> = std::sync::Arc<T>;
+pub type Ref<T> = std::sync::Arc<T>;
 
 /// Represents the type alias for a mutable service reference.
-pub type ServiceRefMut<T> = ServiceRef<std::sync::Mutex<T>>;
+pub type RefMut<T> = Ref<std::sync::Mutex<T>>;
 
 /// Represents the callback function used to create a service.
-pub type ServiceFactory = dyn Fn(&ServiceProvider) -> ServiceRef<dyn Any>;
+pub type ServiceFactory = dyn Fn(&ServiceProvider) -> Ref<dyn Any>;
 
 /// Represents the description of a service with its service type, implementation, and lifetime.
 pub struct ServiceDescriptor {
@@ -35,8 +35,8 @@ pub struct ServiceDescriptor {
     service_type: Type,
     implementation_type: Type,
     dependencies: Vec<ServiceDependency>,
-    instance: ServiceRef<Once<ServiceRef<dyn Any>>>,
-    factory: ServiceRef<ServiceFactory>,
+    instance: Ref<Once<Ref<dyn Any>>>,
+    factory: Ref<ServiceFactory>,
 }
 
 impl ServiceDescriptor {
@@ -46,15 +46,15 @@ impl ServiceDescriptor {
         service_type: Type,
         implementation_type: Type,
         dependencies: Vec<ServiceDependency>,
-        instance: Once<ServiceRef<dyn Any>>,
-        factory: ServiceRef<ServiceFactory>,
+        instance: Once<Ref<dyn Any>>,
+        factory: Ref<ServiceFactory>,
     ) -> Self {
         Self {
             lifetime,
             service_type,
             implementation_type,
             dependencies,
-            instance: ServiceRef::new(instance),
+            instance: Ref::new(instance),
             factory,
         }
     }
@@ -84,7 +84,7 @@ impl ServiceDescriptor {
     /// # Arguments
     ///
     /// * `services` - The current [service provider](struct.ServiceProvider.html).
-    pub fn get(&self, services: &ServiceProvider) -> ServiceRef<dyn Any> {
+    pub fn get(&self, services: &ServiceProvider) -> Ref<dyn Any> {
         if self.lifetime == ServiceLifetime::Transient {
             return (self.factory)(services);
         }
@@ -105,7 +105,7 @@ impl ServiceDescriptor {
             instance: if self.lifetime == ServiceLifetime::Singleton {
                 self.instance.clone()
             } else {
-                ServiceRef::new(Once::new())
+                Ref::new(Once::new())
             },
             factory: self.factory.clone(),
         }

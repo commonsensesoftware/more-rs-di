@@ -1,4 +1,4 @@
-use crate::{ServiceProvider, ServiceRef};
+use crate::{ServiceProvider, Ref};
 use std::any::type_name;
 use std::collections::hash_map::DefaultHasher;
 use std::fmt::{Display, Formatter, Result as FormatResult};
@@ -30,7 +30,7 @@ impl Type {
     /// on the specified return type.
     pub fn factory_of<TSvc: ?Sized>() -> Self {
         Type::new(
-            type_name::<dyn Fn(&ServiceProvider) -> ServiceRef<TSvc>>().to_string(),
+            type_name::<dyn Fn(&ServiceProvider) -> Ref<TSvc>>().to_string(),
             None,
         )
     }

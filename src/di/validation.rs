@@ -260,7 +260,7 @@ mod tests {
             singleton::<dyn OtherTestService, OtherTestServiceImpl>()
                 .depends_on(exactly_one::<dyn TestService>())
                 .from(|sp| {
-                    ServiceRef::new(OtherTestServiceImpl::new(
+                    Ref::new(OtherTestServiceImpl::new(
                         sp.get_required::<dyn TestService>(),
                     ))
                 }),
@@ -288,7 +288,7 @@ mod tests {
                     .depends_on(exactly_one_with_key::<key::Thing1, dyn Thing>())
                     .depends_on(zero_or_one_with_key::<key::Thing2, dyn Thing>())
                     .from(|sp| {
-                        ServiceRef::new(CatInTheHat::new(
+                        Ref::new(CatInTheHat::new(
                             sp.get_required_by_key::<key::Thing1, dyn Thing>(),
                             sp.get_by_key::<key::Thing2, dyn Thing>(),
                         ))
@@ -296,7 +296,7 @@ mod tests {
             )
             .add(
                 transient_with_key::<key::Thing2, dyn Thing, Thing2>()
-                    .from(|_| ServiceRef::new(Thing2::default())),
+                    .from(|_| Ref::new(Thing2::default())),
             );
 
         // act
@@ -318,7 +318,7 @@ mod tests {
         services.add(
             singleton::<dyn OtherTestService, TestOptionalDepImpl>()
                 .depends_on(zero_or_one::<dyn TestService>())
-                .from(|sp| ServiceRef::new(TestOptionalDepImpl::new(sp.get::<dyn TestService>()))),
+                .from(|sp| Ref::new(TestOptionalDepImpl::new(sp.get::<dyn TestService>()))),
         );
 
         // act
@@ -339,7 +339,7 @@ mod tests {
                     .depends_on(exactly_one_with_key::<key::Thing1, dyn Thing>())
                     .depends_on(zero_or_one_with_key::<key::Thing2, dyn Thing>())
                     .from(|sp| {
-                        ServiceRef::new(CatInTheHat::new(
+                        Ref::new(CatInTheHat::new(
                             sp.get_required_by_key::<key::Thing1, dyn Thing>(),
                             sp.get_by_key::<key::Thing2, dyn Thing>(),
                         ))
@@ -347,7 +347,7 @@ mod tests {
             )
             .add(
                 transient_with_key::<key::Thing1, dyn Thing, Thing1>()
-                    .from(|_| ServiceRef::new(Thing1::default())),
+                    .from(|_| Ref::new(Thing1::default())),
             );
 
         // act
@@ -366,7 +366,7 @@ mod tests {
             singleton::<dyn TestService, TestCircularDepImpl>()
                 .depends_on(exactly_one::<dyn TestService>())
                 .from(|sp| {
-                    ServiceRef::new(TestCircularDepImpl::new(
+                    Ref::new(TestCircularDepImpl::new(
                         sp.get_required::<dyn TestService>(),
                     ))
                 }),
@@ -394,7 +394,7 @@ mod tests {
                     .depends_on(exactly_one::<dyn OtherTestService>())
                     .depends_on(exactly_one::<dyn AnotherTestService>())
                     .from(|sp| {
-                        ServiceRef::new(TestAllKindOfProblems::new(
+                        Ref::new(TestAllKindOfProblems::new(
                             sp.get_required::<dyn OtherTestService>(),
                             sp.get_required::<dyn AnotherTestService>(),
                         ))
@@ -404,7 +404,7 @@ mod tests {
                 singleton::<dyn OtherTestService, OtherTestServiceImpl>()
                     .depends_on(exactly_one::<dyn TestService>())
                     .from(|sp| {
-                        ServiceRef::new(OtherTestServiceImpl::new(
+                        Ref::new(OtherTestServiceImpl::new(
                             sp.get_required::<dyn TestService>(),
                         ))
                     }),
@@ -430,13 +430,13 @@ mod tests {
         services
             .add(
                 scoped::<dyn TestService, TestServiceImpl>()
-                    .from(|_| ServiceRef::new(TestServiceImpl::default())),
+                    .from(|_| Ref::new(TestServiceImpl::default())),
             )
             .add(
                 singleton::<dyn OtherTestService, OtherTestServiceImpl>()
                     .depends_on(exactly_one::<dyn TestService>())
                     .from(|sp| {
-                        ServiceRef::new(OtherTestServiceImpl::new(
+                        Ref::new(OtherTestServiceImpl::new(
                             sp.get_required::<dyn TestService>(),
                         ))
                     }),
@@ -461,13 +461,13 @@ mod tests {
         services
             .add(
                 scoped::<dyn TestService, TestServiceImpl>()
-                    .from(|_| ServiceRef::new(TestServiceImpl::default())),
+                    .from(|_| Ref::new(TestServiceImpl::default())),
             )
             .add(
                 transient::<dyn OtherTestService, OtherTestServiceImpl>()
                     .depends_on(exactly_one::<dyn TestService>())
                     .from(|sp| {
-                        ServiceRef::new(OtherTestServiceImpl::new(
+                        Ref::new(OtherTestServiceImpl::new(
                             sp.get_required::<dyn TestService>(),
                         ))
                     }),
@@ -476,7 +476,7 @@ mod tests {
                 singleton::<dyn AnotherTestService, AnotherTestServiceImpl>()
                     .depends_on(exactly_one::<dyn OtherTestService>())
                     .from(|sp| {
-                        ServiceRef::new(AnotherTestServiceImpl::new(
+                        Ref::new(AnotherTestServiceImpl::new(
                             sp.get_required::<dyn OtherTestService>(),
                         ))
                     }),
@@ -500,20 +500,20 @@ mod tests {
 
         services
             .add(
-                singleton::<dyn ServiceM, ServiceMImpl>().from(|_sp| ServiceRef::new(ServiceMImpl)),
+                singleton::<dyn ServiceM, ServiceMImpl>().from(|_sp| Ref::new(ServiceMImpl)),
             )
             .add(
                 singleton::<dyn ServiceB, ServiceBImpl>()
                     .depends_on(exactly_one::<dyn ServiceM>())
                     .from(|sp| {
-                        ServiceRef::new(ServiceBImpl::new(sp.get_required::<dyn ServiceM>()))
+                        Ref::new(ServiceBImpl::new(sp.get_required::<dyn ServiceM>()))
                     }),
             )
             .add(
                 singleton::<dyn ServiceC, ServiceCImpl>()
                     .depends_on(exactly_one::<dyn ServiceM>())
                     .from(|sp| {
-                        ServiceRef::new(ServiceCImpl::new(sp.get_required::<dyn ServiceM>()))
+                        Ref::new(ServiceCImpl::new(sp.get_required::<dyn ServiceM>()))
                     }),
             )
             .add(
@@ -521,7 +521,7 @@ mod tests {
                     .depends_on(exactly_one::<dyn ServiceM>())
                     .depends_on(exactly_one::<dyn ServiceB>())
                     .from(|sp| {
-                        ServiceRef::new(ServiceAImpl::new(
+                        Ref::new(ServiceAImpl::new(
                             sp.get_required::<dyn ServiceM>(),
                             sp.get_required::<dyn ServiceB>(),
                         ))
@@ -532,7 +532,7 @@ mod tests {
                     .depends_on(exactly_one::<dyn ServiceM>())
                     .depends_on(exactly_one::<dyn ServiceC>())
                     .from(|sp| {
-                        ServiceRef::new(ServiceYImpl::new(
+                        Ref::new(ServiceYImpl::new(
                             sp.get_required::<dyn ServiceM>(),
                             sp.get_required::<dyn ServiceC>(),
                         ))
@@ -543,7 +543,7 @@ mod tests {
                     .depends_on(exactly_one::<dyn ServiceM>())
                     .depends_on(exactly_one::<dyn ServiceY>())
                     .from(|sp| {
-                        ServiceRef::new(ServiceXImpl::new(
+                        Ref::new(ServiceXImpl::new(
                             sp.get_required::<dyn ServiceM>(),
                             sp.get_required::<dyn ServiceY>(),
                         ))
@@ -555,7 +555,7 @@ mod tests {
                     .depends_on(exactly_one::<dyn ServiceA>())
                     .depends_on(exactly_one::<dyn ServiceX>())
                     .from(|sp| {
-                        ServiceRef::new(ServiceZImpl::new(
+                        Ref::new(ServiceZImpl::new(
                             sp.get_required::<dyn ServiceM>(),
                             sp.get_required::<dyn ServiceA>(),
                             sp.get_required::<dyn ServiceX>(),
@@ -577,13 +577,13 @@ mod tests {
 
         services
             .add(
-                singleton::<dyn ServiceM, ServiceMImpl>().from(|_sp| ServiceRef::new(ServiceMImpl)),
+                singleton::<dyn ServiceM, ServiceMImpl>().from(|_sp| Ref::new(ServiceMImpl)),
             )
             .add(
                 singleton::<dyn ServiceB, ServiceBImpl>()
                     .depends_on(exactly_one::<dyn ServiceM>())
                     .from(|sp| {
-                        ServiceRef::new(ServiceBImpl::new(sp.get_required::<dyn ServiceM>()))
+                        Ref::new(ServiceBImpl::new(sp.get_required::<dyn ServiceM>()))
                     }),
             )
             .add(
@@ -591,7 +591,7 @@ mod tests {
                     .depends_on(exactly_one::<dyn ServiceM>())
                     .depends_on(exactly_one::<dyn ServiceX>())
                     .from(|sp| {
-                        ServiceRef::new(ServiceCWithCircleRefToXImpl::new(
+                        Ref::new(ServiceCWithCircleRefToXImpl::new(
                             sp.get_required::<dyn ServiceM>(),
                             sp.get_required::<dyn ServiceX>(),
                         ))
@@ -602,7 +602,7 @@ mod tests {
                     .depends_on(exactly_one::<dyn ServiceM>())
                     .depends_on(exactly_one::<dyn ServiceB>())
                     .from(|sp| {
-                        ServiceRef::new(ServiceAImpl::new(
+                        Ref::new(ServiceAImpl::new(
                             sp.get_required::<dyn ServiceM>(),
                             sp.get_required::<dyn ServiceB>(),
                         ))
@@ -613,7 +613,7 @@ mod tests {
                     .depends_on(exactly_one::<dyn ServiceM>())
                     .depends_on(exactly_one::<dyn ServiceC>())
                     .from(|sp| {
-                        ServiceRef::new(ServiceYImpl::new(
+                        Ref::new(ServiceYImpl::new(
                             sp.get_required::<dyn ServiceM>(),
                             sp.get_required::<dyn ServiceC>(),
                         ))
@@ -624,7 +624,7 @@ mod tests {
                     .depends_on(exactly_one::<dyn ServiceM>())
                     .depends_on(exactly_one::<dyn ServiceY>())
                     .from(|sp| {
-                        ServiceRef::new(ServiceXImpl::new(
+                        Ref::new(ServiceXImpl::new(
                             sp.get_required::<dyn ServiceM>(),
                             sp.get_required::<dyn ServiceY>(),
                         ))
@@ -636,7 +636,7 @@ mod tests {
                     .depends_on(exactly_one::<dyn ServiceA>())
                     .depends_on(exactly_one::<dyn ServiceX>())
                     .from(|sp| {
-                        ServiceRef::new(ServiceZImpl::new(
+                        Ref::new(ServiceZImpl::new(
                             sp.get_required::<dyn ServiceM>(),
                             sp.get_required::<dyn ServiceA>(),
                             sp.get_required::<dyn ServiceX>(),

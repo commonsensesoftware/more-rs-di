@@ -37,7 +37,7 @@ mod tests {
     #[derive(Default)]
     struct TestServiceImpl {}
     struct OtherTestServiceImpl {
-        _service: ServiceRef<dyn TestService>,
+        _service: Ref<dyn TestService>,
     }
 
     impl TestService for TestServiceImpl {}
@@ -46,8 +46,8 @@ mod tests {
         fn inject(lifetime: ServiceLifetime) -> InjectBuilder {
             InjectBuilder::new(
                 Activator::new::<dyn TestService, Self>(
-                    |_| ServiceRef::new(Self::default()),
-                    |_| ServiceRef::new(Mutex::new(Self::default())),
+                    |_| Ref::new(Self::default()),
+                    |_| Ref::new(Mutex::new(Self::default())),
                 ),
                 lifetime,
             )
@@ -55,7 +55,7 @@ mod tests {
     }
 
     impl OtherTestServiceImpl {
-        fn new(service: ServiceRef<dyn TestService>) -> Self {
+        fn new(service: Ref<dyn TestService>) -> Self {
             Self { _service: service }
         }
     }
@@ -64,9 +64,9 @@ mod tests {
         fn inject(lifetime: ServiceLifetime) -> InjectBuilder {
             InjectBuilder::new(
                 Activator::new::<dyn OtherTestService, Self>(
-                    |sp| ServiceRef::new(Self::new(sp.get_required::<dyn TestService>())),
+                    |sp| Ref::new(Self::new(sp.get_required::<dyn TestService>())),
                     |sp| {
-                        ServiceRef::new(Mutex::new(Self::new(sp.get_required::<dyn TestService>())))
+                        Ref::new(Mutex::new(Self::new(sp.get_required::<dyn TestService>())))
                     },
                 ),
                 lifetime,

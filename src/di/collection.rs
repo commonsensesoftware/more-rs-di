@@ -789,13 +789,13 @@ mod tests {
 
         collection.add(
             singleton::<dyn TestService, TestServiceImpl>()
-                .from(|_| ServiceRef::new(TestServiceImpl::default())),
+                .from(|_| Ref::new(TestServiceImpl::default())),
         );
 
         // act
         collection.try_add(
             singleton::<dyn TestService, TestServiceImpl>()
-                .from(|_| ServiceRef::new(TestServiceImpl::default())),
+                .from(|_| Ref::new(TestServiceImpl::default())),
         );
 
         // assert
@@ -813,7 +813,7 @@ mod tests {
 
         collection.try_add_to_all(
             singleton::<dyn OtherTestService, OtherTestServiceImpl>().from(|sp| {
-                ServiceRef::new(OtherTestServiceImpl::new(
+                Ref::new(OtherTestServiceImpl::new(
                     sp.get_required::<dyn TestService>(),
                 ))
             }),
@@ -837,7 +837,7 @@ mod tests {
 
         collection.try_add_to_all(
             transient::<dyn TestService, TestServiceImpl>()
-                .from(|_| ServiceRef::new(TestServiceImpl::default())),
+                .from(|_| Ref::new(TestServiceImpl::default())),
         );
 
         // act
@@ -853,7 +853,7 @@ mod tests {
         let descriptors = vec![
             existing::<dyn TestService, TestServiceImpl>(Box::new(TestServiceImpl::default())),
             transient::<dyn TestService, TestServiceImpl>()
-                .from(|_| ServiceRef::new(TestServiceImpl::default())),
+                .from(|_| Ref::new(TestServiceImpl::default())),
         ];
         let mut collection = ServiceCollection::new();
 
@@ -874,17 +874,17 @@ mod tests {
         collection
             .add(
                 singleton::<dyn TestService, TestServiceImpl>()
-                    .from(|_| ServiceRef::new(TestServiceImpl::default())),
+                    .from(|_| Ref::new(TestServiceImpl::default())),
             )
             .add(
                 singleton::<dyn TestService, TestServiceImpl>()
-                    .from(|_| ServiceRef::new(TestServiceImpl::default())),
+                    .from(|_| Ref::new(TestServiceImpl::default())),
             );
 
         // act
         collection.replace(
             singleton::<dyn TestService, TestServiceImpl>()
-                .from(|_| ServiceRef::new(TestServiceImpl::default())),
+                .from(|_| Ref::new(TestServiceImpl::default())),
         );
 
         // assert
@@ -899,11 +899,11 @@ mod tests {
         collection
             .add(
                 singleton::<dyn TestService, TestServiceImpl>()
-                    .from(|_| ServiceRef::new(TestServiceImpl::default())),
+                    .from(|_| Ref::new(TestServiceImpl::default())),
             )
             .add(
                 singleton::<dyn TestService, TestServiceImpl>()
-                    .from(|_| ServiceRef::new(TestServiceImpl::default())),
+                    .from(|_| Ref::new(TestServiceImpl::default())),
             );
 
         // act
@@ -920,13 +920,13 @@ mod tests {
 
         collection.add(
             singleton::<dyn TestService, TestServiceImpl>()
-                .from(|_| ServiceRef::new(TestServiceImpl { value: 1 })),
+                .from(|_| Ref::new(TestServiceImpl { value: 1 })),
         );
 
         // act
         collection.try_replace(
             singleton::<dyn TestService, TestServiceImpl>()
-                .from(|_| ServiceRef::new(TestServiceImpl { value: 2 })),
+                .from(|_| Ref::new(TestServiceImpl { value: 2 })),
         );
 
         // assert
@@ -982,7 +982,7 @@ mod tests {
             services
                 .add(existing::<Path, PathBuf>(file.clone().into_boxed_path()))
                 .add(singleton_as_self().from(|sp| {
-                    ServiceRef::new(Droppable::new(sp.get_required::<Path>().to_path_buf()))
+                    Ref::new(Droppable::new(sp.get_required::<Path>().to_path_buf()))
                 }));
         }
 

@@ -1,4 +1,4 @@
-use crate::{ServiceRef, KeyedServiceRef};
+use crate::{Ref, KeyedRef};
 use std::any::type_name;
 use std::env;
 use std::fs::{remove_file, File};
@@ -34,7 +34,7 @@ pub(crate) struct TestService2Impl {
 }
 
 pub(crate) struct OtherTestServiceImpl {
-    _service: ServiceRef<dyn TestService>,
+    _service: Ref<dyn TestService>,
 }
 
 impl TestService for TestServiceImpl {
@@ -50,7 +50,7 @@ impl TestService for TestService2Impl {
 }
 
 impl OtherTestServiceImpl {
-    pub fn new(service: ServiceRef<dyn TestService>) -> Self {
+    pub fn new(service: Ref<dyn TestService>) -> Self {
         Self { _service: service }
     }
 }
@@ -58,11 +58,11 @@ impl OtherTestServiceImpl {
 impl OtherTestService for OtherTestServiceImpl {}
 
 pub(crate) struct AnotherTestServiceImpl {
-    _service: ServiceRef<dyn OtherTestService>,
+    _service: Ref<dyn OtherTestService>,
 }
 
 impl AnotherTestServiceImpl {
-    pub fn new(service: ServiceRef<dyn OtherTestService>) -> Self {
+    pub fn new(service: Ref<dyn OtherTestService>) -> Self {
         Self { _service: service }
     }
 }
@@ -101,11 +101,11 @@ impl TestService for TestAsyncServiceImpl {
 }
 
 pub(crate) struct TestOptionalDepImpl {
-    _service: Option<ServiceRef<dyn TestService>>,
+    _service: Option<Ref<dyn TestService>>,
 }
 
 impl TestOptionalDepImpl {
-    pub fn new(service: Option<ServiceRef<dyn TestService>>) -> Self {
+    pub fn new(service: Option<Ref<dyn TestService>>) -> Self {
         Self { _service: service }
     }
 }
@@ -113,11 +113,11 @@ impl TestOptionalDepImpl {
 impl OtherTestService for TestOptionalDepImpl {}
 
 pub(crate) struct TestCircularDepImpl {
-    _service: ServiceRef<dyn TestService>,
+    _service: Ref<dyn TestService>,
 }
 
 impl TestCircularDepImpl {
-    pub fn new(service: ServiceRef<dyn TestService>) -> Self {
+    pub fn new(service: Ref<dyn TestService>) -> Self {
         Self { _service: service }
     }
 }
@@ -129,14 +129,14 @@ impl TestService for TestCircularDepImpl {
 }
 
 pub(crate) struct TestAllKindOfProblems {
-    _other: ServiceRef<dyn OtherTestService>,
-    _another: ServiceRef<dyn AnotherTestService>,
+    _other: Ref<dyn OtherTestService>,
+    _another: Ref<dyn AnotherTestService>,
 }
 
 impl TestAllKindOfProblems {
     pub fn new(
-        other: ServiceRef<dyn OtherTestService>,
-        another: ServiceRef<dyn AnotherTestService>,
+        other: Ref<dyn OtherTestService>,
+        another: Ref<dyn AnotherTestService>,
     ) -> Self {
         Self {
             _other: other,
@@ -166,12 +166,12 @@ pub(crate) trait ServiceX {}
 pub(crate) trait ServiceZ {}
 
 pub(crate) struct ServiceAImpl {
-    _m: ServiceRef<dyn ServiceM>,
-    _b: ServiceRef<dyn ServiceB>,
+    _m: Ref<dyn ServiceM>,
+    _b: Ref<dyn ServiceB>,
 }
 
 impl ServiceAImpl {
-    pub(crate) fn new(_m: ServiceRef<dyn ServiceM>, _b: ServiceRef<dyn ServiceB>) -> Self {
+    pub(crate) fn new(_m: Ref<dyn ServiceM>, _b: Ref<dyn ServiceB>) -> Self {
         Self { _m, _b }
     }
 }
@@ -179,11 +179,11 @@ impl ServiceAImpl {
 impl ServiceA for ServiceAImpl {}
 
 pub(crate) struct ServiceBImpl {
-    _m: ServiceRef<dyn ServiceM>,
+    _m: Ref<dyn ServiceM>,
 }
 
 impl ServiceBImpl {
-    pub(crate) fn new(_m: ServiceRef<dyn ServiceM>) -> Self {
+    pub(crate) fn new(_m: Ref<dyn ServiceM>) -> Self {
         Self { _m }
     }
 }
@@ -191,23 +191,23 @@ impl ServiceBImpl {
 impl ServiceB for ServiceBImpl {}
 
 pub(crate) struct ServiceCImpl {
-    _m: ServiceRef<dyn ServiceM>,
+    _m: Ref<dyn ServiceM>,
 }
 
 impl ServiceCImpl {
-    pub(crate) fn new(_m: ServiceRef<dyn ServiceM>) -> Self {
+    pub(crate) fn new(_m: Ref<dyn ServiceM>) -> Self {
         Self { _m }
     }
 }
 impl ServiceC for ServiceCImpl {}
 
 pub(crate) struct ServiceCWithCircleRefToXImpl {
-    _m: ServiceRef<dyn ServiceM>,
-    _x: ServiceRef<dyn ServiceX>,
+    _m: Ref<dyn ServiceM>,
+    _x: Ref<dyn ServiceX>,
 }
 
 impl ServiceCWithCircleRefToXImpl {
-    pub(crate) fn new(_m: ServiceRef<dyn ServiceM>, _x: ServiceRef<dyn ServiceX>) -> Self {
+    pub(crate) fn new(_m: Ref<dyn ServiceM>, _x: Ref<dyn ServiceX>) -> Self {
         Self { _m, _x }
     }
 }
@@ -219,12 +219,12 @@ pub(crate) struct ServiceMImpl;
 impl ServiceM for ServiceMImpl {}
 
 pub(crate) struct ServiceYImpl {
-    _m: ServiceRef<dyn ServiceM>,
-    _c: ServiceRef<dyn ServiceC>,
+    _m: Ref<dyn ServiceM>,
+    _c: Ref<dyn ServiceC>,
 }
 
 impl ServiceYImpl {
-    pub(crate) fn new(_m: ServiceRef<dyn ServiceM>, _c: ServiceRef<dyn ServiceC>) -> Self {
+    pub(crate) fn new(_m: Ref<dyn ServiceM>, _c: Ref<dyn ServiceC>) -> Self {
         Self { _m, _c }
     }
 }
@@ -232,29 +232,29 @@ impl ServiceYImpl {
 impl ServiceY for ServiceYImpl {}
 
 pub(crate) struct ServiceXImpl {
-    _m: ServiceRef<dyn ServiceM>,
-    _y: ServiceRef<dyn ServiceY>,
+    _m: Ref<dyn ServiceM>,
+    _y: Ref<dyn ServiceY>,
 }
 
 impl ServiceX for ServiceXImpl {}
 
 impl ServiceXImpl {
-    pub(crate) fn new(_m: ServiceRef<dyn ServiceM>, _y: ServiceRef<dyn ServiceY>) -> Self {
+    pub(crate) fn new(_m: Ref<dyn ServiceM>, _y: Ref<dyn ServiceY>) -> Self {
         Self { _m, _y }
     }
 }
 
 pub(crate) struct ServiceZImpl {
-    _m: ServiceRef<dyn ServiceM>,
-    _a: ServiceRef<dyn ServiceA>,
-    _x: ServiceRef<dyn ServiceX>,
+    _m: Ref<dyn ServiceM>,
+    _a: Ref<dyn ServiceA>,
+    _x: Ref<dyn ServiceX>,
 }
 
 impl ServiceZImpl {
     pub(crate) fn new(
-        _m: ServiceRef<dyn ServiceM>,
-        _a: ServiceRef<dyn ServiceA>,
-        _x: ServiceRef<dyn ServiceX>,
+        _m: Ref<dyn ServiceM>,
+        _a: Ref<dyn ServiceA>,
+        _x: Ref<dyn ServiceX>,
     ) -> Self {
         Self { _m, _a, _x }
     }
@@ -309,8 +309,8 @@ pub(crate) struct CatInTheHat {
 
 impl CatInTheHat {
     pub fn new(
-        _thing1: KeyedServiceRef<key::Thing1, dyn Thing>,
-        _thing2: Option<KeyedServiceRef<key::Thing2, dyn Thing>>,
+        _thing1: KeyedRef<key::Thing1, dyn Thing>,
+        _thing2: Option<KeyedRef<key::Thing2, dyn Thing>>,
     ) -> Self {
         Self { }
     }
