@@ -47,7 +47,7 @@ impl ServiceCollection {
     ///
     /// # Argument
     ///
-    /// * `index` - The index of the element to remove.
+    /// * `index` - The index of the element to remove
     ///
     /// # Panics
     ///
@@ -60,7 +60,7 @@ impl ServiceCollection {
     ///
     /// # Arguments
     ///
-    /// * `descriptor` - The [service descriptor](struct.ServiceDescriptor.html) to register.
+    /// * `descriptor` - The [service descriptor](struct.ServiceDescriptor.html) to register
     pub fn add<T: Into<ServiceDescriptor>>(&mut self, descriptor: T) -> &mut Self {
         self.items.push(descriptor.into());
         self
@@ -70,7 +70,7 @@ impl ServiceCollection {
     ///
     /// # Arguments
     ///
-    /// * `descriptor` - The [service descriptor](struct.ServiceDescriptor.html) to register.
+    /// * `descriptor` - The [service descriptor](struct.ServiceDescriptor.html) to register
     pub fn try_add<T: Into<ServiceDescriptor>>(&mut self, descriptor: T) -> &mut Self {
         let new_item = descriptor.into();
         let service_type = new_item.service_type();
@@ -90,7 +90,7 @@ impl ServiceCollection {
     ///
     /// # Arguments
     ///
-    /// * `descriptor` - The [service descriptor](struct.ServiceDescriptor.html) to register.
+    /// * `descriptor` - The [service descriptor](struct.ServiceDescriptor.html) to register
     pub fn try_add_to_all<T: Into<ServiceDescriptor>>(&mut self, descriptor: T) -> &mut Self {
         let new_item = descriptor.into();
         let service_type = new_item.service_type();
@@ -117,7 +117,7 @@ impl ServiceCollection {
     ///
     /// # Arguments
     ///
-    /// * `descriptors` - The [service descriptors](struct.ServiceDescriptor.html) to register.
+    /// * `descriptors` - The [service descriptors](struct.ServiceDescriptor.html) to register
     pub fn try_add_all(
         &mut self,
         descriptors: impl IntoIterator<Item = ServiceDescriptor>,
@@ -132,7 +132,7 @@ impl ServiceCollection {
     ///
     /// # Arguments
     ///
-    /// * `descriptor` - The replacement [service descriptor](struct.ServiceDescriptor.html).
+    /// * `descriptor` - The replacement [service descriptor](struct.ServiceDescriptor.html)
     pub fn replace<T: Into<ServiceDescriptor>>(&mut self, descriptor: T) -> &mut Self {
         let new_item = descriptor.into();
         let service_type = new_item.service_type();
@@ -152,7 +152,7 @@ impl ServiceCollection {
     ///
     /// # Arguments
     ///
-    /// * `descriptor` - The replacement [service descriptor](struct.ServiceDescriptor.html).
+    /// * `descriptor` - The replacement [service descriptor](struct.ServiceDescriptor.html)
     pub fn try_replace<T: Into<ServiceDescriptor>>(&mut self, descriptor: T) -> &mut Self {
         self.try_add(descriptor)
     }

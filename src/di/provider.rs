@@ -25,7 +25,7 @@ impl ServiceProvider {
     ///
     /// # Arguments
     ///
-    /// * `services` - The map of services descriptors encapsulated by the provider.
+    /// * `services` - The map of services descriptors encapsulated by the provider
     pub fn new(services: HashMap<Type, Vec<ServiceDescriptor>>) -> Self {
         Self {
             services: Ref::new(services),
@@ -188,14 +188,10 @@ impl ServiceProvider {
 /// 
 /// # Remarks
 /// 
-/// This struct has the exact same functionality as
-/// [ServiceProvider](struct.ServiceProvider.html).
-/// When a new instance is created, it also creates
-/// a new scope from the source
-/// [ServiceProvider](struct.ServiceProvider.html).
-/// The primary use case for this struct is to
-/// explicitly declare that a new scope should be
-/// created at the injection call site.
+/// This struct has the exact same functionality as [ServiceProvider](struct.ServiceProvider.html).
+/// When a new instance is created, it also creates a new scope from the source
+/// [ServiceProvider](struct.ServiceProvider.html). The primary use case for this struct is to
+/// explicitly declare that a new scope should be created at the injection call site.
 #[derive(Clone, Default)]
 pub struct ScopedServiceProvider {
     sp: ServiceProvider

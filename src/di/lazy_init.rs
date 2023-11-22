@@ -205,6 +205,10 @@ pub fn empty_with_key<TKey, TSvc: Any + ?Sized>() -> Lazy<Vec<KeyedRef<TKey, TSv
 }
 
 /// Creates and returns a holder from an existing instance.
+/// 
+/// # Arguments
+/// 
+/// * `instance` - The existing instance used to initialize with
 pub fn init<T: Any + ?Sized>(instance: Box<T>) -> Lazy<Ref<T>> {
     Lazy {
         resolve: |_| unimplemented!(),
@@ -214,6 +218,10 @@ pub fn init<T: Any + ?Sized>(instance: Box<T>) -> Lazy<Ref<T>> {
 }
 
 /// Creates and returns a holder from an existing, mutable instance.
+/// 
+/// # Arguments
+/// 
+/// * `instance` - The existing instance used to initialize with
 pub fn init_mut<T: Any + ?Sized>(instance: Box<Mut<T>>) -> Lazy<RefMut<T>> {
     Lazy {
         resolve: |_| unimplemented!(),
@@ -223,6 +231,10 @@ pub fn init_mut<T: Any + ?Sized>(instance: Box<Mut<T>>) -> Lazy<RefMut<T>> {
 }
 
 /// Creates and returns a holder from an existing instance with a key.
+/// 
+/// # Arguments
+/// 
+/// * `instance` - The existing instance used to initialize with
 pub fn init_with_key<TKey, TSvc: Any + ?Sized>(instance: Box<TSvc>) -> Lazy<KeyedRef<TKey, TSvc>> {
     Lazy {
         resolve: |_| unimplemented!(),
@@ -232,6 +244,10 @@ pub fn init_with_key<TKey, TSvc: Any + ?Sized>(instance: Box<TSvc>) -> Lazy<Keye
 }
 
 /// Creates and returns a holder from an existing, mutable instance with a key.
+/// 
+/// # Arguments
+/// 
+/// * `instance` - The existing instance used to initialize with
 pub fn init_with_key_mut<TKey, TSvc: Any + ?Sized>(
     instance: Box<Mut<TSvc>>,
 ) -> Lazy<KeyedRefMut<TKey, TSvc>> {

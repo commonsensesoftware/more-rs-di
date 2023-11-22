@@ -25,8 +25,8 @@ impl ServiceDependency {
     /// 
     /// # Arguments
     /// 
-    /// * `injected_type` - the [injected type](struct.Type.html) of the service dependency
-    /// * `cardinality` - the [cardinality](enum.ServiceCardinality.html) of the service dependency
+    /// * `injected_type` - The [injected type](struct.Type.html) of the service dependency
+    /// * `cardinality` - The [cardinality](enum.ServiceCardinality.html) of the service dependency
     pub fn new(injected_type: Type, cardinality: ServiceCardinality) -> Self {
         Self {
             injected_type,

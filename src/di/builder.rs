@@ -56,7 +56,7 @@ where
 ///
 /// # Remarks
 ///
-/// This function maps a concrete type to itself rather than a trait
+/// This function maps a concrete type to itself rather than a trait.
 #[inline]
 pub fn singleton_as_self<T: Any>() -> ServiceDescriptorBuilder<T, T> {
     Builder::new(ServiceLifetime::Singleton, Type::of::<T>())
@@ -151,7 +151,7 @@ where
 ///
 /// # Remarks
 ///
-/// This function maps a concrete type to itself rather than a trait
+/// This function maps a concrete type to itself rather than a trait.
 #[inline]
 pub fn transient_as_self<T: Any>() -> ServiceDescriptorBuilder<T, T> {
     Builder::new(ServiceLifetime::Transient, Type::of::<T>())
@@ -161,7 +161,7 @@ pub fn transient_as_self<T: Any>() -> ServiceDescriptorBuilder<T, T> {
 ///
 /// # Remarks
 ///
-/// This function maps a concrete type to itself rather than a trait
+/// This function maps a concrete type to itself rather than a trait.
 #[inline]
 pub fn transient_with_key_as_self<TKey, TSvc: Any>() -> ServiceDescriptorBuilder<TSvc, TSvc> {
     Builder::keyed::<TKey>(ServiceLifetime::Transient, Type::of::<TSvc>())
@@ -175,7 +175,7 @@ pub fn transient_with_key_as_self<TKey, TSvc: Any>() -> ServiceDescriptorBuilder
 ///
 /// # Remarks
 ///
-/// This function maps an existing instance to a trait
+/// This function maps an existing instance to a trait.
 #[inline]
 pub fn existing<TSvc: Any + ?Sized, TImpl>(instance: Box<TSvc>) -> ServiceDescriptor {
     ServiceDescriptor::new(
@@ -196,7 +196,7 @@ pub fn existing<TSvc: Any + ?Sized, TImpl>(instance: Box<TSvc>) -> ServiceDescri
 ///
 /// # Remarks
 ///
-/// This function maps an existing instance to itself rather than a trait
+/// This function maps an existing instance to itself rather than a trait.
 #[inline]
 pub fn existing_as_self<T: Any>(instance: T) -> ServiceDescriptor {
     ServiceDescriptor::new(
@@ -217,7 +217,7 @@ pub fn existing_as_self<T: Any>(instance: T) -> ServiceDescriptor {
 ///
 /// # Remarks
 ///
-/// This function maps an existing instance to a trait
+/// This function maps an existing instance to a trait.
 #[inline]
 pub fn existing_with_key<TKey, TSvc: Any + ?Sized, TImpl>(
     instance: Box<TSvc>,
@@ -240,7 +240,7 @@ pub fn existing_with_key<TKey, TSvc: Any + ?Sized, TImpl>(
 ///
 /// # Remarks
 ///
-/// This function maps an existing instance to itself rather than a trait
+/// This function maps an existing instance to itself rather than a trait.
 #[inline]
 pub fn existing_with_key_as_self<TKey, TSvc: Any>(instance: TSvc) -> ServiceDescriptor {
     ServiceDescriptor::new(

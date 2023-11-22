@@ -83,7 +83,7 @@ impl ServiceDescriptor {
     ///
     /// # Arguments
     ///
-    /// * `services` - The current [service provider](struct.ServiceProvider.html).
+    /// * `services` - The current [service provider](struct.ServiceProvider.html)
     pub fn get(&self, services: &ServiceProvider) -> Ref<dyn Any> {
         if self.lifetime == ServiceLifetime::Transient {
             return (self.factory)(services);

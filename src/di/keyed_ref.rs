@@ -14,7 +14,7 @@ pub type KeyedRefMut<TKey, TSvc> = KeyedRef<TKey, Mut<TSvc>>;
 impl<TKey, TSvc: Any + ?Sized> KeyedRef<TKey, TSvc> {
     /// Initializes a new holder for the specified keyed service.
     ///
-    /// * `service` - the keyed service reference the holder is for
+    /// * `service` - The keyed service reference the holder is for
     pub fn new(service: Ref<TSvc>) -> Self {
         Self {
             service,

@@ -6,7 +6,7 @@ pub trait Injectable: Sized {
     ///
     /// # Arguments
     ///
-    /// * `lifetime` - The [lifetime](enum.ServiceLifetime.html) of the injected type.
+    /// * `lifetime` - The [lifetime](enum.ServiceLifetime.html) of the injected type
     fn inject(lifetime: ServiceLifetime) -> InjectBuilder;
 
     /// Creates and returns a [builder](struct.InjectBuilder.html) for a singleton injected type.
