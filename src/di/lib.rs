@@ -4,7 +4,7 @@
 pub(crate) type Mut<T> = std::cell::RefCell<T>;
 
 #[cfg(feature = "async")]
-pub(crate) type Mut<T> = std::sync::Mutex<T>;
+pub(crate) type Mut<T> = std::sync::RwLock<T>;
 
 mod collection;
 mod dependency;

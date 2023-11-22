@@ -213,7 +213,7 @@ impl CallSite {
                 .iter()
                 .find(|t| name.ident == Ident::new(&t.name, Span::call_site()))
             {
-                // Mut<T> = RefCell<T> | Mutex<T>
+                // Mut<T> = RefCell<T> | RwLock<T>
                 // Rc<Mut<T>>
                 // Arc<Mut<T>>
                 // Ref<Mut<T>>
@@ -224,7 +224,7 @@ impl CallSite {
                             if let Type::Path(ty) = arg {
                                 if let Some(name) = ty.path.segments.last() {
                                     return name.ident == Ident::new("RefCell", Span::call_site())
-                                        || name.ident == Ident::new("Mutex", Span::call_site());
+                                        || name.ident == Ident::new("RwLock", Span::call_site());
                                 }
                             }
                         }
@@ -278,7 +278,7 @@ impl CallSite {
                     if let Type::Path(path) = arg {
                         if let Some(ty) = Self::visit_generic_type_arg(path, "RefCell") {
                             arg = ty;
-                        } else if let Some(ty) = Self::visit_generic_type_arg(path, "Mutex") {
+                        } else if let Some(ty) = Self::visit_generic_type_arg(path, "RwLock") {
                             arg = ty;
                         }
                     }

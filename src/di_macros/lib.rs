@@ -64,10 +64,10 @@ pub fn inject(
 /// * `ScopedServiceProvider`
 ///
 /// `Ref<T>` is a type alias for `Rc<T>` or `Arc<T>` and RefMut<T>` is a
-/// type alias for `Rc<RefCell<T>>` or `Arc<Mutex<T>>` depending on whether
+/// type alias for `Rc<RefCell<T>>` or `Arc<RwLock<T>>` depending on whether
 /// the **async** feature is activated; therefore, `Rc<T>` and `Arc<T>`
 /// are allowed any place `Ref<T>` is allowed and `Rc<RefCell<T>>`
-/// and `Arc<Mutex<T>>` are allowed any place `RefMut<T>` is allowed.
+/// and `Arc<RwLock<T>>` are allowed any place `RefMut<T>` is allowed.
 ///
 /// # Examples
 ///

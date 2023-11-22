@@ -442,7 +442,7 @@ mod tests {
         // assert
         cfg_if! {
             if #[cfg(feature = "async")] {
-                assert_eq!(lazy.value().lock().unwrap().speak(), "I pity the foo!");
+                assert_eq!(lazy.value().read().unwrap().speak(), "I pity the foo!");
             } else {
                 assert_eq!(lazy.value().borrow().speak(), "I pity the foo!");
             }
@@ -460,7 +460,7 @@ mod tests {
         // assert
         cfg_if! {
             if #[cfg(feature = "async")] {
-                assert_eq!(lazy.value().lock().unwrap().speak(), "I pity the foo!");
+                assert_eq!(lazy.value().write().unwrap().speak(), "I pity the foo!");
             } else {
                 assert_eq!(lazy.value().borrow().speak(), "I pity the foo!");
             }

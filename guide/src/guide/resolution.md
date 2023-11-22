@@ -49,8 +49,7 @@ let provider = ServiceCollection::new()
     .add(transient_as_self::<Thing1>().from(|_| Ref::new(Thing1)))
     .add(transient::<dyn Thing, Thing1>().from(|_| Ref::new(Thing1)))
     .add(transient::<dyn Thing, Thing2>().from(|_| Ref::new(Thing2)))
-    .add(transient_mut::<dyn Thing, Thing3>()
-         .from(|_| RefMut::new(Mutex::new(Thing3))))
+    .add(transient_mut::<dyn Thing, Thing3>().from(|_| RefMut::new(Thing3.into())))
     .build_provider()
     .unwrap();
 
@@ -60,7 +59,7 @@ assert!(provider.get::<Thing1>().is_some());
 // None
 assert!(provider.get::<Thing3>().is_none());
 
-// Mutex<dyn Thing> → Mutex<Thing>
+// RwLock<dyn Thing> → RwLock<Thing3>
 assert!(provider.get_mut::<dyn Thing>().is_some());
 
 // dyn Thing → Thing1

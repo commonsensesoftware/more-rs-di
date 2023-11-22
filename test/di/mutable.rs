@@ -9,7 +9,7 @@ use cfg_if::cfg_if;
 
 cfg_if! {
     if #[cfg(feature = "async")] {
-        use std::sync::Mutex;
+        use std::sync::RwLock;
     } else {
         use std::cell::RefCell;
     }
@@ -33,7 +33,7 @@ cfg_if! {
     if #[cfg(feature = "async")] {
         #[injectable]
         pub struct MutStructRef {
-            pub dep: Ref<Mutex<MutDep>>,
+            pub dep: Ref<RwLock<MutDep>>,
         }
     } else {
         #[injectable]
@@ -58,12 +58,12 @@ impl MutStructImpl {
 cfg_if! {
     if #[cfg(feature = "async")] {
         pub struct MutStructImplRef {
-            dep: Ref<Mutex<MutDep>>,
+            dep: Ref<RwLock<MutDep>>,
         }
 
         #[injectable]
         impl MutStructImplRef {
-            fn new(dep: Ref<Mutex<MutDep>>) -> Self {
+            fn new(dep: Ref<RwLock<MutDep>>) -> Self {
                 Self { dep }
             }
         }
@@ -102,12 +102,12 @@ impl MutStructIter {
 cfg_if! {
     if #[cfg(feature = "async")] {
         pub struct MutStructIterRef {
-            pub vec: Vec<Ref<Mutex<MutDep>>>,
+            pub vec: Vec<Ref<RwLock<MutDep>>>,
         }
         
         #[injectable]
         impl MutStructIterRef {
-            pub fn new(deps: impl Iterator<Item = Ref<Mutex<MutDep>>>) -> Self {
+            pub fn new(deps: impl Iterator<Item = Ref<RwLock<MutDep>>>) -> Self {
                 Self {
                     vec: deps.collect(),
                 }

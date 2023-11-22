@@ -9,7 +9,7 @@ use cfg_if::cfg_if;
 
 cfg_if! {
     if #[cfg(feature = "async")] {
-        use std::sync::Mutex;
+        use std::sync::RwLock;
     } else {
         use std::cell::RefCell;
     }
@@ -39,7 +39,7 @@ cfg_if! {
     if #[cfg(feature = "async")] {
         #[injectable]
         pub struct KeyedStructRef {
-            pub dep: KeyedRef<key::Key1, Mutex<KeyedDep>>,
+            pub dep: KeyedRef<key::Key1, RwLock<KeyedDep>>,
         }
     } else {
         #[injectable]
@@ -63,12 +63,12 @@ impl KeyedStructImpl {
 cfg_if! {
     if #[cfg(feature = "async")] {
         pub struct KeyedStructImplRef {
-            dep: KeyedRef<key::Key1, Mutex<KeyedDep>>,
+            dep: KeyedRef<key::Key1, RwLock<KeyedDep>>,
         }
         
         #[injectable]
         impl KeyedStructImplRef {
-            fn new(dep: KeyedRef<key::Key1, Mutex<KeyedDep>>) -> Self {
+            fn new(dep: KeyedRef<key::Key1, RwLock<KeyedDep>>) -> Self {
                 Self { dep }
             }
         }
@@ -107,12 +107,12 @@ impl KeyedStructIter {
 cfg_if! {
     if #[cfg(feature = "async")] {
         pub struct KeyedStructIterRef {
-            pub vec: Vec<KeyedRef<key::Key1, Mutex<KeyedDep>>>,
+            pub vec: Vec<KeyedRef<key::Key1, RwLock<KeyedDep>>>,
         }
         
         #[injectable]
         impl KeyedStructIterRef {
-            pub fn new(deps: impl Iterator<Item = KeyedRef<key::Key1, Mutex<KeyedDep>>>) -> Self {
+            pub fn new(deps: impl Iterator<Item = KeyedRef<key::Key1, RwLock<KeyedDep>>>) -> Self {
                 Self {
                     vec: deps.collect(),
                 }

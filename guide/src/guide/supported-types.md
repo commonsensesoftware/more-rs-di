@@ -20,8 +20,8 @@ There are a few basic forms in which you can request a service:
 When the **async** feature is enabled, you **must** use `Arc` instead of `Rc`. To facilitate switching between synchronous and asynchronous contexts as well as making the syntax slightly more succinct, the following type aliases are provided:
 
 - `Ref<T>` = `Rc<T>` or `Arc<T>`
-- `RefMut<T>` = `Rc<RefCell<T>>` or `Arc<Mutex<T>>`
-- `KeyedRefMut<K,T>` = `KeyedRef<K,RefCell<T>>` or `KeyedRef<K,Mutex<T>>`
+- `RefMut<T>` = `Rc<RefCell<T>>` or `Arc<RwLock<T>>`
+- `KeyedRefMut<K,T>` = `KeyedRef<K,RefCell<T>>` or `KeyedRef<K,RwLock<T>>`
 
 ## Macro Support
 

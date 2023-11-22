@@ -101,9 +101,9 @@ The borrowing rules imposed by Rust places limitations on creating mutable servi
 
 1. Use _Interior Mutability_ within your service implementation
 2. Design your service as a factory which is shared within DI, but can create instances owned outside the factory that are idiomatically mutable
-3. Decorate your service with `RefCell<T>` or, if the **async** feature is activated, `Mutex<T>`
+3. Decorate your service with `RefCell<T>` or, if the **async** feature is activated, `RwLock<T>`
 
-**Option 3** is the only method provided out-of-the-box as the other options are subjective design choices within the scope of your application. One of the consequences of this approach is that the types `RefCell<T>` and `Mutex<T>` themselves become part of the service registration; `Ref<T>` and `Ref<RefCell<T>>` (or `RefMut<T>` for short) are considered different services. In most use cases, this is not a problem. Your service is either entirely read-only or it is read-write. If you need both and two different service instances will not work for you or you want finer-grained control over synchronization, you should consider _Interior Mutability_ instead.
+**Option 3** is the only method provided out-of-the-box as the other options are subjective design choices within the scope of your application. One of the consequences of this approach is that the types `RefCell<T>` and `RwLock<T>` themselves become part of the service registration; `Ref<T>` and `Ref<RefCell<T>>` (or `RefMut<T>` for short) are considered different services. In most use cases, this is not a problem. Your service is either entirely read-only or it is read-write. If you need both and two different service instances will not work for you or you want finer-grained control over synchronization, you should consider _Interior Mutability_ instead.
 
 ## Builder
 
