@@ -246,6 +246,7 @@ pub fn init_with_key_mut<TKey, TSvc: Any + ?Sized>(
 mod tests {
     use super::*;
     use crate::*;
+    use cfg_if::cfg_if;
 
     #[derive(Default)]
     struct Bar;
@@ -430,7 +431,6 @@ mod tests {
         assert_eq!(lazy.value().speak(), "I pity the foo!");
     }
 
-    #[cfg(not(feature = "async"))]
     #[test]
     fn init_mut_should_create_lazy_from_instance() {
         // arrange
@@ -440,23 +440,15 @@ mod tests {
         let lazy = lazy::init_mut(instance);
 
         // assert
-        assert_eq!(lazy.value().borrow().speak(), "I pity the foo!");
+        cfg_if! {
+            if #[cfg(feature = "async")] {
+                assert_eq!(lazy.value().lock().unwrap().speak(), "I pity the foo!");
+            } else {
+                assert_eq!(lazy.value().borrow().speak(), "I pity the foo!");
+            }
+        }
     }
 
-    #[cfg(feature = "async")]
-    #[test]
-    fn init_mut_should_create_lazy_from_instance() {
-        // arrange
-        let instance: Box<Mut<dyn IPityTheFoo>> = Box::new(Mut::new(FooImpl));
-
-        // act
-        let lazy = lazy::init_mut(instance);
-
-        // assert
-        assert_eq!(lazy.value().lock().unwrap().speak(), "I pity the foo!");
-    }
-
-    #[cfg(not(feature = "async"))]
     #[test]
     fn init_with_key_mut_should_create_lazy_from_instance() {
         // arrange
@@ -466,19 +458,12 @@ mod tests {
         let lazy = lazy::init_with_key_mut::<Bar, _>(instance);
 
         // assert
-        assert_eq!(lazy.value().borrow().speak(), "I pity the foo!");
-    }
-
-    #[cfg(feature = "async")]
-    #[test]
-    fn init_with_key_mut_should_create_lazy_from_instance() {
-        // arrange
-        let instance: Box<Mut<dyn IPityTheFoo>> = Box::new(Mut::new(FooImpl));
-
-        // act
-        let lazy = lazy::init_with_key_mut::<Bar, _>(instance);
-
-        // assert
-        assert_eq!(lazy.value().lock().unwrap().speak(), "I pity the foo!");
+        cfg_if! {
+            if #[cfg(feature = "async")] {
+                assert_eq!(lazy.value().lock().unwrap().speak(), "I pity the foo!");
+            } else {
+                assert_eq!(lazy.value().borrow().speak(), "I pity the foo!");
+            }
+        }
     }
 }

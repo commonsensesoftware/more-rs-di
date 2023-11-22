@@ -35,11 +35,14 @@ version = "0.9.8"
 default-features = false
 features = ["once"]
 
+[dependencies.colored]
+version = "2.0"
+optional = true
+
+[dev-dependencies]
+cfg-if = "1.0"
+
 [dev-dependencies.more-di]
 path = "."
 default-features = false
 features = ["builder", "lazy", "fmt"]
-
-[dependencies.colored]
-version = "2.0"
-optional = true
