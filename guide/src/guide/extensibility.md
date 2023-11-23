@@ -1,3 +1,5 @@
+{{#include links.md}}
+
 # Extensibility
 
 Using dependency injection in your own application is certainly useful; however, the strength of the `more-di` crate really starts to shine when you enable DI composition across different crates. It effectively enables a DI ecosystem that crate library authors can elect to make required or opt into as a conditional feature.
@@ -46,7 +48,7 @@ pub mod ext {
 }
 ```
 
-The extensions will then look something like the following and apply to `ServiceCollection`.
+The extensions will then look something like the following and apply to [`ServiceCollection`].
 
 #### di_ext.rs
 

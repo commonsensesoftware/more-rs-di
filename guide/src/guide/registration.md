@@ -1,8 +1,10 @@
+{{#include links.md}}
+
 # Service Registration
 
 ## Service Descriptors
 
-The foundation of the entire crate revolves around a `ServiceDescriptor`. A descriptor describes the following about a service:
+The foundation of the entire crate revolves around a [`ServiceDescriptor`]. A descriptor describes the following about a service:
 
 - The service type
 - The implementation type
@@ -10,27 +12,27 @@ The foundation of the entire crate revolves around a `ServiceDescriptor`. A desc
 - Its [dependencies](validation.md#service-dependency), if any
 - The factory function used to instantiate the service
 
-Rust does not have a Reflection API so the `di::Type` struct is used to represent a pseudo-type. A `ServiceDescriptor` also enables a collection of services to be explored, validated, and/or modified.
+Rust does not have a Reflection API so the [`Type`] struct is used to represent a pseudo-type. A [`ServiceDescriptor`] also enables a collection of services to be explored, validated, and/or modified.
 
-To ensure that a `ServiceDescriptor` is properly constructed, you can only create an instance through one of the provided factories:
+To ensure that a [`ServiceDescriptor`] is properly constructed, you can only create an instance through one of the provided factories:
 
-- `ServiceDescriptorBuilder<TSvc,TImpl>`
-- `InjectBuilder`
+- [`ServiceDescriptorBuilder`]
+- [`InjectBuilder`]
 
 ## Service Collection
 
-A `ServiceCollection` is a mutable container of `ServiceDescriptor` instances that you can modify before creating an immutable `ServiceProvider`. The `ServiceCollection` allows you to register or modify services in any order. When you're ready to create a `ServiceProvider`, the `ServiceCollection` will validate all service dependencies before constructing the instance. The `ServiceCollection` cannot guarantee you won't ask for a service that doesn't exist, but it can guarantee any service it knows about can be correctly resolved. The `ServiceCollection` is ultimately a factory and can create multiple, independent `ServiceProvider` instances if you want.
+A [`ServiceCollection`] is a mutable container of [`ServiceDescriptor`] instances that you can modify before creating an immutable [`ServiceProvider`]. The [`ServiceCollection`] allows you to register or modify services in any order. When you're ready to create a [`ServiceProvider`], the [`ServiceCollection`] will validate all service dependencies before constructing the instance. The [`ServiceCollection`] cannot guarantee you won't ask for a service that doesn't exist, but it can guarantee any service it knows about can be correctly resolved. The [`ServiceCollection`] is ultimately a factory and can create multiple, independent [`ServiceProvider`] instances if you want.
 
-For binary applications, most users will only add descriptors to the `ServiceCollection`. The `ServiceCollection` becomes much more useful in library crates and test applications. Here is a summary of the most useful functions:
+For binary applications, most users will only add descriptors to the [`ServiceCollection`]. The [`ServiceCollection`] becomes much more useful in library crates and test applications. Here is a summary of the most useful functions:
 
-| Function         | Description                                                    |
-| ---------------- | -------------------------------------------------------------- |
-| `add`            | Adds a new item                                                |
-| `try_add`        | Attempts to add a new item if the same service is unregistered |
-| `try_add_to_all` | Attempts to add a new item to a set if it's unregistered       |
-| `try_add_all`    | Adds a sequence of new items                                   |
-| `replace`        | Adds a new item or replaces an existing registration           |
-| `try_replace`    | Equivalent to `try_add`                                        |
+| Function           | Description                                                    |
+| ------------------ | -------------------------------------------------------------- |
+| [`add`]            | Adds a new item                                                |
+| [`try_add`]        | Attempts to add a new item if the same service is unregistered |
+| [`try_add_to_all`] | Attempts to add a new item to a set if it's unregistered       |
+| [`try_add_all`]    | Adds a sequence of new items                                   |
+| [`replace`]        | Adds a new item or replaces an existing registration           |
+| [`try_replace`]    | Equivalent to `try_add`                                        |
 
 ### Best Practice
 
@@ -101,39 +103,39 @@ The borrowing rules imposed by Rust places limitations on creating mutable servi
 
 1. Use _Interior Mutability_ within your service implementation
 2. Design your service as a factory which is shared within DI, but can create instances owned outside the factory that are idiomatically mutable
-3. Decorate your service with `RefCell<T>` or, if the **async** feature is activated, `RwLock<T>`
+3. Decorate your service with `RefCell` or, if the **async** feature is activated, `RwLock`
 
-**Option 3** is the only method provided out-of-the-box as the other options are subjective design choices within the scope of your application. One of the consequences of this approach is that the types `RefCell<T>` and `RwLock<T>` themselves become part of the service registration; `Ref<T>` and `Ref<RefCell<T>>` (or `RefMut<T>` for short) are considered different services. In most use cases, this is not a problem. Your service is either entirely read-only or it is read-write. If you need both and two different service instances will not work for you or you want finer-grained control over synchronization, you should consider _Interior Mutability_ instead.
+**Option 3** is the only method provided out-of-the-box as the other options are subjective design choices within the scope of your application. One of the consequences of this approach is that the types `RefCell` and `RwLock` themselves become part of the service registration; `Ref` and `Ref<RefCell>` (or `RefMut` for short) are considered different services. In most use cases, this is not a problem. Your service is either entirely read-only or it is read-write. If you need both and two different service instances will not work for you or you want finer-grained control over synchronization, you should consider _Interior Mutability_ instead.
 
 ## Builder
 
 >These features are only available if the **builder** feature is activated
 
-The `ServiceDescriptorBuilder<TSvc,TImpl>` is the long-form approach used to create `ServiceDescriptor` instances. It is most useful when you need to create `ServiceDescriptor` instances and you don't want to use the provided macros. You might also need this capability for a scenario not supported by the macros or because you need to inject types defined in an external crate that do not provide extensibility points from the `more-di` crate.
+The [`ServiceDescriptorBuilder`] is the long-form approach used to create [`ServiceDescriptor`] instances. It is most useful when you need to create [`ServiceDescriptor`] instances and you don't want to use the provided macros. You might also need this capability for a scenario not supported by the macros or because you need to inject types defined in an external crate that do not provide extensibility points from the `more-di` crate.
 
-The `ServieDescriptorBuilder<TSvc,TImpl>` is accompanied by numerous shorthand functions to simplify registration:
+The [`ServiceDescriptorBuilder`] is accompanied by numerous shorthand functions to simplify registration:
 
-| Function                     | Starts Building                                          |
-| ---------------------------- | -------------------------------------------------------- |
-| `singleton`                  | A singleton service                                      |
-| `singleton_as_self`          | A singleton service for a struct                         |
-| `singleton_factory`          | A singleton service from a factory function              |
-| `singleton_with_key`         | A singleton service with a key                           |
-| `singleton_with_key_factory` | A singleton service using a key and factory function     |
-| `scoped`                     | A scoped service                                         |
-| `scoped_factory`             | A scoped service from a factory function                 |
-| `scoped_with_key`            | A scoped service with a key                              |
-| `scoped_with_key_factory`    | A scoped service using a key and factory function        |
-| `transient`                  | A transient service                                      |
-| `transient_factory`          | A transient service using a factory function             |
-| `transient_as_self`          | A transient service for struct                           |
-| `transient_with_key`         | A transient service with a key                           |
-| `transient_with_key_factory` | A transient service using a key and factory function     |
-| `transient_with_key_as_self` | A transient service with key for a struct                |
-| `existing`                   | A singleton service from an existing instance            |
-| `existing_as_self`           | A singleton service from an existing struct              |
-| `existing_with_key`          | A singleton service from an existing instance with a key |
-| `existing_with_key_as_self`  | A singleton service from an existing struct for a struct |
+| Function                       | Starts Building                                          |
+| ------------------------------ | -------------------------------------------------------- |
+| [`singleton`]                  | A singleton service                                      |
+| [`singleton_as_self`]          | A singleton service for a struct                         |
+| [`singleton_factory`]          | A singleton service from a factory function              |
+| [`singleton_with_key`]         | A singleton service with a key                           |
+| [`singleton_with_key_factory`] | A singleton service using a key and factory function     |
+| [`scoped`]                     | A scoped service                                         |
+| [`scoped_factory`]             | A scoped service from a factory function                 |
+| [`scoped_with_key`]            | A scoped service with a key                              |
+| [`scoped_with_key_factory`]    | A scoped service using a key and factory function        |
+| [`transient`]                  | A transient service                                      |
+| [`transient_factory`]          | A transient service using a factory function             |
+| [`transient_as_self`]          | A transient service for struct                           |
+| [`transient_with_key`]         | A transient service with a key                           |
+| [`transient_with_key_factory`] | A transient service using a key and factory function     |
+| [`transient_with_key_as_self`] | A transient service with key for a struct                |
+| [`existing`]                   | A singleton service from an existing instance            |
+| [`existing_as_self`]           | A singleton service from an existing struct              |
+| [`existing_with_key`]          | A singleton service from an existing instance with a key |
+| [`existing_with_key_as_self`]  | A singleton service from an existing struct for a struct |
 
 The following registers arbitrary traits and structs as services:
 
@@ -267,9 +269,9 @@ A keyed service allows a service to be resolved in conjunction with a key. In ma
 - No attributes or other required metadata
 - No hidden service location lookups
 - No name collisions (because types are unique)
-- No changes to `ServiceDescriptor`
+- No changes to [`ServiceDescriptor`]
 
-In the previous code example there is nothing in place that restricts or defines which `dyn Thing` needs to be mapped. By definition, any `dyn Thing` _could_ be used, but a specific mapping is expected. To address that, we can refactor to use a `KeyedRef<K,T>`.
+In the previous code example there is nothing in place that restricts or defines which `dyn Thing` needs to be mapped. By definition, any `dyn Thing` _could_ be used, but a specific mapping is expected. To address that, we can refactor to use a `KeyedRef`.
 
 We also need to define some _keys_. A key is just a type used as a marker. A zero-sized `struct` is perfect for this case. For all intents and purposes, this struct acts like an enumeration. A key difference is that the required value is defined as part of the requested type, which an enumeration cannot do.
 
@@ -291,9 +293,9 @@ pub struct CatInTheHat {
 }
 ```
 
-Introducing a key means that we can no longer provide just any `dyn Thing`; a specific registration must be mapped. Although it is still possible to configure the wrong key, the key specified will never collide with a key defined by another crate. The compiler will enforce the key specified exists and the configuration will be validated when the `ServiceProvider` is created. Key types do not be need to be public or in nested modules unless you want them to be.
+Introducing a key means that we can no longer provide just any `dyn Thing`; a specific registration must be mapped. Although it is still possible to configure the wrong key, the key specified will never collide with a key defined by another crate. The compiler will enforce the key specified exists and the configuration will be validated when the [`ServiceProvider`] is created. Key types do not be need to be public or in nested modules unless you want them to be.
 
-It's important to know that we only need the key at the injection call site. We can safely convert down to `Ref` if we use an injected constructor as follows:
+It's important to know that we only need the key at the injection call site. We can safely convert down to [`Ref`] if we use an injected constructor as follows:
 
 ```rust
 use crate::*;

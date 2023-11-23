@@ -1,10 +1,12 @@
+{{#include links.md}}
+
 # Macros
 
 >These features are only available if the **inject** feature is activated
 
 ## Injectable
 
-The `Injectable` trait provides the ability for a struct to be injected as a single trait that it implements or as itself.
+The [`Injectable`] trait provides the ability for a struct to be injected as a single trait that it implements or as itself.
 
 ```rust
 pub trait Injectable: Sized {
@@ -64,11 +66,11 @@ impl Injectable for Foo {
 }
 ```
 
-## ``#[injectable]``
+## `#[injectable]`
 
-While implementing `Injectable` _might_ be necessary or desired in a handful of scenarios, it is mostly tedious ceremony. If the injection call site were known, then it would be possible to provide the implementation automatically. This is exactly what the `#[injectable]` proc macro attribute provides.
+While implementing [`Injectable`] _might_ be necessary or desired in a handful of scenarios, it is mostly tedious ceremony. If the injection call site were known, then it would be possible to provide the implementation automatically. This is exactly what the `#[injectable]` proc macro attribute provides.
 
-Instead of implementing `Injectable` explicitly, the entire implementation can be achieved with a simple decorator:
+Instead of implementing [`Injectable`] explicitly, the entire implementation can be achieved with a simple decorator:
 
 ```rust
 use di::*;
@@ -82,7 +84,7 @@ pub struct Foo {
 }
 ```
 
-The `#[injectable]` attribute also supports a single, optional parameter value: the name of the injected trait. When no value is specified, it is assumed that the struct will be injected as itself. When a value is specified, a constructed `ServiceDescriptor` will map the struct to the specified trait.
+The `#[injectable]` attribute also supports a single, optional parameter value: the name of the injected trait. When no value is specified, it is assumed that the struct will be injected as itself. When a value is specified, a constructed [`ServiceDescriptor`] will map the struct to the specified trait.
 
 ```rust
 use di::*;
@@ -200,7 +202,7 @@ impl Runner for DefaultRunner {
 }
 ```
 
-The `Injectable` implementation for `DefaultRunner` expands to:
+The [`Injectable`] implementation for `DefaultRunner` expands to:
 
 ```rust
 impl Injectable for DefaultRunner {
@@ -237,7 +239,7 @@ impl Injectable for DefaultRunner {
 
 ## Builder
 
-`InjectBuilder` is similar to, but not exactly the same as, `ServiceDescriptorBuilder<TSvc,TImpl>`. `InjectBuilder` is part of the **inject** feature, while `ServiceDescriptorBuilder<TSvc,TImpl>` is part of the **builder** feature. The key implementation differences are a non-generic type, mutable construction (`as_mut`), and deferred key configuration (`with_key<TKey>`). This enables multiple registration scenarios with a single implementation. 
+[`InjectBuilder`] is similar to, but not exactly the same as, [`ServiceDescriptorBuilder`]. [`InjectBuilder`] is part of the **inject** feature, while [`ServiceDescriptorBuilder`] is part of the **builder** feature. The key implementation differences are a non-generic type, mutable construction ([`as_mut`]), and deferred key configuration ([`with_key<TKey>`]). This enables multiple registration scenarios with a single implementation. 
 
 ```rust
 let provider = ServiceCollection::new()

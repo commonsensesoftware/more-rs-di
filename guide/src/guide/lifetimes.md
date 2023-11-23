@@ -1,3 +1,5 @@
+{{#include links.md}}
+
 # Service Lifetimes
 
 A service can have the following lifetimes:
@@ -10,9 +12,9 @@ A service with a **Singleton** lifetime, which depends on service that has a **T
 
 ## Lifetime Management
 
-The lifetime of a service determines how long a service lives relative to its owning `ServiceProvider`. When a `ServiceProvider` is dropped, all of the service instances it owns are also dropped. If a service instance somehow outlives its owning `ServiceProvider`, when the last of the owners is dropped, the service will also be dropped. The `ServiceProvider` itself will never leak any instantiated services.
+The lifetime of a service determines how long a service lives relative to its owning [`ServiceProvider`]. When a [`ServiceProvider`] is dropped, all of the service instances it owns are also dropped. If a service instance somehow outlives its owning [`ServiceProvider`], when the last of the owners is dropped, the service will also be dropped. The [`ServiceProvider`] itself will never leak any instantiated services.
 
-There are scenarios where you might want a `ServiceProvider` to be _scoped_ for a limited amount of time. A HTTP request, for example, has a _Per-Request_ lifetime where you might want some services to be shared within the scope of the request (e.g. _scoped_) and then dropped. A new scope can be created via `create_scope` from any `ServiceProvider`.
+There are scenarios where you might want a [`ServiceProvider`] to be _scoped_ for a limited amount of time. A HTTP request, for example, has a _Per-Request_ lifetime where you might want some services to be shared within the scope of the request (e.g. _scoped_) and then dropped. A new scope can be created via [`create_scope`] from any [`ServiceProvider`].
 
 Consider the following structures:
 
@@ -30,7 +32,7 @@ pub struct Foo {
 
 ## Service Provider Singletons
 
-A **Singleton** is created exactly once and lives for the lifetime of the root `ServiceProvider` no matter where it is actually first instantiated.
+A **Singleton** is created exactly once and lives for the lifetime of the root [`ServiceProvider`] no matter where it is actually first instantiated.
 
 A **Singleton** in the root scope will be the same as a **Singleton** created in a nested scope.
 
@@ -40,7 +42,7 @@ use di::*;
 
 let provider = ServiceCollection::new()
     .add(Bar::transient())
-    .add(Foo::singleton()
+    .add(Foo::singleton())
     .build_provider()
     .unwrap();
 
@@ -62,7 +64,7 @@ use di::*;
 
 let provider = ServiceCollection::new()
     .add(Bar::transient())
-    .add(Foo::singleton()
+    .add(Foo::singleton())
     .build_provider()
     .unwrap();
 let foo1;
@@ -86,7 +88,7 @@ use di::*;
 
 let provider = ServiceCollection::new()
     .add(Bar::transient())
-    .add(Foo::scoped()
+    .add(Foo::scoped())
     .build_provider()
     .unwrap();
 let foo1 = provider.get_required::<Foo>();

@@ -1,21 +1,23 @@
+{{#include links.md}}
+
 # Service Resolution
 
-Once you've registered, validated, and instantiated a `ServiceProvider`, you'll eventually need to get something out of it. This should typically only happen at the root of your application, but it might occur in other scenarios such as creating a new scope. The following functions are provided to resolve services:
+Once you've registered, validated, and instantiated a [`ServiceProvider`], you'll eventually need to get something out of it. This should typically only happen at the root of your application, but it might occur in other scenarios such as creating a new scope. The following functions are provided to resolve services:
      
-| Function                  | Resolution                                           |
-| ------------------------- | ---------------------------------------------------- |
-| `get`                     | A single service, if it's registered                 |
-| `get_mut`                 | A single, mutable service, if it's registered        |
-| `get_by_key`              | A single service by key, if it's registered          |
-| `get_by_key_mut`          | A single, mutable service by key, if it's registered |
-| `get_all`                 | All services of the specified type                   |
-| `get_all_mut`             | All mutable services of the specified type           |
-| `get_all_by_key`          | All services of the specified type and key           |
-| `get_all_by_key_mut`      | All mutable services of the specified type and key   |
-| `get_required`            | A single service or panics                           |
-| `get_required_mut`        | A single, mutable service or panics                  |
-| `get_required_by_key`     | A single service by key or panics                    |
-| `get_required_by_key_mut` | A single, mutable service by key or panics           |
+| Function                    | Resolution                                           |
+| --------------------------- | ---------------------------------------------------- |
+| [`get`]                     | A single service, if it's registered                 |
+| [`get_mut`]                 | A single, mutable service, if it's registered        |
+| [`get_by_key`]              | A single service by key, if it's registered          |
+| [`get_by_key_mut`]          | A single, mutable service by key, if it's registered |
+| [`get_all`]                 | All services of the specified type                   |
+| [`get_all_mut`]             | All mutable services of the specified type           |
+| [`get_all_by_key`]          | All services of the specified type and key           |
+| [`get_all_by_key_mut`]      | All mutable services of the specified type and key   |
+| [`get_required`]            | A single service or panics                           |
+| [`get_required_mut`]        | A single, mutable service or panics                  |
+| [`get_required_by_key`]     | A single service by key or panics                    |
+| [`get_required_by_key_mut`] | A single, mutable service by key or panics           |
 
 ## Examples
 

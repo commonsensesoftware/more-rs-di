@@ -1,8 +1,10 @@
+{{#include links.md}}
+
 # Troubleshooting
 
 Despite numerous forms of automatic code generation and validation, it's still possible to encounter misconfiguration where it's not clear what has gone wrong. While a validation error will tell you _what_ is wrong, it doesn't do a lot to tell you _where_ it is wrong. In these scenarios, a picture is worth a thousand words.
 
-In order to make it easy to understand which services have been configured and for which types, `ServiceCollection` implements the `std::fmt::Debug` trait and, when the **fmt** feature is enabled, it also implements the `std::fmt::Display` trait with terminal colorization. You might take advantage of this capability for debug output, logging, or one-off inspection.
+In order to make it easy to understand which services have been configured and for which types, [`ServiceCollection`] implements the `std::fmt::Debug` trait and, when the **fmt** feature is enabled, it also implements the `std::fmt::Display` trait with terminal colorization. You might take advantage of this capability for debug output, logging, or one-off inspection.
 
 ```rust
 use di::*;
