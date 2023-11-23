@@ -14,8 +14,8 @@ impl InjectBuilder {
     ///
     /// # Arguments
     ///
-    /// * `activator` - The [activator](struct.Activator.html) used to activate the service
-    /// * `lifetime` - The [lifetime](enum.ServiceLifetime.html) of the service
+    /// * `activator` - The [activator](crate::Activator) used to activate the service
+    /// * `lifetime` - The [lifetime](crate::ServiceLifetime) of the service
     pub fn new(activator: Activator, lifetime: ServiceLifetime) -> Self {
         Self {
             activator,
@@ -29,7 +29,7 @@ impl InjectBuilder {
     ///
     /// # Arguments
     ///
-    /// * `dependency` - The [dependency](struct.ServiceDependency.html) associated with the services
+    /// * `dependency` - The [dependency](crate::ServiceDependency) associated with the services
     pub fn depends_on(mut self, dependency: ServiceDependency) -> Self {
         if !self.dependencies.contains(&dependency) {
             self.dependencies.push(dependency);
@@ -49,7 +49,7 @@ impl InjectBuilder {
         self
     }
 
-    /// Builds and returns a new [service descriptor](struct.ServiceDescriptor.html).
+    /// Builds and returns a new [`ServiceDescriptor`](crate::ServiceDescriptor).
     pub fn build(mut self) -> ServiceDescriptor {
         ServiceDescriptor::new(
             self.lifetime,

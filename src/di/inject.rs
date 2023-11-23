@@ -2,24 +2,24 @@ use crate::{InjectBuilder, ServiceLifetime};
 
 /// Defines the behavior of an injectable type.
 pub trait Injectable: Sized {
-    /// Creates and returns a [builder](struct.InjectBuilder.html) for an injected type.
+    /// Creates and returns a [builder](crate::InjectBuilder) for an injected type.
     ///
     /// # Arguments
     ///
-    /// * `lifetime` - The [lifetime](enum.ServiceLifetime.html) of the injected type
+    /// * `lifetime` - The [lifetime](crate::ServiceLifetime) of the injected type
     fn inject(lifetime: ServiceLifetime) -> InjectBuilder;
 
-    /// Creates and returns a [builder](struct.InjectBuilder.html) for a singleton injected type.
+    /// Creates and returns a [builder](crate::InjectBuilder) for a singleton injected type.
     fn singleton() -> InjectBuilder {
         Self::inject(ServiceLifetime::Singleton)
     }
 
-    /// Creates and returns a [builder](struct.InjectBuilder.html) for a scoped injected type.
+    /// Creates and returns a [builder](crate::InjectBuilder) for a scoped injected type.
     fn scoped() -> InjectBuilder {
         Self::inject(ServiceLifetime::Scoped)
     }
 
-    /// Creates and returns a [builder](struct.InjectBuilder.html) for a transient injected type.
+    /// Creates and returns a [builder](crate::InjectBuilder) for a transient injected type.
     fn transient() -> InjectBuilder {
         Self::inject(ServiceLifetime::Transient)
     }

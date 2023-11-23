@@ -11,6 +11,11 @@ homepage = "https://commonsensesoftware.github.io/more-rs-di/"
 repository = "https://github.com/commonsensesoftware/more-rs-di"
 include = ["*.rs", "!build.rs", "README.md"]
 
+# RUSTDOCFLAGS="--cfg docsrs"; cargo +nightly doc
+[package.metadata.docs.rs]
+features = ["builder", "inject", "lazy", "fmt", "alias"]
+rustdoc-args = ["--cfg", "docsrs"]
+
 [lib]
 name = "di"
 path = "lib.rs"

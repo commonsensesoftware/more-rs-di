@@ -5,7 +5,7 @@ use spin::Once;
 use std::any::Any;
 use std::marker::PhantomData;
 
-/// Represents a builder for [service descriptors](struct.ServiceDescriptor.html).
+/// Represents a [`ServiceDescriptor`](crate::ServiceDescriptor) builder.
 pub struct ServiceDescriptorBuilder<TSvc: Any + ?Sized, TImpl> {
     lifetime: ServiceLifetime,
     service_type: Type,
@@ -16,7 +16,7 @@ pub struct ServiceDescriptorBuilder<TSvc: Any + ?Sized, TImpl> {
 }
 
 impl<TSvc: Any + ?Sized, TImpl> ServiceDescriptorBuilder<TSvc, TImpl> {
-    /// Defines the factory method used to activate the service and returns the service descriptor.
+    /// Defines the factory method used to activate the service and returns the [`ServiceDescriptor`](crate::ServiceDescriptor).
     ///
     /// # Arguments
     ///
@@ -41,7 +41,7 @@ impl<TSvc: Any + ?Sized, TImpl> ServiceDescriptorBuilder<TSvc, TImpl> {
     ///
     /// # Arguments
     ///
-    /// * `dependency` - The [dependency](struct.ServiceDependency.html) associated with the service
+    /// * `dependency` - The [dependency](crate::ServiceDependency) associated with the service
     pub fn depends_on(mut self, dependency: ServiceDependency) -> Self {
         if !self.dependencies.contains(&dependency) {
             self.dependencies.push(dependency);
@@ -53,8 +53,8 @@ impl<TSvc: Any + ?Sized, TImpl> ServiceDescriptorBuilder<TSvc, TImpl> {
     ///
     /// # Arguments
     ///
-    /// * `lifetime` - The [lifetime](enum.ServiceLifetime.html) of the service
-    /// * `implementation_type` - The service implementation [type](struct.Type.html)
+    /// * `lifetime` - The [lifetime](crate::ServiceLifetime) of the service
+    /// * `implementation_type` - The service implementation [type](crate::Type)
     pub fn new(lifetime: ServiceLifetime, implementation_type: Type) -> Self {
         Self {
             lifetime,
@@ -70,8 +70,8 @@ impl<TSvc: Any + ?Sized, TImpl> ServiceDescriptorBuilder<TSvc, TImpl> {
     ///
     /// # Arguments
     ///
-    /// * `lifetime` - The [lifetime](enum.ServiceLifetime.html) of the service
-    /// * `implementation_type` - The service implementation [type](struct.Type.html)
+    /// * `lifetime` - The [lifetime](crate::ServiceLifetime) of the service
+    /// * `implementation_type` - The service implementation [type](crate::Type)
     pub fn keyed<TKey>(lifetime: ServiceLifetime, implementation_type: Type) -> Self {
         Self {
             lifetime,

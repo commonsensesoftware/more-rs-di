@@ -1,4 +1,5 @@
 #![doc = include_str!("README.md")]
+#![cfg_attr(docsrs, feature(doc_cfg))]
 
 #[cfg(not(feature = "async"))]
 pub(crate) type Mut<T> = std::cell::RefCell<T>;
@@ -44,26 +45,34 @@ pub use r#type::*;
 pub use validation::*;
 
 #[cfg(feature = "builder")]
+#[cfg_attr(docsrs, doc(cfg(feature = "builder")))]
 pub use builder::*;
 
 #[cfg(feature = "builder")]
+#[cfg_attr(docsrs, doc(cfg(feature = "builder")))]
 pub use descriptor_builder::*;
 
 #[cfg(feature = "inject")]
+#[cfg_attr(docsrs, doc(cfg(feature = "inject")))]
 pub use activator::*;
 
 #[cfg(feature = "inject")]
+#[cfg_attr(docsrs, doc(cfg(feature = "inject")))]
 pub use inject::*;
 
 #[cfg(feature = "inject")]
+#[cfg_attr(docsrs, doc(cfg(feature = "inject")))]
 pub use inject_builder::*;
 
 #[cfg(feature = "inject")]
+#[cfg_attr(docsrs, doc(cfg(feature = "inject")))]
 pub use di_macros::{inject, injectable};
 
 /// Contains support for lazy service resolution.
 #[cfg(feature = "lazy")]
 pub mod lazy {
     use super::lazy_init;
+
+    #[cfg_attr(docsrs, doc(cfg(feature = "lazy")))]
     pub use lazy_init::*;
 }

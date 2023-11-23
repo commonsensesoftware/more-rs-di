@@ -46,7 +46,7 @@ fn to_keyed_vec_mut<TKey, TSvc: Any + ?Sized>(
 ///
 /// # Arguments
 ///
-/// * `services` - The [service provider](struct.ServiceProvider.html) used to resolve the service
+/// * `services` - The [`ServiceProvider`](crate::ServiceProvider) used to resolve the service
 #[inline]
 pub fn exactly_one<T: Any + ?Sized>(services: ServiceProvider) -> Lazy<Ref<T>> {
     Lazy::new(services, ServiceProvider::get_required::<T>)
@@ -56,7 +56,7 @@ pub fn exactly_one<T: Any + ?Sized>(services: ServiceProvider) -> Lazy<Ref<T>> {
 ///
 /// # Arguments
 ///
-/// * `services` - The [service provider](struct.ServiceProvider.html) used to resolve the service
+/// * `services` - The [`ServiceProvider`](crate::ServiceProvider) used to resolve the service
 #[inline]
 pub fn exactly_one_mut<T: Any + ?Sized>(services: ServiceProvider) -> Lazy<RefMut<T>> {
     Lazy::new(services, ServiceProvider::get_required_mut::<T>)
@@ -66,7 +66,7 @@ pub fn exactly_one_mut<T: Any + ?Sized>(services: ServiceProvider) -> Lazy<RefMu
 ///
 /// # Arguments
 ///
-/// * `services` - The [service provider](struct.ServiceProvider.html) used to resolve the service
+/// * `services` - The [`ServiceProvider`](crate::ServiceProvider) used to resolve the service
 #[inline]
 pub fn exactly_one_with_key<TKey, TSvc: Any + ?Sized>(
     services: ServiceProvider,
@@ -78,7 +78,7 @@ pub fn exactly_one_with_key<TKey, TSvc: Any + ?Sized>(
 ///
 /// # Arguments
 ///
-/// * `services` - The [service provider](struct.ServiceProvider.html) used to resolve the service
+/// * `services` - The [`ServiceProvider`](crate::ServiceProvider) used to resolve the service
 #[inline]
 pub fn exactly_one_with_key_mut<TKey, TSvc: Any + ?Sized>(
     services: ServiceProvider,
@@ -93,7 +93,7 @@ pub fn exactly_one_with_key_mut<TKey, TSvc: Any + ?Sized>(
 ///
 /// # Arguments
 ///
-/// * `services` - The [service provider](struct.ServiceProvider.html) used to resolve the service
+/// * `services` - The [`ServiceProvider`](crate::ServiceProvider) used to resolve the service
 #[inline]
 pub fn zero_or_one<T: Any + ?Sized>(services: ServiceProvider) -> Lazy<Option<Ref<T>>> {
     Lazy::new(services, ServiceProvider::get::<T>)
@@ -103,7 +103,7 @@ pub fn zero_or_one<T: Any + ?Sized>(services: ServiceProvider) -> Lazy<Option<Re
 ///
 /// # Arguments
 ///
-/// * `services` - The [service provider](struct.ServiceProvider.html) used to resolve the service
+/// * `services` - The [`ServiceProvider`](crate::ServiceProvider) used to resolve the service
 #[inline]
 pub fn zero_or_one_mut<T: Any + ?Sized>(services: ServiceProvider) -> Lazy<Option<RefMut<T>>> {
     Lazy::new(services, ServiceProvider::get_mut::<T>)
@@ -113,7 +113,7 @@ pub fn zero_or_one_mut<T: Any + ?Sized>(services: ServiceProvider) -> Lazy<Optio
 ///
 /// # Arguments
 ///
-/// * `services` - The [service provider](struct.ServiceProvider.html) used to resolve the service
+/// * `services` - The [`ServiceProvider`](crate::ServiceProvider) used to resolve the service
 #[inline]
 pub fn zero_or_one_with_key<TKey, TSvc: Any + ?Sized>(
     services: ServiceProvider,
@@ -125,7 +125,7 @@ pub fn zero_or_one_with_key<TKey, TSvc: Any + ?Sized>(
 ///
 /// # Arguments
 ///
-/// * `services` - The [service provider](struct.ServiceProvider.html) used to resolve the service
+/// * `services` - The [`ServiceProvider`](crate::ServiceProvider) used to resolve the service
 #[inline]
 pub fn zero_or_one_with_key_mut<TKey, TSvc: Any + ?Sized>(
     services: ServiceProvider,
@@ -137,7 +137,7 @@ pub fn zero_or_one_with_key_mut<TKey, TSvc: Any + ?Sized>(
 ///
 /// # Arguments
 ///
-/// * `services` - The [service provider](struct.ServiceProvider.html) used to resolve the services
+/// * `services` - The [`ServiceProvider`](crate::ServiceProvider) used to resolve the services
 #[inline]
 pub fn zero_or_more<T: Any + ?Sized>(services: ServiceProvider) -> Lazy<Vec<Ref<T>>> {
     Lazy::new(services, to_vec::<T>)
@@ -147,7 +147,7 @@ pub fn zero_or_more<T: Any + ?Sized>(services: ServiceProvider) -> Lazy<Vec<Ref<
 ///
 /// # Arguments
 ///
-/// * `services` - The [service provider](struct.ServiceProvider.html) used to resolve the services
+/// * `services` - The [`ServiceProvider`](crate::ServiceProvider) used to resolve the services
 #[inline]
 pub fn zero_or_more_mut<T: Any + ?Sized>(services: ServiceProvider) -> Lazy<Vec<RefMut<T>>> {
     Lazy::new(services, to_vec_mut::<T>)
@@ -157,7 +157,7 @@ pub fn zero_or_more_mut<T: Any + ?Sized>(services: ServiceProvider) -> Lazy<Vec<
 ///
 /// # Arguments
 ///
-/// * `services` - The [service provider](struct.ServiceProvider.html) used to resolve the services
+/// * `services` - The [`ServiceProvider`](crate::ServiceProvider) used to resolve the services
 #[inline]
 pub fn zero_or_more_with_key<TKey, TSvc: Any + ?Sized>(
     services: ServiceProvider,
@@ -169,7 +169,7 @@ pub fn zero_or_more_with_key<TKey, TSvc: Any + ?Sized>(
 ///
 /// # Arguments
 ///
-/// * `services` - The [service provider](struct.ServiceProvider.html) used to resolve the services
+/// * `services` - The [`ServiceProvider`](crate::ServiceProvider) used to resolve the services
 #[inline]
 pub fn zero_or_more_with_key_mut<TKey, TSvc: Any + ?Sized>(
     services: ServiceProvider,

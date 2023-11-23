@@ -12,7 +12,7 @@ pub struct Activator {
 }
 
 impl Activator {
-    /// Gets the [service type](struct.Type.html) associated with the service descriptor.
+    /// Gets the [service type](crate::Type) associated with the service descriptor.
     pub fn service_type(&self) -> &Type {
         if self.mutable {
             &self.service_type_mut
@@ -21,7 +21,7 @@ impl Activator {
         }
     }
 
-    /// Gets the [implementation type](struct.Type.html) associated with the service descriptor.
+    /// Gets the [implementation type](crate::Type) associated with the service descriptor.
     pub fn implementation_type(&self) -> &Type {
         &self.implementation_type
     }

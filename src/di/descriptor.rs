@@ -59,22 +59,22 @@ impl ServiceDescriptor {
         }
     }
 
-    /// Gets the [lifetime](enum.ServiceLifetime.html) associated with the service descriptor.
+    /// Gets the [lifetime](crate::ServiceLifetime) associated with the service descriptor.
     pub fn lifetime(&self) -> ServiceLifetime {
         self.lifetime
     }
 
-    /// Gets the [service type](struct.Type.html) associated with the service descriptor.
+    /// Gets the service [type](crate::Type) associated with the service descriptor.
     pub fn service_type(&self) -> &Type {
         &self.service_type
     }
 
-    /// Gets the [implementation type](struct.Type.html) associated with the service descriptor.
+    /// Gets the implementation [type](crate::Type) associated with the service descriptor.
     pub fn implementation_type(&self) -> &Type {
         &self.implementation_type
     }
 
-    /// Gets the associated [service dependencies](struct.ServiceDependency.html), if any.
+    /// Gets the associated [service dependencies](crate::ServiceDependency), if any.
     pub fn dependencies(&self) -> &[ServiceDependency] {
         &self.dependencies
     }
@@ -83,7 +83,7 @@ impl ServiceDescriptor {
     ///
     /// # Arguments
     ///
-    /// * `services` - The current [service provider](struct.ServiceProvider.html)
+    /// * `services` - The current [`ServiceProvider`](crate::ServiceProvider)
     pub fn get(&self, services: &ServiceProvider) -> Ref<dyn Any> {
         if self.lifetime == ServiceLifetime::Transient {
             return (self.factory)(services);
