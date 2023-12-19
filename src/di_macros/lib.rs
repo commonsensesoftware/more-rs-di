@@ -6,7 +6,12 @@ extern crate proc_macro;
 use crate::internal::*;
 use internal::{Constructor, DeriveContext, InjectableTrait};
 use proc_macro2::TokenStream;
-use syn::{punctuated::Punctuated, spanned::Spanned, token::PathSep, *};
+use syn::{
+    punctuated::Punctuated,
+    spanned::Spanned,
+    token::{PathSep, Plus},
+    *,
+};
 
 /// Represents the metadata used to identify an injected function.
 ///
@@ -164,11 +169,10 @@ fn derive_from_struct_impl(
 ) -> Result<TokenStream> {
     if let Type::Path(type_) = &*impl_.self_ty {
         let imp = &type_.path;
-        let svc = attribute.trait_.as_ref().unwrap_or(imp);
-
+        let svc = service_from_attribute(imp, attribute);
         match Constructor::select(&impl_, imp) {
             Ok(method) => {
-                let context = DeriveContext::for_method(&impl_.generics, imp, &svc, method);
+                let context = DeriveContext::for_method(&impl_.generics, imp, svc, method);
                 derive(context, original)
             }
             Err(error) => Err(error),
@@ -184,10 +188,20 @@ fn derive_from_struct(
     original: TokenStream,
 ) -> Result<TokenStream> {
     let imp = &build_path_from_struct(&struct_);
-    let svc = attribute.trait_.as_ref().unwrap_or(imp);
+    let svc = service_from_attribute(imp, attribute);
     let context = DeriveContext::for_struct(&struct_.generics, imp, svc, &struct_);
 
     derive(context, original)
+}
+
+fn service_from_attribute(impl_: &Path, mut attribute: InjectableAttribute) -> Punctuated<Path, Plus> {
+    let mut punctuated = attribute.trait_.take().unwrap_or_else(Punctuated::<Path, Plus>::new);
+
+    if punctuated.is_empty() {
+        punctuated.push(impl_.clone());
+    }
+
+    punctuated
 }
 
 fn build_path_from_struct(struct_: &ItemStruct) -> Path {
@@ -279,7 +293,8 @@ mod test {
             "| sp : & di :: ServiceProvider | di :: RefMut :: new (Self :: new () . into ())) , ",
             "lifetime) ",
             "} ",
-            "}");
+            "}"
+        );
 
         assert_eq!(expected, result.to_string());
     }
@@ -516,7 +531,8 @@ mod test {
             "| sp : & di :: ServiceProvider | di :: RefMut :: new (Self :: new () . into ())) , ",
             "lifetime) ",
             "} ",
-            "}");
+            "}"
+        );
 
         assert_eq!(expected, result.to_string());
     }
@@ -593,7 +609,8 @@ mod test {
             "| sp : & di :: ServiceProvider | di :: RefMut :: new (Self :: new () . into ())) , ",
             "lifetime) ",
             "} ",
-            "}");
+            "}"
+        );
 
         assert_eq!(expected, result.to_string());
     }

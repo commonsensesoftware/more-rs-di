@@ -444,7 +444,7 @@ fn inject_should_resolve_keyed_mut() {
 }
 
 #[test]
-fn inject_should_support_multiple_traits() {
+fn inject_should_resolve_multiple_traits() {
     // arrange
     let provider = ServiceCollection::new()
         .add(MultiService::singleton())
@@ -460,6 +460,28 @@ fn inject_should_support_multiple_traits() {
     // act
     let _svc1 = provider.get_required::<dyn Service1>();
     let _svc2 = provider.get_required::<dyn Service2>();
+
+    // assert
+    // no panic!
+}
+
+#[test]
+fn inject_should_support_multiple_traits() {
+    // arrange
+    trait IPityTheFoo {}
+
+    #[injectable(IPityTheFoo + Send + Sync)]
+    struct Foo;
+
+    impl IPityTheFoo for Foo {}
+
+    let provider = ServiceCollection::new()
+        .add(Foo::transient())
+        .build_provider()
+        .unwrap();
+
+    // act
+    let _ = provider.get_required::<dyn IPityTheFoo + Send + Sync>();
 
     // assert
     // no panic!
