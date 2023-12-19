@@ -1,11 +1,19 @@
 #![doc = include_str!("README.md")]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
-#[cfg(not(feature = "async"))]
-pub(crate) type Mut<T> = std::cell::RefCell<T>;
+// Mut<T> is public primarily for code generation in the proc macro. it is
+// generally uninteresting, but is required because, while we can detect a
+// mutable service, we don't know which alias is behind the 'async' feature.
+// the documentation will remain hidden to avoid confusion unless you really,
+// really know and need to use it.
 
+#[doc(hidden)]
+#[cfg(not(feature = "async"))]
+pub type Mut<T> = std::cell::RefCell<T>;
+
+#[doc(hidden)]
 #[cfg(feature = "async")]
-pub(crate) type Mut<T> = std::sync::RwLock<T>;
+pub type Mut<T> = std::sync::RwLock<T>;
 
 mod collection;
 mod dependency;
