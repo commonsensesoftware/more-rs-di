@@ -2,7 +2,7 @@ use crate::{Mut, Ref};
 use std::{any::Any, borrow::Borrow, marker::PhantomData, ops::Deref};
 
 /// Represents a holder for a keyed service.
-#[derive(Clone)]
+#[derive(Debug)]
 pub struct KeyedRef<TKey, TSvc: Any + ?Sized> {
     service: Ref<TSvc>,
     _key: PhantomData<TKey>,
@@ -18,6 +18,15 @@ impl<TKey, TSvc: Any + ?Sized> KeyedRef<TKey, TSvc> {
     pub fn new(service: Ref<TSvc>) -> Self {
         Self {
             service,
+            _key: PhantomData,
+        }
+    }
+}
+
+impl<TKey, TSvc: Any + ?Sized> Clone for KeyedRef<TKey, TSvc> {
+    fn clone(&self) -> Self {
+        Self {
+            service: self.service.clone(),
             _key: PhantomData,
         }
     }
