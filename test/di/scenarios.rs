@@ -409,6 +409,22 @@ fn inject_should_resolve_mut() {
 }
 
 #[test]
+fn inject_should_resolve_mut_dependency() {
+    // arrange
+    let provider = ServiceCollection::new()
+        .add(mutable::MutDep::transient().as_mut())
+        .add(mutable::MutStruct::transient())
+        .build_provider()
+        .unwrap();
+
+    // act
+    let _ = provider.get_required::<mutable::MutStruct>();
+
+    // assert
+    // no panic!
+}
+
+#[test]
 fn inject_should_resolve_keyed_mut() {
     // arrange
     let provider = ServiceCollection::new()

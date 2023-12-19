@@ -25,9 +25,17 @@ pub trait CallSiteInjector<'a> {
                 } else {
                     quote! { sp.get_by_key::<#key, #svc>() }
                 },
-                dependency: Some(
-                    quote! { di::ServiceDependency::new(di::Type::keyed::<#key, #svc>(), di::ServiceCardinality::ZeroOrOne) },
-                ),
+                dependency: if context.mutable {
+                    Some(quote! {
+                    di::ServiceDependency::new(
+                        di::Type::keyed::<#key, di::Mut<#svc>>(),
+                        di::ServiceCardinality::ZeroOrOne) })
+                } else {
+                    Some(quote! {
+                    di::ServiceDependency::new(
+                        di::Type::keyed::<#key, #svc>(),
+                        di::ServiceCardinality::ZeroOrOne) })
+                },
             }
         } else {
             InjectedCallSite {
@@ -42,9 +50,17 @@ pub trait CallSiteInjector<'a> {
                 } else {
                     quote! { sp.get::<#svc>() }
                 },
-                dependency: Some(
-                    quote! { di::ServiceDependency::new(di::Type::of::<#svc>(), di::ServiceCardinality::ZeroOrOne) },
-                ),
+                dependency: if context.mutable {
+                    Some(quote! {
+                    di::ServiceDependency::new(
+                        di::Type::of::<di::Mut<#svc>>(),
+                        di::ServiceCardinality::ZeroOrOne) })
+                } else {
+                    Some(quote! {
+                    di::ServiceDependency::new(
+                        di::Type::of::<#svc>(),
+                        di::ServiceCardinality::ZeroOrOne) })
+                },
             }
         }
     }
@@ -65,9 +81,17 @@ pub trait CallSiteInjector<'a> {
                 } else {
                     quote! { sp.get_required_by_key::<#key, #svc>() }
                 },
-                dependency: Some(
-                    quote! { di::ServiceDependency::new(di::Type::keyed::<#key, #svc>(), di::ServiceCardinality::ExactlyOne) },
-                ),
+                dependency: if context.mutable {
+                    Some(quote! {
+                    di::ServiceDependency::new(
+                        di::Type::keyed::<#key, di::Mut<#svc>>(),
+                        di::ServiceCardinality::ExactlyOne) })
+                } else {
+                    Some(quote! {
+                    di::ServiceDependency::new(
+                        di::Type::keyed::<#key, #svc>(),
+                        di::ServiceCardinality::ExactlyOne) })
+                },
             }
         } else {
             InjectedCallSite {
@@ -82,9 +106,17 @@ pub trait CallSiteInjector<'a> {
                 } else {
                     quote! { sp.get_required::<#svc>() }
                 },
-                dependency: Some(
-                    quote! { di::ServiceDependency::new(di::Type::of::<#svc>(), di::ServiceCardinality::ExactlyOne) },
-                ),
+                dependency: if context.mutable {
+                    Some(quote! {
+                    di::ServiceDependency::new(
+                        di::Type::of::<di::Mut<#svc>>(),
+                        di::ServiceCardinality::ExactlyOne) })
+                } else {
+                    Some(quote! {
+                    di::ServiceDependency::new(
+                       di::Type::of::<#svc>(),
+                       di::ServiceCardinality::ExactlyOne) })
+                },
             }
         }
     }
@@ -113,9 +145,17 @@ pub trait CallSiteInjector<'a> {
                         quote! { sp.get_all_by_key::<#key, #svc>().collect() }
                     }
                 },
-                dependency: Some(
-                    quote! { di::ServiceDependency::new(di::Type::keyed::<#key, #svc>(), di::ServiceCardinality::ZeroOrMore) },
-                ),
+                dependency: if context.mutable {
+                    Some(quote! {
+                    di::ServiceDependency::new(
+                        di::Type::keyed::<#key, di::Mut<#svc>>(),
+                        di::ServiceCardinality::ZeroOrMore) })
+                } else {
+                    Some(quote! {
+                    di::ServiceDependency::new(
+                       di::Type::keyed::<#key, #svc>(),
+                       di::ServiceCardinality::ZeroOrMore) })
+                },
             }
         } else {
             InjectedCallSite {
@@ -138,9 +178,17 @@ pub trait CallSiteInjector<'a> {
                         quote! { sp.get_all::<#svc>().collect() }
                     }
                 },
-                dependency: Some(
-                    quote! { di::ServiceDependency::new(di::Type::of::<#svc>(), di::ServiceCardinality::ZeroOrMore) },
-                ),
+                dependency: if context.mutable {
+                    Some(quote! {
+                    di::ServiceDependency::new(
+                        di::Type::of::<di::Mut<#svc>>(),
+                        di::ServiceCardinality::ZeroOrMore) })
+                } else {
+                    Some(quote! {
+                    di::ServiceDependency::new(
+                        di::Type::of::<#svc>(),
+                        di::ServiceCardinality::ZeroOrMore) })
+                },
             }
         }
     }
