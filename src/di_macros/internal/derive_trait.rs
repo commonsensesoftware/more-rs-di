@@ -23,8 +23,8 @@ impl InjectableTrait {
         }
 
         let service = if context.is_trait() {
-            let svc = context.service;
-            quote! { dyn #svc }
+            let svc = context.service.iter();
+            quote! { dyn #(#svc)+* }
         } else {
             quote! { Self }
         };
@@ -48,7 +48,7 @@ impl InjectableTrait {
         };
         let activate2 = activate.clone();
         let code = quote! {
-            impl#generics di::Injectable for #implementation #where_ {
+            impl #generics di::Injectable for #implementation #where_ {
                 fn inject(lifetime: di::ServiceLifetime) -> di::InjectBuilder {
                     di::InjectBuilder::new(
                         di::Activator::new::<#service, Self>(

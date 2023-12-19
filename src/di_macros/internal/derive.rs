@@ -1,4 +1,4 @@
-use syn::{Generics, ItemStruct, Path, Signature};
+use syn::{punctuated::Punctuated, token::Plus, Generics, ItemStruct, Path, Signature};
 
 pub enum MacroTarget<'a> {
     Method(&'a Signature),
@@ -8,7 +8,7 @@ pub enum MacroTarget<'a> {
 pub struct DeriveContext<'a> {
     pub generics: &'a Generics,
     pub implementation: &'a Path,
-    pub service: &'a Path,
+    pub service: Punctuated<Path, Plus>,
     target: MacroTarget<'a>,
 }
 
@@ -16,7 +16,7 @@ impl<'a> DeriveContext<'a> {
     pub fn for_method(
         generics: &'a Generics,
         implementation: &'a Path,
-        service: &'a Path,
+        service: Punctuated<Path, Plus>,
         method: &'a Signature,
     ) -> Self {
         Self {
@@ -30,7 +30,7 @@ impl<'a> DeriveContext<'a> {
     pub fn for_struct(
         generics: &'a Generics,
         implementation: &'a Path,
-        service: &'a Path,
+        service: Punctuated<Path, Plus>,
         struct_: &'a ItemStruct,
     ) -> Self {
         Self {
@@ -46,8 +46,12 @@ impl<'a> DeriveContext<'a> {
     }
 
     pub fn is_trait(&self) -> bool {
+        if self.service.len() > 1 {
+            return true;
+        }
+
         let impl_ = &self.implementation.segments.last().unwrap().ident;
-        let struct_ = &self.service.segments.last().unwrap().ident;
+        let struct_ = &self.service.first().unwrap().segments.last().unwrap().ident;
         impl_ != struct_
     }
 }
