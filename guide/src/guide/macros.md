@@ -95,6 +95,30 @@ pub trait Foo;
 pub struct FooImpl;
 ```
 
+### Multiple Traits
+
+In most scenarios where you want to inject a trait, you will specify a single trait. There are a limited number of edge cases where you might need to specify multiple traits. The most common use case will be implementing a trait for a struct that is thread-safe, but the trait definition does not declare that itself.
+
+```rust
+use di::*;
+
+pub trait Foo;
+
+#[injectable(Foo + Send + Sync)]  // dyn Foo + Send + Sync → FooImpl
+pub struct FooImpl;
+```
+
+Note that the combination of all traits now defines the service. The complete set of traits must be specified in order to resolve the service.
+
+```rust
+let provider = ServiceCollection::new()
+    .add(FooImpl::transient())
+    .build_provider()
+    .unwrap();
+
+let foo = provider.get_required::<dyn Foo + Send + Sync>();
+```
+
 ### Injection Rules
 
 The most basic form of injection allows `#[injectable]` to be applied to any struct or tuple struct, including generics.
