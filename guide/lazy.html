@@ -1,0 +1,337 @@
+<!DOCTYPE HTML>
+<html lang="en" class="ayu" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Lazy Initialization - More DI Documentation</title>
+
+
+        <!-- Custom HTML head -->
+        
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="../highlight.css">
+        <link rel="stylesheet" href="../tomorrow-night.css">
+        <link rel="stylesheet" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../theme/custom.css">
+
+    </head>
+    <body class="sidebar-visible no-js">
+    <div id="body-container">
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "../";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "ayu";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('ayu')
+            html.classList.add(theme);
+            var body = document.querySelector('body');
+            body.classList.remove('no-js')
+            body.classList.add('js');
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var body = document.querySelector('body');
+            var sidebar = null;
+            var sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            sidebar_toggle.checked = sidebar === 'visible';
+            body.classList.remove('sidebar-visible');
+            body.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="../index.html">Introduction</a></li><li class="chapter-item expanded affix "><li class="part-title">User Guide</li><li class="chapter-item expanded "><a href="../getting-started.html"><strong aria-hidden="true">1.</strong> Getting Started</a></li><li class="chapter-item expanded affix "><li class="part-title">Reference Guide</li><li class="chapter-item expanded "><a href="../guide/lifetimes.html"><strong aria-hidden="true">2.</strong> Service Lifetimes</a></li><li class="chapter-item expanded "><a href="../guide/supported-types.html"><strong aria-hidden="true">3.</strong> Supported Types</a></li><li class="chapter-item expanded "><a href="../guide/registration.html"><strong aria-hidden="true">4.</strong> Service Registration</a></li><li class="chapter-item expanded "><a href="../guide/validation.html"><strong aria-hidden="true">5.</strong> Registration Validation</a></li><li class="chapter-item expanded "><a href="../guide/resolution.html"><strong aria-hidden="true">6.</strong> Service Resolution</a></li><li class="chapter-item expanded "><a href="../guide/lazy.html" class="active"><strong aria-hidden="true">7.</strong> Lazy Initialization</a></li><li class="chapter-item expanded "><a href="../guide/macros.html"><strong aria-hidden="true">8.</strong> Macros</a></li><li class="chapter-item expanded "><a href="../guide/extensibility.html"><strong aria-hidden="true">9.</strong> Extensibility</a></li><li class="chapter-item expanded "><a href="../guide/troubleshooting.html"><strong aria-hidden="true">10.</strong> Troubleshooting</a></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Track and set sidebar scroll position -->
+        <script>
+            var sidebarScrollbox = document.querySelector('#sidebar .sidebar-scrollbox');
+            sidebarScrollbox.addEventListener('click', function(e) {
+                if (e.target.tagName === 'A') {
+                    sessionStorage.setItem('sidebar-scroll', sidebarScrollbox.scrollTop);
+                }
+            }, { passive: true });
+            var sidebarScrollTop = sessionStorage.getItem('sidebar-scroll');
+            sessionStorage.removeItem('sidebar-scroll');
+            if (sidebarScrollTop) {
+                // preserve sidebar scroll position when navigating via links within sidebar
+                sidebarScrollbox.scrollTop = sidebarScrollTop;
+            } else {
+                // scroll sidebar to current active section when navigating via "next/previous chapter" buttons
+                var activeSection = document.querySelector('#sidebar .active');
+                if (activeSection) {
+                    activeSection.scrollIntoView({ block: 'center' });
+                }
+            }
+        </script>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">More DI Documentation</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/commonsensesoftware/more-rs-di/tree/main/guide" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+                        <a href="https://github.com/commonsensesoftware/more-rs-di/edit/main/guide/src/guide/lazy.md" title="Suggest an edit" aria-label="Suggest an edit">
+                            <i id="git-edit-button" class="fa fa-edit"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <!--
+This file contains links that can be shared across pages. RustDoc links cannot currently
+be used by mdBook directly. Links are stable on crates.io so we can centralize what is
+required in this file, albeit manually.
+
+REF: https://github.com/rust-lang/mdBook/issues/1356
+REF: https://github.com/rust-lang/cargo/issues/739
+REF: https://github.com/tag1consulting/goose/issues/320
+-->
+<h1 id="lazy-initialization"><a class="header" href="#lazy-initialization">Lazy Initialization</a></h1>
+<blockquote>
+<p>These features are only available if the <strong>lazy</strong> feature is activated</p>
+</blockquote>
+<p>There are some scenarios where you know or have high reason to believe that a particular service composition will
+be expensive to create. The requirement to eagerly load every injected service instance in such situations is
+undesirable. There are several methods by which you can differ dependency resolution, including declaring a
+parameter which would inject the <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceProvider.html"><code>ServiceProvider</code></a> itself. Using the <em>Service Locator</em> pattern in this manner
+hides dependencies and is considered to be an <em>anti-pattern</em>. The <strong>lazy</strong> feature provides an out-of-the-box
+facility to address this problem.</p>
+<p>The <a href="https://docs.rs/more-di/3.1.0/di/lazy/index.html"><code>Lazy</code></a> struct is a holder that resolves a service in a lazily evaluated manner. The <a href="https://docs.rs/more-di/3.1.0/di/lazy/index.html"><code>Lazy</code></a> struct itself is owned by the struct it is injected into and the lifetime of the service resolved is unchanged. The key difference is that the injected service dependency is well-known at the call site, but its evaluation is differed.</p>
+<p>Consider the following:</p>
+<pre><code class="language-rust">use di::*;
+
+#[derive(Default)]
+pub struct Expensive {
+    // expensive stuff here
+}
+
+impl Expensive {
+    pub fn do_work(&amp;self) {
+        // use expensive stuff
+    }
+}
+
+pub struct Needy {
+    expensive: Lazy&lt;Ref&lt;Expensive&gt;&gt;
+}
+
+impl Needy {
+    pub fn new(expensive: Lazy&lt;Ref&lt;Expensive&gt;&gt;) -&gt; Self {
+        Self { expensive }
+    }
+
+    pub fn run(&amp;self) {
+        self.expensive.value().do_work()
+    }
+}</code></pre>
+<p>The <code>Needy</code> struct defines a <a href="https://docs.rs/more-di/3.1.0/di/lazy/index.html"><code>Lazy</code></a> that wraps around a service dependency. This allows the service to
+be evaluated on-demand and also keeps the <code>Expensive</code> struct visible as a required collaborator.</p>
+<p>Despite being a generic type, <a href="https://docs.rs/more-di/3.1.0/di/lazy/index.html"><code>Lazy</code></a> can only be created using the utility functions from the <a href="https://docs.rs/more-di/3.1.0/di/lazy/index.html"><code>lazy</code></a>
+module as follows:</p>
+<div class="table-wrapper"><table><thead><tr><th>Function</th><th>Resolution</th></tr></thead><tbody>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/lazy/fn.exactly_one.html"><code>lazy::exactly_one</code></a></td><td>A required service lazily</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/lazy/fn.exactly_one_mut.html"><code>lazy::exactly_one_mut</code></a></td><td>A required, mutable service lazily</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/lazy/fn.exactly_one_with_key.html"><code>lazy::exactly_one_with_key</code></a></td><td>A required service with a key lazily</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/lazy/fn.exactly_one_with_key_mut.html"><code>lazy::exactly_one_with_key_mut</code></a></td><td>A required, mutable service with key lazily</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/lazy/fn.zero_or_one.html"><code>lazy::zero_or_one</code></a></td><td>An optional service lazily</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/lazy/fn.zero_or_one_mut.html"><code>lazy::zero_or_one_mut</code></a></td><td>An optional, mutable service lazily</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/lazy/fn.zero_or_one_by_key.html"><code>lazy::zero_or_one_by_key</code></a></td><td>An optional, service with a key lazily</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/lazy/fn.zero_or_one_by_key_mut.html"><code>lazy::zero_or_one_by_key_mut</code></a></td><td>An optional, mutable service with a key lazily</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/lazy/fn.zero_or_more.html"><code>lazy::zero_or_more</code></a></td><td>One or more services lazily</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/lazy/fn.zero_or_more_mut.html"><code>lazy::zero_or_more_mut</code></a></td><td>One or more mutable services lazily</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/lazy/fn.zero_or_more_by_key.html"><code>lazy::zero_or_more_by_key</code></a></td><td>One or more services with a key lazily</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/lazy/fn.zero_or_more_by_key_mut.html"><code>lazy::zero_or_more_by_key_mut</code></a></td><td>One or more mutable services with a key lazily</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/lazy/fn.missing.html"><code>lazy::missing</code></a></td><td>Always resolves <code>None</code></td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/lazy/fn.missing_with_key.html"><code>lazy::missing_with_key</code></a></td><td>Always resolves <code>None</code></td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/lazy/fn.empty.html"><code>lazy::empty</code></a></td><td>Always resolves <code>Vec::with_capacity(0)</code></td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/lazy/fn.empty_with_key.html"><code>lazy::empty_with_key</code></a></td><td>Always resolves <code>Vec::with_capacity(0)</code></td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/lazy/fn.init.html"><code>lazy::init</code></a></td><td>Initializes from an instance (ex: testing)</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/lazy/fn.init_mut.html"><code>lazy::init_mut</code></a></td><td>Initializes from a mutable instance (ex: testing)</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/lazy/fn.init_by_key.html"><code>lazy::init_by_key</code></a></td><td>Initializes from a keyed instance (ex: testing)</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/lazy/fn.init_by_key_mut.html"><code>lazy::init_by_key_mut</code></a></td><td>Initializes from a mutable, keyed instance (ex: testing)</td></tr>
+</tbody></table>
+</div>
+<p><a href="https://docs.rs/more-di/3.1.0/di/lazy/index.html"><code>Lazy</code></a> is a <em>special</em> type which cannot be resolved directly from a <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceProvider.html"><code>ServiceProvider</code></a>. You will
+need construct one or more <a href="https://docs.rs/more-di/3.1.0/di/lazy/index.html"><code>Lazy</code></a> registrations in the activation factory method. For example:</p>
+<pre><code class="language-rust">use crate::*;
+use di::*;
+
+fn main() {
+    let provider = ServiceCollection::new()
+        .add(singleton_as_self::&lt;Expensive&gt;()
+             .from(|_| Rc::new(Expensive::default())));
+        .add(singleton_as_self::&lt;Needy&gt;()
+             .depends_on(exactly_one::&lt;Expensive&gt;())
+             .from(|sp| Rc::new(Needy::new(lazy::exactly_one(sp.clone())))))
+        .build_provider()
+        .unwrap();
+    let needy = provider.get_required::&lt;Needy&gt;();
+    needy.run()
+}</code></pre>
+<blockquote>
+<p>Note: <code>singleton_as_self</code> and <code>exactly_one</code> are functions provided by the <strong>builder</strong> feature, while <code>lazy::exactly_one</code> is provided by the <strong>lazy</strong> feature.</p>
+</blockquote>
+<p>When <code>#[injectable]</code> is used, it will generate the appropriate <code>lazy</code> function for the injected call site.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../guide/resolution.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../guide/macros.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../guide/resolution.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../guide/macros.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+    </div>
+    </body>
+</html>

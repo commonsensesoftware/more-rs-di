@@ -1,0 +1,464 @@
+<!DOCTYPE HTML>
+<html lang="en" class="ayu" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Extensibility - More DI Documentation</title>
+
+
+        <!-- Custom HTML head -->
+        
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="../highlight.css">
+        <link rel="stylesheet" href="../tomorrow-night.css">
+        <link rel="stylesheet" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../theme/custom.css">
+
+    </head>
+    <body class="sidebar-visible no-js">
+    <div id="body-container">
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "../";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "ayu";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('ayu')
+            html.classList.add(theme);
+            var body = document.querySelector('body');
+            body.classList.remove('no-js')
+            body.classList.add('js');
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var body = document.querySelector('body');
+            var sidebar = null;
+            var sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            sidebar_toggle.checked = sidebar === 'visible';
+            body.classList.remove('sidebar-visible');
+            body.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="../index.html">Introduction</a></li><li class="chapter-item expanded affix "><li class="part-title">User Guide</li><li class="chapter-item expanded "><a href="../getting-started.html"><strong aria-hidden="true">1.</strong> Getting Started</a></li><li class="chapter-item expanded affix "><li class="part-title">Reference Guide</li><li class="chapter-item expanded "><a href="../guide/lifetimes.html"><strong aria-hidden="true">2.</strong> Service Lifetimes</a></li><li class="chapter-item expanded "><a href="../guide/supported-types.html"><strong aria-hidden="true">3.</strong> Supported Types</a></li><li class="chapter-item expanded "><a href="../guide/registration.html"><strong aria-hidden="true">4.</strong> Service Registration</a></li><li class="chapter-item expanded "><a href="../guide/validation.html"><strong aria-hidden="true">5.</strong> Registration Validation</a></li><li class="chapter-item expanded "><a href="../guide/resolution.html"><strong aria-hidden="true">6.</strong> Service Resolution</a></li><li class="chapter-item expanded "><a href="../guide/lazy.html"><strong aria-hidden="true">7.</strong> Lazy Initialization</a></li><li class="chapter-item expanded "><a href="../guide/macros.html"><strong aria-hidden="true">8.</strong> Macros</a></li><li class="chapter-item expanded "><a href="../guide/extensibility.html" class="active"><strong aria-hidden="true">9.</strong> Extensibility</a></li><li class="chapter-item expanded "><a href="../guide/troubleshooting.html"><strong aria-hidden="true">10.</strong> Troubleshooting</a></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Track and set sidebar scroll position -->
+        <script>
+            var sidebarScrollbox = document.querySelector('#sidebar .sidebar-scrollbox');
+            sidebarScrollbox.addEventListener('click', function(e) {
+                if (e.target.tagName === 'A') {
+                    sessionStorage.setItem('sidebar-scroll', sidebarScrollbox.scrollTop);
+                }
+            }, { passive: true });
+            var sidebarScrollTop = sessionStorage.getItem('sidebar-scroll');
+            sessionStorage.removeItem('sidebar-scroll');
+            if (sidebarScrollTop) {
+                // preserve sidebar scroll position when navigating via links within sidebar
+                sidebarScrollbox.scrollTop = sidebarScrollTop;
+            } else {
+                // scroll sidebar to current active section when navigating via "next/previous chapter" buttons
+                var activeSection = document.querySelector('#sidebar .active');
+                if (activeSection) {
+                    activeSection.scrollIntoView({ block: 'center' });
+                }
+            }
+        </script>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">More DI Documentation</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/commonsensesoftware/more-rs-di/tree/main/guide" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+                        <a href="https://github.com/commonsensesoftware/more-rs-di/edit/main/guide/src/guide/extensibility.md" title="Suggest an edit" aria-label="Suggest an edit">
+                            <i id="git-edit-button" class="fa fa-edit"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <!--
+This file contains links that can be shared across pages. RustDoc links cannot currently
+be used by mdBook directly. Links are stable on crates.io so we can centralize what is
+required in this file, albeit manually.
+
+REF: https://github.com/rust-lang/mdBook/issues/1356
+REF: https://github.com/rust-lang/cargo/issues/739
+REF: https://github.com/tag1consulting/goose/issues/320
+-->
+<h1 id="extensibility"><a class="header" href="#extensibility">Extensibility</a></h1>
+<p>Using dependency injection in your own application is certainly useful; however, the strength of the <code>more-di</code> crate really starts to shine when you enable DI composition across different crates. It effectively enables a DI ecosystem that crate library authors can elect to make required or opt into as a conditional feature.</p>
+<h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
+<p>There are few requirements to make it possible to interleave DI into a library. This will typically be configured in <code>Cargo.toml</code>.</p>
+<pre><code class="language-toml">[package]
+name = &quot;logger&quot;
+version = &quot;1.0.0&quot;
+description = &quot;An example logger&quot;
+
+[lib]
+name = &quot;logger&quot;
+
+[features]
+di = [&quot;more-di&quot;]
+async = [&quot;more-di/async&quot;] # our 'async' feature actives the 'more-di/async' feature
+
+[dependencies.more-di]
+version = &quot;3.0&quot;
+default-features = false
+features = [&quot;inject&quot;]
+optional = true           # only bring di when requested
+</code></pre>
+<p>The next part is to create a trait that can apply the extensions. It is not a hard requirement, but this typically takes the form of:</p>
+<ul>
+<li><code>pub trait &lt;Feature&gt;ServiceExtensions</code></li>
+<li>Defined in the <code>crate::ext</code> module</li>
+</ul>
+<p>The library module would then configure the extensions as optional.</p>
+<h4 id="librs"><a class="header" href="#librs">lib.rs</a></h4>
+<pre><code class="language-rust">#[cfg(feature = &quot;di&quot;)]
+mod di_ext;
+
+#[cfg(feature = &quot;di&quot;)]
+pub mod ext {
+    use super::*;    
+    pub use di_ext::*;
+}</code></pre>
+<p>The extensions will then look something like the following and apply to <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceCollection.html"><code>ServiceCollection</code></a>.</p>
+<h4 id="di_extrs"><a class="header" href="#di_extrs">di_ext.rs</a></h4>
+<pre><code class="language-rust">use di::*;
+
+// define extensions that can be applied to ServiceCollection
+// note: remember to flow a mutable reference to make it easy
+// to compose with other extensions
+pub trait CustomServiceExtensions {
+    fn add_custom_services(&amp;mut self) -&gt; &amp;mut Self;
+}
+
+impl CustomServiceExtensions for ServiceCollection {
+    fn add_custom_services(&amp;mut self) -&gt; &amp;mut Self {
+        // add custom services
+        self.try_add(transient::&lt;dyn Service, DefaultImpl&gt;())
+    }
+}</code></pre>
+<h2 id="example"><a class="header" href="#example">Example</a></h2>
+<p>Let's consider several composable library crates for logging.</p>
+<h3 id="logger-crate"><a class="header" href="#logger-crate">Logger Crate</a></h3>
+<p>This crate would include the core abstractions common to all extenders.</p>
+<pre><code class="language-rust">// map to DI type when enabled
+#[cfg(feature = &quot;di&quot;)]
+pub type Ref&lt;T&gt; = di::Ref&lt;T&gt;;
+
+// default to Rc&lt;T&gt;
+#[cfg(not(feature = &quot;di&quot;))]
+pub type Ref&lt;T&gt; = std::rc::Rc&lt;T&gt;;
+
+pub trait Logger {
+    fn log(&amp;self, text: &amp;str);
+}
+
+pub trait LoggerSource {
+    fn log(&amp;self, text: &amp;str);
+}
+
+// #[injectable(Logger)] only when the &quot;di&quot; feature is enabled
+#[cfg_attr(feature = &quot;di&quot;, di::injectable(Logger))]
+pub struct DefaultLogger {
+    loggers: Vec&lt;Ref&lt;dyn LoggerSource&gt;&gt;,
+}
+
+impl DefaultLogger {
+    pub fn new(loggers: impl Iterator&lt;Item = Ref&lt;dyn LoggerSource&gt;&gt;) -&gt; Self {
+        Self {
+            loggers: loggers.collect(),
+        }
+    }
+}
+
+impl Logger for DefaultLogger {
+    fn log(&amp;self, text: &amp;str) {
+        for logger in self.loggers {
+            logger.log(text)
+        }
+    }
+}
+
+#[cfg(feature = &quot;di&quot;)]
+pub mod ext {
+    use di::*;
+
+    pub trait LoggerServiceExtensions {
+        fn add_logging(&amp;mut self) -&gt; &amp;mut Self;
+    }
+
+    impl LoggerServiceExtensions for ServiceCollection {
+        fn add_logging(&amp;mut self) -&gt; &amp;mut Self {
+            self.try_add(DefaultLogger::singleton())
+        }
+    }
+}</code></pre>
+<h2 id="console-logger-crate"><a class="header" href="#console-logger-crate">Console Logger Crate</a></h2>
+<p>This crate would provide a logger which writes to the console.</p>
+<pre><code class="language-rust">#[cfg_attr(feature = &quot;di&quot;, di::injectable(LoggerSource))]
+pub struct ConsoleLogger;
+
+impl LoggerSource for ConsoleLogger {
+    fn log(&amp;self, text: &amp;str) {
+        println!(&quot;{}&quot;, text)
+    }
+}
+
+#[cfg(feature = &quot;di&quot;)]
+pub mod ext {
+    use di::*;
+
+    pub trait ConsoleLoggerServiceExtensions {
+        fn add_console_logging(&amp;mut self) -&gt; &amp;mut Self;
+    }
+
+    impl ConsoleLoggerServiceExtensions for ServiceCollection {
+        fn add_console_logging(&amp;mut self) -&gt; &amp;mut Self {
+            self.try_add(ConsoleLogger::transient())
+        }
+    }
+}</code></pre>
+<h2 id="file-logger-crate"><a class="header" href="#file-logger-crate">File Logger Crate</a></h2>
+<p>This crate would provide a logger which writes to a file.</p>
+<pre><code class="language-rust">use std::fs::File;
+
+pub struct FileLogger {
+    file: File,
+}
+
+impl FileLogger {
+    pub fn new&lt;S: AsRef&lt;str&gt;&gt;(filename: S) -&gt; Self {
+        Self {
+            file: File::create(Path::new(s.as_ref())).unwrap(),
+        }
+    }
+}
+
+impl LoggerSource for FileLogger {
+    fn log(&amp;self, text: &amp;str) {
+        self.file.write_all(text.as_bytes()).ok()
+    }
+}
+
+#[cfg(feature = &quot;di&quot;)]
+pub mod ext {
+    use di::*;
+
+    pub trait FileLoggerServiceExtensions {
+        fn add_file_logging&lt;S: AsRef&lt;str&gt;&gt;(&amp;mut self, filename: S) -&gt; &amp;mut Self;
+    }
+
+    impl FileLoggerServiceExtensions for ServiceCollection {
+        fn add_file_logging&lt;S: AsRef&lt;str&gt;&gt;(&amp;mut self, filename: S) -&gt; &amp;mut Self {
+            let path = filename.as_ref().clone();
+            self.try_add(transient::&lt;dyn LoggerSource, FileLogger&gt;()
+                         .from(move |_| Ref::new(FileLogger::new(path))))
+        }
+    }
+}</code></pre>
+<h2 id="putting-it-all-together"><a class="header" href="#putting-it-all-together">Putting It All Together</a></h2>
+<p>We can now put it all together in an application. Our configuration will look something like:</p>
+<pre><code class="language-toml">[package]
+name = &quot;myapp&quot;
+version = &quot;1.0.0&quot;
+description = &quot;An example application&quot;
+
+[[bin]]
+name = &quot;myapp&quot;
+path = &quot;main.rs&quot;
+
+[dependencies]
+more-di = &quot;3.0&quot;
+logger = { &quot;1.0.0&quot;, features = [&quot;di&quot;] }
+console-logger = { &quot;1.0.0&quot;, features = [&quot;di&quot;] }
+file-logger = { &quot;1.0.0&quot;, features = [&quot;di&quot;] }
+</code></pre>
+<h4 id="mainrs"><a class="header" href="#mainrs">main.rs</a></h4>
+<pre><code class="language-rust">use di::*;
+use logger::{*, ext::*};
+use console_logger::{*, ext::*};
+use file_logger::{*, ext::*};
+
+fn main() {
+    let provider = ServiceCollection::new()
+        .add_logging()
+        .add_console_logging()
+        .add_file_logging(&quot;example.log&quot;)
+        .build_provider()
+        .unwrap();
+
+    let logger = provider.get_required::&lt;dyn Logger&gt;();
+
+    logger.log(&quot;Hello world!&quot;);
+}</code></pre>
+<h2 id="dependency-injected-enabled-crates"><a class="header" href="#dependency-injected-enabled-crates">Dependency Injected Enabled Crates</a></h2>
+<p>The following are crates which provide DI extensions:</p>
+<ul>
+<li><a href="https://crates.io/crates/more-options">more-options</a></li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../guide/macros.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../guide/troubleshooting.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../guide/macros.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../guide/troubleshooting.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+    </div>
+    </body>
+</html>

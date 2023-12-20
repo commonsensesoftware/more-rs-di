@@ -1,0 +1,551 @@
+<!DOCTYPE HTML>
+<html lang="en" class="ayu" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Service Registration - More DI Documentation</title>
+
+
+        <!-- Custom HTML head -->
+        
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="../highlight.css">
+        <link rel="stylesheet" href="../tomorrow-night.css">
+        <link rel="stylesheet" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../theme/custom.css">
+
+    </head>
+    <body class="sidebar-visible no-js">
+    <div id="body-container">
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "../";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "ayu";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('ayu')
+            html.classList.add(theme);
+            var body = document.querySelector('body');
+            body.classList.remove('no-js')
+            body.classList.add('js');
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var body = document.querySelector('body');
+            var sidebar = null;
+            var sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            sidebar_toggle.checked = sidebar === 'visible';
+            body.classList.remove('sidebar-visible');
+            body.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="../index.html">Introduction</a></li><li class="chapter-item expanded affix "><li class="part-title">User Guide</li><li class="chapter-item expanded "><a href="../getting-started.html"><strong aria-hidden="true">1.</strong> Getting Started</a></li><li class="chapter-item expanded affix "><li class="part-title">Reference Guide</li><li class="chapter-item expanded "><a href="../guide/lifetimes.html"><strong aria-hidden="true">2.</strong> Service Lifetimes</a></li><li class="chapter-item expanded "><a href="../guide/supported-types.html"><strong aria-hidden="true">3.</strong> Supported Types</a></li><li class="chapter-item expanded "><a href="../guide/registration.html" class="active"><strong aria-hidden="true">4.</strong> Service Registration</a></li><li class="chapter-item expanded "><a href="../guide/validation.html"><strong aria-hidden="true">5.</strong> Registration Validation</a></li><li class="chapter-item expanded "><a href="../guide/resolution.html"><strong aria-hidden="true">6.</strong> Service Resolution</a></li><li class="chapter-item expanded "><a href="../guide/lazy.html"><strong aria-hidden="true">7.</strong> Lazy Initialization</a></li><li class="chapter-item expanded "><a href="../guide/macros.html"><strong aria-hidden="true">8.</strong> Macros</a></li><li class="chapter-item expanded "><a href="../guide/extensibility.html"><strong aria-hidden="true">9.</strong> Extensibility</a></li><li class="chapter-item expanded "><a href="../guide/troubleshooting.html"><strong aria-hidden="true">10.</strong> Troubleshooting</a></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Track and set sidebar scroll position -->
+        <script>
+            var sidebarScrollbox = document.querySelector('#sidebar .sidebar-scrollbox');
+            sidebarScrollbox.addEventListener('click', function(e) {
+                if (e.target.tagName === 'A') {
+                    sessionStorage.setItem('sidebar-scroll', sidebarScrollbox.scrollTop);
+                }
+            }, { passive: true });
+            var sidebarScrollTop = sessionStorage.getItem('sidebar-scroll');
+            sessionStorage.removeItem('sidebar-scroll');
+            if (sidebarScrollTop) {
+                // preserve sidebar scroll position when navigating via links within sidebar
+                sidebarScrollbox.scrollTop = sidebarScrollTop;
+            } else {
+                // scroll sidebar to current active section when navigating via "next/previous chapter" buttons
+                var activeSection = document.querySelector('#sidebar .active');
+                if (activeSection) {
+                    activeSection.scrollIntoView({ block: 'center' });
+                }
+            }
+        </script>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">More DI Documentation</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/commonsensesoftware/more-rs-di/tree/main/guide" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+                        <a href="https://github.com/commonsensesoftware/more-rs-di/edit/main/guide/src/guide/registration.md" title="Suggest an edit" aria-label="Suggest an edit">
+                            <i id="git-edit-button" class="fa fa-edit"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <!--
+This file contains links that can be shared across pages. RustDoc links cannot currently
+be used by mdBook directly. Links are stable on crates.io so we can centralize what is
+required in this file, albeit manually.
+
+REF: https://github.com/rust-lang/mdBook/issues/1356
+REF: https://github.com/rust-lang/cargo/issues/739
+REF: https://github.com/tag1consulting/goose/issues/320
+-->
+<h1 id="service-registration"><a class="header" href="#service-registration">Service Registration</a></h1>
+<h2 id="service-descriptors"><a class="header" href="#service-descriptors">Service Descriptors</a></h2>
+<p>The foundation of the entire crate revolves around a <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceDescriptor.html"><code>ServiceDescriptor</code></a>. A descriptor describes the following about a service:</p>
+<ul>
+<li>The service type</li>
+<li>The implementation type</li>
+<li>Its <a href="lifetimes.html">lifetime</a></li>
+<li>Its <a href="validation.html#service-dependency">dependencies</a>, if any</li>
+<li>The factory function used to instantiate the service</li>
+</ul>
+<p>Rust does not have a Reflection API so the <a href="https://docs.rs/more-di/3.1.0/di/struct.Type.html"><code>Type</code></a> struct is used to represent a pseudo-type. A <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceDescriptor.html"><code>ServiceDescriptor</code></a> also enables a collection of services to be explored, validated, and/or modified.</p>
+<p>To ensure that a <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceDescriptor.html"><code>ServiceDescriptor</code></a> is properly constructed, you can only create an instance through one of the provided factories:</p>
+<ul>
+<li><a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceDescriptorBuilder.html"><code>ServiceDescriptorBuilder</code></a></li>
+<li><a href="https://docs.rs/more-di/3.1.0/di/struct.InjectBuilder.html"><code>InjectBuilder</code></a></li>
+</ul>
+<h2 id="service-collection"><a class="header" href="#service-collection">Service Collection</a></h2>
+<p>A <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceCollection.html"><code>ServiceCollection</code></a> is a mutable container of <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceDescriptor.html"><code>ServiceDescriptor</code></a> instances that you can modify before creating an immutable <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceProvider.html"><code>ServiceProvider</code></a>. The <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceCollection.html"><code>ServiceCollection</code></a> allows you to register or modify services in any order. When you're ready to create a <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceProvider.html"><code>ServiceProvider</code></a>, the <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceCollection.html"><code>ServiceCollection</code></a> will validate all service dependencies before constructing the instance. The <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceCollection.html"><code>ServiceCollection</code></a> cannot guarantee you won't ask for a service that doesn't exist, but it can guarantee any service it knows about can be correctly resolved. The <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceCollection.html"><code>ServiceCollection</code></a> is ultimately a factory and can create multiple, independent <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceProvider.html"><code>ServiceProvider</code></a> instances if you want.</p>
+<p>For binary applications, most users will only add descriptors to the <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceCollection.html"><code>ServiceCollection</code></a>. The <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceCollection.html"><code>ServiceCollection</code></a> becomes much more useful in library crates and test applications. Here is a summary of the most useful functions:</p>
+<div class="table-wrapper"><table><thead><tr><th>Function</th><th>Description</th></tr></thead><tbody>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceCollection.html#method.add"><code>add</code></a></td><td>Adds a new item</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceCollection.html#method.try_add"><code>try_add</code></a></td><td>Attempts to add a new item if the same service is unregistered</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceCollection.html#method.try_add_to_all"><code>try_add_to_all</code></a></td><td>Attempts to add a new item to a set if it's unregistered</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceCollection.html#method.try_add_all"><code>try_add_all</code></a></td><td>Adds a sequence of new items</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceCollection.html#method.replace"><code>replace</code></a></td><td>Adds a new item or replaces an existing registration</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceCollection.html#method.try_replace"><code>try_replace</code></a></td><td>Equivalent to <code>try_add</code></td></tr>
+</tbody></table>
+</div>
+<h3 id="best-practice"><a class="header" href="#best-practice">Best Practice</a></h3>
+<p>To make it easy to test a binary application, it is recommended that you expose a public function that configures the default set of services. This will make it simple to use the same default configuration as the application and replace only the parts that are necessary for testing.</p>
+<pre><code class="language-rust">use di::*;
+
+#[injectable]
+pub struct Runner;
+
+impl Runner {
+    pub fn run(&amp;self) {
+        // TODO: implementation
+    }
+}
+    
+pub fn config_default_services(services: &amp;mut ServiceCollection) {
+    services.add(Runner::singleton());
+    // TODO: register other services
+    // replaceable services should use try_add so that any
+    // existing registration, say from a test, is not overridden
+}
+
+fn main() {
+    let mut services = ServiceCollection::new();
+
+    config_default_services(&amp;mut services);
+
+    let provider = services.build_provider().unwrap();
+    let runner = provider.get_required::&lt;Runner&gt;();
+
+    runner.run();
+}</code></pre>
+<p>You can now create a test replicating the same setup as the release application, but only changing the parts you need to for testing.</p>
+<pre><code class="language-rust">use crate::*;
+use di::*;
+
+#[test]
+fn runner_should_do_expected_work() {
+    // arrange
+    let mut services = ServiceCollection::new();
+
+    // TODO: add test replacements with: services.add(?);
+
+    config_default_services(&amp;mut services);
+
+    // TODO: optionally, override defaults with: services.replace(?);
+
+    let provider = services.build_provider().unwrap();
+    let runner = provider.get_required::&lt;Runner&gt;();
+
+    // act
+    runner.run();
+
+    // assert
+    // TODO: assertions
+}</code></pre>
+<h2 id="mutable-services"><a class="header" href="#mutable-services">Mutable Services</a></h2>
+<p>The borrowing rules imposed by Rust places limitations on creating mutable services. The service lifetimes supported by dependency injection make using the <code>mut</code> keyword in an idiomatic way impossible. There are, at least, three possible alternate solutions:</p>
+<ol>
+<li>Use <em>Interior Mutability</em> within your service implementation</li>
+<li>Design your service as a factory which is shared within DI, but can create instances owned outside the factory that are idiomatically mutable</li>
+<li>Decorate your service with <code>RefCell</code> or, if the <strong>async</strong> feature is activated, <code>RwLock</code></li>
+</ol>
+<p><strong>Option 3</strong> is the only method provided out-of-the-box as the other options are subjective design choices within the scope of your application. One of the consequences of this approach is that the types <code>RefCell</code> and <code>RwLock</code> themselves become part of the service registration; <code>Ref</code> and <code>Ref&lt;RefCell&gt;</code> (or <code>RefMut</code> for short) are considered different services. In most use cases, this is not a problem. Your service is either entirely read-only or it is read-write. If you need both and two different service instances will not work for you or you want finer-grained control over synchronization, you should consider <em>Interior Mutability</em> instead.</p>
+<h2 id="builder"><a class="header" href="#builder">Builder</a></h2>
+<blockquote>
+<p>These features are only available if the <strong>builder</strong> feature is activated</p>
+</blockquote>
+<p>The <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceDescriptorBuilder.html"><code>ServiceDescriptorBuilder</code></a> is the long-form approach used to create <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceDescriptor.html"><code>ServiceDescriptor</code></a> instances. It is most useful when you need to create <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceDescriptor.html"><code>ServiceDescriptor</code></a> instances and you don't want to use the provided macros. You might also need this capability for a scenario not supported by the macros or because you need to inject types defined in an external crate that do not provide extensibility points from the <code>more-di</code> crate.</p>
+<p>The <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceDescriptorBuilder.html"><code>ServiceDescriptorBuilder</code></a> is accompanied by numerous shorthand functions to simplify registration:</p>
+<div class="table-wrapper"><table><thead><tr><th>Function</th><th>Starts Building</th></tr></thead><tbody>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/fn.singleton.html"><code>singleton</code></a></td><td>A singleton service</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/fn.singleton_as_self.html"><code>singleton_as_self</code></a></td><td>A singleton service for a struct</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/fn.singleton_factory.html"><code>singleton_factory</code></a></td><td>A singleton service from a factory function</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/fn.singleton_with_key.html"><code>singleton_with_key</code></a></td><td>A singleton service with a key</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/fn.singleton_with_key_factory.html"><code>singleton_with_key_factory</code></a></td><td>A singleton service using a key and factory function</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/fn.scoped.html"><code>scoped</code></a></td><td>A scoped service</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/fn.scoped_factory.html"><code>scoped_factory</code></a></td><td>A scoped service from a factory function</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/fn.scoped_with_key.html"><code>scoped_with_key</code></a></td><td>A scoped service with a key</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/fn.scoped_with_key_factory.html"><code>scoped_with_key_factory</code></a></td><td>A scoped service using a key and factory function</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/fn.transient.html"><code>transient</code></a></td><td>A transient service</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/fn.transient_factory.html"><code>transient_factory</code></a></td><td>A transient service using a factory function</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/fn.transient_as_self.html"><code>transient_as_self</code></a></td><td>A transient service for struct</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/fn.transient_with_key.html"><code>transient_with_key</code></a></td><td>A transient service with a key</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/fn.transient_with_key_factory.html"><code>transient_with_key_factory</code></a></td><td>A transient service using a key and factory function</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/fn.transient_with_key_as_self.html"><code>transient_with_key_as_self</code></a></td><td>A transient service with key for a struct</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/fn.existing.html"><code>existing</code></a></td><td>A singleton service from an existing instance</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/fn.existing_as_self.html"><code>existing_as_self</code></a></td><td>A singleton service from an existing struct</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/fn.existing_with_key.html"><code>existing_with_key</code></a></td><td>A singleton service from an existing instance with a key</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/fn.existing_with_key_as_self.html"><code>existing_with_key_as_self</code></a></td><td>A singleton service from an existing struct for a struct</td></tr>
+</tbody></table>
+</div>
+<p>The following registers arbitrary traits and structs as services:</p>
+<pre><code class="language-rust">use di::*;
+use std::rc::Rc;
+
+pub struct Bar;
+
+impl Bar {
+    pub fn speak(&amp;self) -&gt; &amp;str {
+        &quot;Hello world!&quot;
+    }
+}
+
+pub trait Foo {
+    fn speak(&amp;self) -&gt; &amp;str;
+}
+
+pub struct FooImpl {
+    bar: Rc&lt;Bar&gt;
+}
+
+impl Foo for FooImpl {
+    fn speak(&amp;self) -&gt; &amp;str {
+        self.bar.speak()
+    }
+}
+
+fn run() {
+    let provider = ServiceCollection::new()
+        .add(transient_as_self::&lt;Bar&gt;().from(|_| Rc::new(Bar)))
+        .add(singleton::&lt;dyn Foo, FooImpl&gt;()
+             .from(|sp| Rc::new(FooImpl { bar: sp.get_required::&lt;Bar&gt;() })))
+        .build_provider()
+        .unwrap();
+    let foo = provider.get_required::&lt;dyn Foo&gt;();
+
+    println!(&quot;{}&quot;, foo.speak());
+}</code></pre>
+<h2 id="multiple-traits"><a class="header" href="#multiple-traits">Multiple Traits</a></h2>
+<p>In a few advanced scenarios, you might need a single service implementation to be mapped to multiple traits. This can be achieved, but ancillary service registrations must be explicit. There is currently no macro support for such a configuration.</p>
+<p>Consider the following:</p>
+<pre><code class="language-rust">use di::*;
+
+trait Service1 { }
+
+trait Service2 { }
+
+#[injectable]
+struct MultiService;
+
+impl Service1 for MultiService { }
+
+impl Service2 for MultiService { }</code></pre>
+<p>It is now possible to register a single service with multiple traits as follows:</p>
+<pre><code class="language-rust">use crate::*;
+use di::*;
+
+let provider = ServiceCollection::new()
+     // MultiService → Self
+    .add(MultiService::singleton())
+     // MultiService → dyn Service1
+    .add(transient_factory::&lt;dyn Service1&gt;(|sp| sp.get_required::&lt;MultiService&gt;()))
+     // MultiService → dyn Service2
+    .add(transient_factory::&lt;dyn Service2&gt;(|sp| sp.get_required::&lt;MultiService&gt;()))
+    .build_provider()
+    .unwrap();
+
+let svc1 = provider.get_required::&lt;dyn Service1&gt;();
+let svc2 = provider.get_required::&lt;dyn Service2&gt;();</code></pre>
+<p>Care must be taken to ensure the lifetime of the primary service is compatible with the ancillary services. Each ancillary service should never live longer than the primary service. This configuration is most common when primary service is a <strong>Singleton</strong> or <strong>Scoped</strong>. If the primary service is <strong>Transient</strong>, the two independent registrations can be used instead.</p>
+<h2 id="keyed-services"><a class="header" href="#keyed-services">Keyed Services</a></h2>
+<p>Occasionally there are edge cases where the same service might need to be registered more than once for different contexts. A few scenarios include the same service, but with different lifetimes or different implementations of the same service in an otherwise ambiguous context.</p>
+<p>Consider the following:</p>
+<pre><code class="language-rust">use di::*;
+
+pub trait Thing : ToString;
+
+#[injectable(Thing)]
+pub struct Thing1;
+
+impl Thing for Thing1;
+
+impl ToString for Thing1 {
+    fn to_string(&amp;self) -&gt; String {
+        String::from(std::any::type_name::&lt;Self&gt;())
+    }
+}
+
+#[injectable(Thing)]
+pub struct Thing2;
+
+impl Thing for Thing2;
+
+impl ToString for Thing2 {
+    fn to_string(&amp;self) -&gt; String {
+        String::from(std::any::type_name::&lt;Self&gt;())
+    }
+}
+
+#[injectable]
+pub struct CatInTheHat {
+    pub thing1: Ref&lt;dyn Thing&gt;,
+    pub thing2: Ref&lt;dyn Thing&gt;,
+}</code></pre>
+<p><code>CatInTheHat</code> has two different dependencies of <code>dyn Thing</code>, but they are not expected to be same implementation. One solution would be to simply use <code>Thing1</code> and <code>Thing2</code> directly. Another solution would be to have complementary <code>dyn Thing1</code> and <code>dyn Thing2</code> traits. The final approach would be to used <em>keyed</em> services.</p>
+<p>A keyed service allows a service to be resolved in conjunction with a key. In many dependency injection frameworks, keyed services are supported by using a <code>String</code> as the key. That approach has a number of different problems. The <code>more-di</code> crate uses a type as a key instead. This approach provides the following advantages:</p>
+<ul>
+<li>No <em>magic strings</em></li>
+<li>No attributes or other required metadata</li>
+<li>No hidden service location lookups</li>
+<li>No name collisions (because types are unique)</li>
+<li>No changes to <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceDescriptor.html"><code>ServiceDescriptor</code></a></li>
+</ul>
+<p>In the previous code example there is nothing in place that restricts or defines which <code>dyn Thing</code> needs to be mapped. By definition, any <code>dyn Thing</code> <em>could</em> be used, but a specific mapping is expected. To address that, we can refactor to use a <code>KeyedRef</code>.</p>
+<p>We also need to define some <em>keys</em>. A key is just a type used as a marker. A zero-sized <code>struct</code> is perfect for this case. For all intents and purposes, this struct acts like an enumeration. A key difference is that the required value is defined as part of the requested type, which an enumeration cannot do.</p>
+<p>Let's perform a little refactoring:</p>
+<pre><code class="language-rust">use crate::*;
+use di::*;
+
+pub mod key {
+    pub struct Thing1;
+    pub struct Thing2;
+}
+
+#[injectable]
+pub struct CatInTheHat {
+    pub thing1: KeyedRef&lt;key::Thing1, dyn Thing&gt;,
+    pub thing2: KeyedRef&lt;key::Thing2, dyn Thing&gt;,
+}</code></pre>
+<p>Introducing a key means that we can no longer provide just any <code>dyn Thing</code>; a specific registration must be mapped. Although it is still possible to configure the wrong key, the key specified will never collide with a key defined by another crate. The compiler will enforce the key specified exists and the configuration will be validated when the <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceProvider.html"><code>ServiceProvider</code></a> is created. Key types do not be need to be public or in nested modules unless you want them to be.</p>
+<p>It's important to know that we only need the key at the injection call site. We can safely convert down to <a href="https://docs.rs/more-di/3.1.0/di/type.Ref.html"><code>Ref</code></a> if we use an injected constructor as follows:</p>
+<pre><code class="language-rust">use crate::*;
+use di::*;
+
+pub struct CatInTheHat {
+    pub thing1: Ref&lt;dyn Thing&gt;,
+    pub thing2: Ref&lt;dyn Thing&gt;,
+}
+
+#[injectable]
+impl CatInTheHat {
+    pub fn new(
+        thing1: KeyedRef&lt;key::Thing1, dyn Thing&gt;,
+        thing2: KeyedRef&lt;key::Thing2, dyn Thing&gt;) -&gt; Self {
+        // the key isn't useful after the correct service is injected
+        Self {
+            thing1: thing1.into(),
+            thing2: thing2.into(),
+        }
+    }
+}</code></pre>
+<p>Putting it all together, the service registration now looks like:</p>
+<pre><code class="language-rust">use crate::*;
+use di::*;
+
+let services = ServiceCollection::new()
+    .add(Thing1::transient().with_key::&lt;key::Thing1&gt;())
+    .add(Thing2::transient().with_key::&lt;key::Thing2&gt;())
+    .add(CatInTheHat::singleton())
+    .build_provider()
+    .unwrap();
+
+let cat = provider.get_required::&lt;CatInTheHat&gt;();
+
+println!(&quot;Hi from {}&quot;, cat.thing1.to_string());
+println!(&quot;Hi from {}&quot;, cat.thing2.to_string());</code></pre>
+<blockquote>
+<p>If you're not using <code>#[injectable]</code>, the long-form <a href="#builder">builder</a> functions provide variants that support specifying a key while creating a <code>ServiceDescriptor</code>.</p>
+</blockquote>
+<p>Creating a keyed service explicitly is still possible and useful for some scenarios such as testing:</p>
+<pre><code class="language-rust">#[test]
+fn setup_cat_in_the_hat() {
+    // arrange
+    let thing1 = KeyedRef::&lt;key::Thing1, dyn Thing&gt;::new(Ref::new(Thing1::default()));
+    let thing2 = KeyedRef::&lt;key::Thing2, dyn Thing&gt;::new(Ref::new(Thing2::default()));
+    let cat = CatInTheHat::new(thing1, thing2);
+
+    // act
+    let name = cat.thing1.to_string();
+
+    // assert
+    assert_eq!(&amp;name, &quot;crate::Thing1&quot;);
+}</code></pre>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../guide/supported-types.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../guide/validation.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../guide/supported-types.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../guide/validation.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+    </div>
+    </body>
+</html>

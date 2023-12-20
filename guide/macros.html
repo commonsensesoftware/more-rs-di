@@ -1,0 +1,474 @@
+<!DOCTYPE HTML>
+<html lang="en" class="ayu" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Macros - More DI Documentation</title>
+
+
+        <!-- Custom HTML head -->
+        
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="../highlight.css">
+        <link rel="stylesheet" href="../tomorrow-night.css">
+        <link rel="stylesheet" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../theme/custom.css">
+
+    </head>
+    <body class="sidebar-visible no-js">
+    <div id="body-container">
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "../";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "ayu";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('ayu')
+            html.classList.add(theme);
+            var body = document.querySelector('body');
+            body.classList.remove('no-js')
+            body.classList.add('js');
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var body = document.querySelector('body');
+            var sidebar = null;
+            var sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            sidebar_toggle.checked = sidebar === 'visible';
+            body.classList.remove('sidebar-visible');
+            body.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="../index.html">Introduction</a></li><li class="chapter-item expanded affix "><li class="part-title">User Guide</li><li class="chapter-item expanded "><a href="../getting-started.html"><strong aria-hidden="true">1.</strong> Getting Started</a></li><li class="chapter-item expanded affix "><li class="part-title">Reference Guide</li><li class="chapter-item expanded "><a href="../guide/lifetimes.html"><strong aria-hidden="true">2.</strong> Service Lifetimes</a></li><li class="chapter-item expanded "><a href="../guide/supported-types.html"><strong aria-hidden="true">3.</strong> Supported Types</a></li><li class="chapter-item expanded "><a href="../guide/registration.html"><strong aria-hidden="true">4.</strong> Service Registration</a></li><li class="chapter-item expanded "><a href="../guide/validation.html"><strong aria-hidden="true">5.</strong> Registration Validation</a></li><li class="chapter-item expanded "><a href="../guide/resolution.html"><strong aria-hidden="true">6.</strong> Service Resolution</a></li><li class="chapter-item expanded "><a href="../guide/lazy.html"><strong aria-hidden="true">7.</strong> Lazy Initialization</a></li><li class="chapter-item expanded "><a href="../guide/macros.html" class="active"><strong aria-hidden="true">8.</strong> Macros</a></li><li class="chapter-item expanded "><a href="../guide/extensibility.html"><strong aria-hidden="true">9.</strong> Extensibility</a></li><li class="chapter-item expanded "><a href="../guide/troubleshooting.html"><strong aria-hidden="true">10.</strong> Troubleshooting</a></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Track and set sidebar scroll position -->
+        <script>
+            var sidebarScrollbox = document.querySelector('#sidebar .sidebar-scrollbox');
+            sidebarScrollbox.addEventListener('click', function(e) {
+                if (e.target.tagName === 'A') {
+                    sessionStorage.setItem('sidebar-scroll', sidebarScrollbox.scrollTop);
+                }
+            }, { passive: true });
+            var sidebarScrollTop = sessionStorage.getItem('sidebar-scroll');
+            sessionStorage.removeItem('sidebar-scroll');
+            if (sidebarScrollTop) {
+                // preserve sidebar scroll position when navigating via links within sidebar
+                sidebarScrollbox.scrollTop = sidebarScrollTop;
+            } else {
+                // scroll sidebar to current active section when navigating via "next/previous chapter" buttons
+                var activeSection = document.querySelector('#sidebar .active');
+                if (activeSection) {
+                    activeSection.scrollIntoView({ block: 'center' });
+                }
+            }
+        </script>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">More DI Documentation</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/commonsensesoftware/more-rs-di/tree/main/guide" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+                        <a href="https://github.com/commonsensesoftware/more-rs-di/edit/main/guide/src/guide/macros.md" title="Suggest an edit" aria-label="Suggest an edit">
+                            <i id="git-edit-button" class="fa fa-edit"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <!--
+This file contains links that can be shared across pages. RustDoc links cannot currently
+be used by mdBook directly. Links are stable on crates.io so we can centralize what is
+required in this file, albeit manually.
+
+REF: https://github.com/rust-lang/mdBook/issues/1356
+REF: https://github.com/rust-lang/cargo/issues/739
+REF: https://github.com/tag1consulting/goose/issues/320
+-->
+<h1 id="macros"><a class="header" href="#macros">Macros</a></h1>
+<blockquote>
+<p>These features are only available if the <strong>inject</strong> feature is activated</p>
+</blockquote>
+<h2 id="injectable"><a class="header" href="#injectable">Injectable</a></h2>
+<p>The <a href="https://docs.rs/more-di/3.1.0/di/trait.Injectable.html"><code>Injectable</code></a> trait provides the ability for a struct to be injected as a single trait that it implements or as itself.</p>
+<pre><code class="language-rust">pub trait Injectable: Sized {
+    fn inject(lifetime: ServiceLifetime) -&gt; InjectBuilder;
+
+    fn singleton() -&gt; InjectBuilder {
+        Self::inject(ServiceLifetime::Singleton)
+    }
+
+    fn scoped() -&gt; InjectBuilder {
+        Self::inject(ServiceLifetime::Scoped)
+    }
+
+    fn transient() -&gt; InjectBuilder {
+        Self::inject(ServiceLifetime::Transient)
+    }
+}</code></pre>
+<p>Default implementations are provided each of the specific <a href="lifetimes.html">lifetimes</a>, thereby requiring only a single function to be implemented.</p>
+<pre><code class="language-rust">use di::*;
+
+pub struct Bar;
+
+pub struct Foo {
+    bar: Ref&lt;Bar&gt;
+}
+
+impl Injectable for Bar {
+  fn inject(lifetime: ServiceLifetime) -&gt; InjectBuilder {
+    InjectBuilder::new(
+      Activator::new::&lt;Self, Self&gt;(
+        |_| Ref::new(Self),
+        |_| RefMut::new(Self.into()),
+      ),
+      lifetime,
+    )
+  }
+}
+
+impl Injectable for Foo {
+  fn inject(lifetime: ServiceLifetime) -&gt; InjectBuilder {
+    InjectBuilder::new(
+      Activator::new::&lt;Self, Self&gt;(
+        |sp| Ref::new(Self { bar: sp.get_required::&lt;Bar&gt;() }),
+        |sp| RefMut::new(Self { bar: sp.get_required::&lt;Bar&gt;() }.into()),
+      ),
+      lifetime,
+    )
+    .depends_on(
+      ServiceDependency::new(
+        Type::of::&lt;Bar&gt;(),
+        ServiceCardinality::ExactlyOne))
+  }
+}</code></pre>
+<h2 id="injectable-1"><a class="header" href="#injectable-1"><code>#[injectable]</code></a></h2>
+<p>While implementing <a href="https://docs.rs/more-di/3.1.0/di/trait.Injectable.html"><code>Injectable</code></a> <em>might</em> be necessary or desired in a handful of scenarios, it is mostly tedious ceremony. If the injection call site were known, then it would be possible to provide the implementation automatically. This is exactly what the <code>#[injectable]</code> proc macro attribute provides.</p>
+<p>Instead of implementing <a href="https://docs.rs/more-di/3.1.0/di/trait.Injectable.html"><code>Injectable</code></a> explicitly, the entire implementation can be achieved with a simple decorator:</p>
+<pre><code class="language-rust">use di::*;
+
+#[injectable]
+pub struct Bar;
+
+#[injectable]
+pub struct Foo {
+    bar: Ref&lt;Bar&gt;
+}</code></pre>
+<p>The <code>#[injectable]</code> attribute also supports a single, optional parameter value: the name of the injected trait. When no value is specified, it is assumed that the struct will be injected as itself. When a value is specified, a constructed <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceDescriptor.html"><code>ServiceDescriptor</code></a> will map the struct to the specified trait.</p>
+<pre><code class="language-rust">use di::*;
+
+pub trait Foo;
+
+#[injectable(Foo)]  // dyn Foo → FooImpl
+pub struct FooImpl;</code></pre>
+<h3 id="multiple-traits"><a class="header" href="#multiple-traits">Multiple Traits</a></h3>
+<p>In most scenarios where you want to inject a trait, you will specify a single trait. There are a limited number of edge cases where you might need to specify multiple traits. The most common use case will be implementing a trait for a struct that is thread-safe, but the trait definition does not declare that itself.</p>
+<pre><code class="language-rust">use di::*;
+
+pub trait Foo;
+
+#[injectable(Foo + Send + Sync)]  // dyn Foo + Send + Sync → FooImpl
+pub struct FooImpl;</code></pre>
+<p>Note that the combination of all traits now defines the service. The complete set of traits must be specified in order to resolve the service.</p>
+<pre><code class="language-rust">let provider = ServiceCollection::new()
+    .add(FooImpl::transient())
+    .build_provider()
+    .unwrap();
+
+let foo = provider.get_required::&lt;dyn Foo + Send + Sync&gt;();</code></pre>
+<h3 id="injection-rules"><a class="header" href="#injection-rules">Injection Rules</a></h3>
+<p>The most basic form of injection allows <code>#[injectable]</code> to be applied to any struct or tuple struct, including generics.</p>
+<blockquote>
+<p>A generic type parameter requires a <code>'static</code> lifetime on it bounds due to the <code>Any</code> requirement; however, the actual type used will typically be coerced to a shorter lifetime.</p>
+</blockquote>
+<pre><code class="language-rust">use di::*;
+
+#[injectable]
+pub struct Simple;
+
+#[injectable]
+pub struct Tuple(pub Ref&lt;Simple&gt;);
+
+#[injectable]
+pub struct Generic&lt;T: 'static&gt; {
+    value: Ref&lt;T&gt;,
+}</code></pre>
+<p>If the target struct defines fields that are not meant to be injected, then it is assumed that those types implement <code>Default</code>. If they don't, then an error will occur.</p>
+<pre><code class="language-rust">use di::*;
+
+#[injectable]
+pub struct Complex {
+    simple: Ref&lt;Simple&gt;, // ← ServiceProvider.get_required::&lt;Simple&gt;()
+    counter: usize,      // ← Default::default()
+}</code></pre>
+<p>This behavior might be undesirable, unsupported, or you may just want more control over initialization. To support that capability, <code>#[injectable]</code> can also be applied on a struct <code>impl</code> block. This is because that is the location where the function that will be used to construct the struct is expected to be found. This allows the attribute to inspect the injection call site of the function to build the proper implementation.</p>
+<p>By default, <code>#[injectable]</code> will search for an associated function named <code>new</code>. The function does not need to be <code>pub</code>. This is a simple convention that works for most cases; however, if you want to use a different name, the intended function must be decorated with <code>#[inject]</code>. <code>#[inject]</code> simply indicates which function to use. If <code>new</code> and a decorated function are defined, the decorated function will take precedence. If multiple functions have <code>#[inject]</code> applied, an error will occur.</p>
+<p>The following basic example uses a constructor:</p>
+<pre><code class="language-rust">use di::*;
+
+pub struct Complex2 {
+    simple: Ref&lt;Simple&gt;
+    counter: usize
+}
+
+#[injectable]
+impl Complex2 {
+    // assumed to be the injection constructor by naming convention
+    pub fn new(simple: Ref&lt;Simple&gt;) -&gt; Self {
+        Self {
+            simple,
+            counter: 0,
+        }
+    }
+}</code></pre>
+<p>The following advanced example uses a custom constructor:</p>
+<pre><code class="language-rust">use di::*;
+
+pub trait Input { }
+
+pub trait Translator {
+    fn translate(&amp;self, text: &amp;str, lang: &amp;str) -&gt; String;
+}
+
+pub trait Logger {
+    fn log(&amp;self, message: &amp;str);
+}
+
+
+pub trait Runner {
+    fn run(&amp;self);
+}
+
+pub struct DefaultRunner {
+    input: Ref&lt;dyn Input&gt;,
+    translator: Option&lt;Ref&lt;dyn Input&gt;&gt;,
+    loggers: Vec&lt;Ref&lt;dyn Logger&gt;&gt;,
+}
+
+#[injectable(Runner)]
+impl DefaultRunner {
+    #[inject] // ↓ use 'create' instead of inferring 'new'
+    pub fn create(
+        input: Ref&lt;dyn Input&gt;,
+        translator: Option&lt;Ref&lt;dyn Input&gt;&gt;,
+        loggers: Vec&lt;Ref&lt;dyn Logger&gt;&gt;) -&gt; Self {
+        Self {
+            input,
+            translator,
+            loggers,
+        }
+    }
+}
+
+impl Runner for DefaultRunner {
+    fn run(&amp;self) {
+        // TODO: implementation
+    }
+}</code></pre>
+<p>The <a href="https://docs.rs/more-di/3.1.0/di/trait.Injectable.html"><code>Injectable</code></a> implementation for <code>DefaultRunner</code> expands to:</p>
+<pre><code class="language-rust">impl Injectable for DefaultRunner {
+    fn inject(lifetime: ServiceLifetime) -&gt; InjectBuilder {
+        InjectBuilder::new(
+            Activator::new::&lt;dyn Runner, Self&gt;(
+                |sp| Ref::new(
+                        Self::create(
+                            sp.get_required::&lt;dyn Input&gt;(),
+                            sp.get::&lt;dyn Input&gt;(),
+                            sp.get_all::&lt;dyn Logger&gt;().collect())),
+                |sp| RefMut::new(
+                        Self::create(
+                            sp.get_required::&lt;dyn Input&gt;(),
+                            sp.get::&lt;dyn Input&gt;(),
+                            sp.get_all::&lt;dyn Logger&gt;().collect()).into()),
+            )
+        )
+        .depends_on(
+            ServiceDependency::new(
+                Type::of::&lt;dyn Input&gt;(),
+                ServiceCardinality::ExactlyOne))
+        .depends_on(
+            ServiceDependency::new(
+                Type::of::&lt;dyn Translator&gt;(),
+                ServiceCardinality::ZeroOrOne))
+        .depends_on(
+            ServiceDependency::new(
+                Type::of::&lt;dyn Logger&gt;(),
+                ServiceCardinality::ZeroOrMore))
+    }
+}</code></pre>
+<h2 id="builder"><a class="header" href="#builder">Builder</a></h2>
+<p><a href="https://docs.rs/more-di/3.1.0/di/struct.InjectBuilder.html"><code>InjectBuilder</code></a> is similar to, but not exactly the same as, <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceDescriptorBuilder.html"><code>ServiceDescriptorBuilder</code></a>. <a href="https://docs.rs/more-di/3.1.0/di/struct.InjectBuilder.html"><code>InjectBuilder</code></a> is part of the <strong>inject</strong> feature, while <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceDescriptorBuilder.html"><code>ServiceDescriptorBuilder</code></a> is part of the <strong>builder</strong> feature. The key implementation differences are a non-generic type, mutable construction (<a href="https://docs.rs/more-di/3.1.0/di/struct.InjectBuilder.html#method.as_mut"><code>as_mut</code></a>), and deferred key configuration (<a href="https://docs.rs/more-di/3.1.0/di/struct.InjectBuilder.html#method.with_key"><code>with_key&lt;TKey&gt;</code></a>). This enables multiple registration scenarios with a single implementation. </p>
+<pre><code class="language-rust">let provider = ServiceCollection::new()
+    .add(Simple::transient())          // ← Ref&lt;Simple&gt;
+    .add(Simple::transient().as_mut()) // ← RefMut&lt;Simple&gt;
+    .add(Simple::transient()
+         .with_key::&lt;key::Alt&gt;())      // ← KeyedRef&lt;key::Alt, Simple&gt;
+    .add(Simple::transient()
+         .with_key::&lt;key::Alt&gt;()
+         .as_mut())                    // ← KeyedRefMut&lt;key::Alt, Simple&gt;
+    .build_provider()
+    .unwrap();</code></pre>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../guide/lazy.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../guide/extensibility.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../guide/lazy.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../guide/extensibility.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+    </div>
+    </body>
+</html>

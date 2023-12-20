@@ -1,0 +1,1598 @@
+<!DOCTYPE HTML>
+<html lang="en" class="ayu" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>More DI Documentation</title>
+        <meta name="robots" content="noindex">
+
+
+        <!-- Custom HTML head -->
+        
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="theme/custom.css">
+
+    </head>
+    <body class="sidebar-visible no-js">
+    <div id="body-container">
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "ayu";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('ayu')
+            html.classList.add(theme);
+            var body = document.querySelector('body');
+            body.classList.remove('no-js')
+            body.classList.add('js');
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var body = document.querySelector('body');
+            var sidebar = null;
+            var sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            sidebar_toggle.checked = sidebar === 'visible';
+            body.classList.remove('sidebar-visible');
+            body.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="index.html">Introduction</a></li><li class="chapter-item expanded affix "><li class="part-title">User Guide</li><li class="chapter-item expanded "><a href="getting-started.html"><strong aria-hidden="true">1.</strong> Getting Started</a></li><li class="chapter-item expanded affix "><li class="part-title">Reference Guide</li><li class="chapter-item expanded "><a href="guide/lifetimes.html"><strong aria-hidden="true">2.</strong> Service Lifetimes</a></li><li class="chapter-item expanded "><a href="guide/supported-types.html"><strong aria-hidden="true">3.</strong> Supported Types</a></li><li class="chapter-item expanded "><a href="guide/registration.html"><strong aria-hidden="true">4.</strong> Service Registration</a></li><li class="chapter-item expanded "><a href="guide/validation.html"><strong aria-hidden="true">5.</strong> Registration Validation</a></li><li class="chapter-item expanded "><a href="guide/resolution.html"><strong aria-hidden="true">6.</strong> Service Resolution</a></li><li class="chapter-item expanded "><a href="guide/lazy.html"><strong aria-hidden="true">7.</strong> Lazy Initialization</a></li><li class="chapter-item expanded "><a href="guide/macros.html"><strong aria-hidden="true">8.</strong> Macros</a></li><li class="chapter-item expanded "><a href="guide/extensibility.html"><strong aria-hidden="true">9.</strong> Extensibility</a></li><li class="chapter-item expanded "><a href="guide/troubleshooting.html"><strong aria-hidden="true">10.</strong> Troubleshooting</a></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Track and set sidebar scroll position -->
+        <script>
+            var sidebarScrollbox = document.querySelector('#sidebar .sidebar-scrollbox');
+            sidebarScrollbox.addEventListener('click', function(e) {
+                if (e.target.tagName === 'A') {
+                    sessionStorage.setItem('sidebar-scroll', sidebarScrollbox.scrollTop);
+                }
+            }, { passive: true });
+            var sidebarScrollTop = sessionStorage.getItem('sidebar-scroll');
+            sessionStorage.removeItem('sidebar-scroll');
+            if (sidebarScrollTop) {
+                // preserve sidebar scroll position when navigating via links within sidebar
+                sidebarScrollbox.scrollTop = sidebarScrollTop;
+            } else {
+                // scroll sidebar to current active section when navigating via "next/previous chapter" buttons
+                var activeSection = document.querySelector('#sidebar .active');
+                if (activeSection) {
+                    activeSection.scrollIntoView({ block: 'center' });
+                }
+            }
+        </script>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">More DI Documentation</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/commonsensesoftware/more-rs-di/tree/main/guide" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="introduction"><a class="header" href="#introduction">Introduction</a></h1>
+<p><code>more-di</code> is a crate containing all of the fundamental abstractions for dependency injection (DI) in Rust.
+Any <code>trait</code> or <code>struct</code> can be used as an injected service.</p>
+<h2 id="design-tenets"><a class="header" href="#design-tenets">Design Tenets</a></h2>
+<ul>
+<li>Add, remove, or replace injected services</li>
+<li>Mitigate sequence coupling in service registration</li>
+<li>Support the most common service lifetimes</li>
+<li>Service registry exploration</li>
+<li>Separation of mutable service collection and immutable service provider</li>
+<li>Proc macros are a convenience, not a requirement</li>
+<li>Enable validation of required services, missing services, and circular references</li>
+<li>Support traits and structures defined in external crates</li>
+<li>Support asynchronous contexts</li>
+<li>Enable extensibility across crates</li>
+</ul>
+<h2 id="crate-features"><a class="header" href="#crate-features">Crate Features</a></h2>
+<p>This crate provides the following features:</p>
+<ul>
+<li><em>default</em> - Abstractions for dependency injection, plus the <strong>builder</strong> and <strong>inject</strong> features</li>
+<li><strong>builder</strong> - Functions for configuring service descriptors</li>
+<li><strong>async</strong> - Use dependencies in an asynchronous context</li>
+<li><strong>inject</strong> - Code-generate common injection scenarios</li>
+<li><strong>lazy</strong> - Lazy-initialize service resolution</li>
+<li><strong>fmt</strong> - Additional output formatting</li>
+<li><strong>alias</strong> - Use alternate type aliases</li>
+</ul>
+<h2 id="contributing"><a class="header" href="#contributing">Contributing</a></h2>
+<p><code>more-di</code> is free and open source. You can find the source code on <a href="https://github.com/commonsensesoftware/more-rs-di">GitHub</a>
+and issues and feature requests can be posted on the <a href="https://github.com/commonsensesoftware/more-rs-di/issues">GitHub issue tracker</a>.
+<code>more-di</code> relies on the community to fix bugs and add features: if you'd like to contribute, please read the
+<a href="https://github.com/commonsensesoftware/more-rs-di/blob/main/CONTRIBUTING.md">CONTRIBUTING</a> guide and consider opening
+a <a href="https://github.com/commonsensesoftware/more-rs-di/pulls">pull request</a>.</p>
+<h2 id="license"><a class="header" href="#license">License</a></h2>
+<p>This project is licensed under the <a href="https://github.com/commonsensesoftware/more-rs-di/blob/main/LICENSE">MIT</a> license.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="getting-started"><a class="header" href="#getting-started">Getting Started</a></h1>
+<p>The simplest way to get started is to install the crate using the default features.</p>
+<pre><code class="language-bash">cargo add more-di
+</code></pre>
+<h2 id="example"><a class="header" href="#example">Example</a></h2>
+<p>Let's build the ubiquitous <em>Hello World</em> application. The first thing we need to do is define some traits and structures. We'll use <code>#[injectable]</code>, which is highly convenient, but not strictly required.</p>
+<pre><code class="language-rust">use di::*;
+use std::rc::Rc;
+
+// let Bar make itself injectable as Bar
+#[injectable]
+pub struct Bar;
+
+impl Bar {
+    pub fn speak(&amp;self) -&gt; &amp;str {
+        &quot;Hello world!&quot;
+    }
+}
+
+pub trait Foo {
+    pub fn speak(&amp;self) -&gt; &amp;str;
+}
+
+// let FooImpl make itself injectable as dyn Foo
+#[injectable(Foo)]
+pub struct FooImpl {
+    bar: Rc&lt;Bar&gt; // ← assigned by #[injectable]
+}
+
+impl Foo for FooImpl {
+    fn speak(&amp;self) -&gt; &amp;str {
+        self.bar.speak()
+    }
+}
+
+pub trait Thing {}
+
+// let Thing1 make itself injectable as dyn Thing
+#[injectable(Thing)]
+pub struct Thing1;
+
+impl Thing for Thing1 {}
+
+// let Thing2 make itself injectable as dyn Thing
+#[injectable(Thing)]
+pub struct Thing2;
+
+impl Thing for Thing2 {}</code></pre>
+<p>Now that we have a few injectable types, we can build a basic application.</p>
+<pre><code class="language-rust">use crate::*;
+use di::*;
+
+fn main() {
+    // create a collection of registered services. the order of
+    // registration does not matter.
+    let services = ServiceCollection::new()
+        .add(FooImpl::transient())
+        .add(Bar::singleton())
+        .add(Thing1::transient());
+        .add(Thing2::transient());
+
+    // build an immutable service provider from the collection
+    // of services. validation is performed here to ensure
+    // the provider is a good state. if we're not, then a
+    // ValidationError will indicate what the problems are.
+    // if, for example, we forgot to register Bar, an error
+    // would be returned indicating that Bar is missing.
+    let provider = services.build_provider().unwrap();
+
+    // get the requested service or panic
+    let foo = provider::get_required::&lt;dyn Foo&gt;();
+
+    println!(&quot;Foo says '{}'.&quot;, foo.speak());
+
+    // get all of the requested services, which could be zero
+    let things: Vec&lt;_&gt; = provider::get_all::&lt;Thing&gt;().collect();
+
+    println!(&quot;Number of things: {}&quot;, things.len());
+}</code></pre>
+<div style="break-before: page; page-break-before: always;"></div><!--
+This file contains links that can be shared across pages. RustDoc links cannot currently
+be used by mdBook directly. Links are stable on crates.io so we can centralize what is
+required in this file, albeit manually.
+
+REF: https://github.com/rust-lang/mdBook/issues/1356
+REF: https://github.com/rust-lang/cargo/issues/739
+REF: https://github.com/tag1consulting/goose/issues/320
+-->
+<h1 id="service-lifetimes"><a class="header" href="#service-lifetimes">Service Lifetimes</a></h1>
+<p>A service can have the following lifetimes:</p>
+<ul>
+<li><strong>Transient</strong> - a new instance is created every time it is requested</li>
+<li><strong>Singleton</strong> - a single, new instance is created the first time it is requested</li>
+<li><strong>Scoped</strong> - a new instance is created once per provider that it is requested from</li>
+</ul>
+<p>A service with a <strong>Singleton</strong> lifetime, which depends on service that has a <strong>Transient</strong> lifetime will effectively promote that service to a <strong>Singleton</strong> lifetime as well. A service with a <strong>Singleton</strong> lifetime, which depends on service that has a <strong>Scoped</strong> lifetime will result in a validation error.</p>
+<h2 id="lifetime-management"><a class="header" href="#lifetime-management">Lifetime Management</a></h2>
+<p>The lifetime of a service determines how long a service lives relative to its owning <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceProvider.html"><code>ServiceProvider</code></a>. When a <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceProvider.html"><code>ServiceProvider</code></a> is dropped, all of the service instances it owns are also dropped. If a service instance somehow outlives its owning <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceProvider.html"><code>ServiceProvider</code></a>, when the last of the owners is dropped, the service will also be dropped. The <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceProvider.html"><code>ServiceProvider</code></a> itself will never leak any instantiated services.</p>
+<p>There are scenarios where you might want a <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceProvider.html"><code>ServiceProvider</code></a> to be <em>scoped</em> for a limited amount of time. A HTTP request, for example, has a <em>Per-Request</em> lifetime where you might want some services to be shared within the scope of the request (e.g. <em>scoped</em>) and then dropped. A new scope can be created via <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceProvider.html#method.create_scope"><code>create_scope</code></a> from any <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceProvider.html"><code>ServiceProvider</code></a>.</p>
+<p>Consider the following structures:</p>
+<pre><code class="language-rust">use di::*;
+
+#[injectable]
+pub struct Bar;
+
+#[injectable]
+pub struct Foo {
+    bar: Ref&lt;Bar&gt;
+}</code></pre>
+<h2 id="service-provider-singletons"><a class="header" href="#service-provider-singletons">Service Provider Singletons</a></h2>
+<p>A <strong>Singleton</strong> is created exactly once and lives for the lifetime of the root <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceProvider.html"><code>ServiceProvider</code></a> no matter where it is actually first instantiated.</p>
+<p>A <strong>Singleton</strong> in the root scope will be the same as a <strong>Singleton</strong> created in a nested scope.</p>
+<pre><code class="language-rust">use crate::*;
+use di::*;
+
+let provider = ServiceCollection::new()
+    .add(Bar::transient())
+    .add(Foo::singleton())
+    .build_provider()
+    .unwrap();
+
+let foo1 = provider.get_required::&lt;Foo&gt;();
+
+{
+    let scope = provider.create_scope();
+    let foo2 = scope.get_required::&lt;Foo&gt;();
+
+    assert!(Ref::ptr_eq(&amp;foo1, &amp;foo2));
+}</code></pre>
+<p>In addition, if a <strong>Singleton</strong> is first created in a nested scoped, it will still be the same instance in the root scope.</p>
+<pre><code class="language-rust">use crate::*;
+use di::*;
+
+let provider = ServiceCollection::new()
+    .add(Bar::transient())
+    .add(Foo::singleton())
+    .build_provider()
+    .unwrap();
+let foo1;
+
+{
+    let scope = provider.create_scope();
+    foo1 = scope.get_required::&lt;Foo&gt;();
+}
+
+let foo2 = provider.get_required::&lt;Foo&gt;();
+assert!(Ref::ptr_eq(&amp;foo1, &amp;foo2));</code></pre>
+<h2 id="service-provider-scopes"><a class="header" href="#service-provider-scopes">Service Provider Scopes</a></h2>
+<p>A <strong>Scoped</strong> service only lives as long as the lifetime of the owning service provider.</p>
+<pre><code class="language-rust">use crate::*;
+use di::*;
+
+let provider = ServiceCollection::new()
+    .add(Bar::transient())
+    .add(Foo::scoped())
+    .build_provider()
+    .unwrap();
+let foo1 = provider.get_required::&lt;Foo&gt;();
+let foo2;
+
+{
+    let scope = provider.create_scope();
+    foo2 = scope.get_required::&lt;Foo&gt;();
+    let foo3 = scope.get_required::&lt;Foo&gt;();
+
+    // foo2 == foo3 because they have the same scope
+    assert!(Ref::ptr_eq(&amp;foo2, &amp;foo3));
+} // ← all instances owned by 'scope' are dropped here
+
+// 'foo2' outlived the scope because we held onto it for
+// testing/demonstration purposes. as soon as it goes
+// out of scope, it will be dropped. transient services
+// behave in the same way and no instances are held by
+// the ServiceProvider they were resolved from
+//
+// foo1 != foo2 because they came from different scopes
+assert!(!Ref::ptr_eq(&amp;foo1, &amp;foo2));</code></pre>
+<div style="break-before: page; page-break-before: always;"></div><!--
+This file contains links that can be shared across pages. RustDoc links cannot currently
+be used by mdBook directly. Links are stable on crates.io so we can centralize what is
+required in this file, albeit manually.
+
+REF: https://github.com/rust-lang/mdBook/issues/1356
+REF: https://github.com/rust-lang/cargo/issues/739
+REF: https://github.com/tag1consulting/goose/issues/320
+-->
+<h1 id="supported-types"><a class="header" href="#supported-types">Supported Types</a></h1>
+<p>While you are able to use any <code>trait</code> or <code>struct</code> you want for service registration, there are a few limitations as to how they can be resolved in order to satisfy the necessary service <a href="guide/lifetimes.html">lifetime</a> requirements.</p>
+<p>There are a few basic forms in which you can request a service:</p>
+<ol>
+<li><code>Rc</code> - a required service</li>
+<li><code>Rc&lt;RefCell&gt;</code> - a required, mutable service</li>
+<li><code>Option&lt;Rc&gt;</code> - an optional service (e.g. unregistered)</li>
+<li><code>Option&lt;Rc&lt;RefCell&gt;&gt;</code> - an optional, mutable service (e.g. unregistered)</li>
+<li><code>Iterator&lt;Item = Rc&gt;</code> - a sequence of services</li>
+<li><code>Iterator&lt;Item = Rc&lt;RefCell&gt;&gt;</code> - a sequence of mutable services</li>
+<li><code>Lazy</code> - a <a href="guide/lazy.html">lazy</a>-initialized service</li>
+<li><code>KeyedRef&lt;K,T&gt;</code> - a required, keyed service</li>
+<li><code>Option&lt;KeyedRef&lt;K,T&gt;&gt;</code> - an optional, keyed service</li>
+<li><code>Iterator&lt;Item = KeyedRef&lt;K,T&gt;&gt;</code> - a sequence of keyed services</li>
+<li><code>ServiceProvider</code> - the service provider itself</li>
+<li><code>ScopedServiceProvider</code> - a new, scoped service provider from the resolving instance</li>
+</ol>
+<p>When the <strong>async</strong> feature is enabled, you <strong>must</strong> use <code>Arc</code> instead of <code>Rc</code>. To facilitate switching between synchronous and asynchronous contexts as well as making the syntax slightly more succinct, the following type aliases are provided:</p>
+<ul>
+<li><code>Ref</code> = <code>Rc</code> or <code>Arc</code></li>
+<li><code>RefMut</code> = <code>Rc&lt;RefCell&gt;</code> or <code>Arc&lt;RwLock&gt;</code></li>
+<li><code>KeyedRefMut&lt;K,T&gt;</code> = <code>KeyedRef&lt;K,RefCell&gt;</code> or <code>KeyedRef&lt;K,RwLock&gt;</code></li>
+</ul>
+<h2 id="macro-support"><a class="header" href="#macro-support">Macro Support</a></h2>
+<p><code>#[injectable]</code> understands all of the forms listed above and supports mixed forms as well; for example, <code>Ref&lt;RefCell&gt;</code> is equivalent to <code>RefMut</code>. Since the results of an iterator must be owned, <code>#[injectable]</code> also supports using <code>Vec</code> at any injected call site that would otherwise use <code>Iterator</code>. The combinations <code>Option&lt;Vec&gt;</code> and <code>Vec&lt;Option&gt;</code>, however, are invalid.</p>
+<p>Injecting <code>Iterator</code> is only supported when using an injection constructor. This is useful when you may not want to own the injected sequence of services or you want to use a collection other than <code>Vec</code>, such as <code>HashMap</code>.</p>
+<p>For more information see <a href="guide/macros.html">macros</a>.</p>
+<h2 id="custom-type-aliases"><a class="header" href="#custom-type-aliases">Custom Type Aliases</a></h2>
+<blockquote>
+<p>These features are only available if the <strong>alias</strong> feature is activated</p>
+</blockquote>
+<p>User-defined type aliases are usually not a problem for a library. When you use the <code>#[injectable]</code> attribute macro, however, it becomes important because the macro needs to understand the call site that it inspects so that it can generate the appropriate code. To overcome this limitation, you can define a custom mapping in the crate dependency configuration using the <code>aliases</code> table with the following keys:</p>
+<div class="table-wrapper"><table><thead><tr><th>Key</th><th>Default Alias</th></tr></thead><tbody>
+<tr><td><code>ref</code></td><td><code>Ref</code></td></tr>
+<tr><td><code>ref-mut</code></td><td><code>RefMut</code></td></tr>
+<tr><td><code>keyed-ref</code></td><td><code>KeyedRef</code></td></tr>
+<tr><td><code>keyed-ref-mut</code></td><td><code>KeyedRefMut</code></td></tr>
+</tbody></table>
+</div>
+<p>For example, if you prefer the prefix <code>Svc</code>, you can remap them all as follows:</p>
+<pre><code class="language-toml">[dependencies.more-di.aliases]
+ref = &quot;Svc&quot;
+ref-mut = &quot;SvcMut&quot;
+keyed-ref = &quot;KeyedSvc&quot;
+keyed-ref-mut = &quot;KeyedSvcMut&quot;
+</code></pre>
+<p>You are still required define the aliases in your library or application:</p>
+<pre><code class="language-rust">type Svc&lt;T&gt; = Ref&lt;T&gt;;
+type SvcMut&lt;T&gt; = RefMut&lt;T&gt;;
+type KeyedSvc&lt;K,T&gt; = KeyedRef&lt;K,T&gt;;
+type KeyedSvcMut&lt;K,T&gt; = KeyedRefMut&lt;K,T&gt;;</code></pre>
+<p>The only constraints are that the aliases you define must have the same number of generic type arguments. You are not required to use the built-in aliases.
+If you prefer to directly alias the underlying type, that is also allowed:</p>
+<pre><code class="language-rust">type Svc&lt;T&gt; = std::rc::Rc&lt;T&gt;;</code></pre>
+<p>You are not required to alias every type. If all of your services are read-only and don't use keys, then the configuration can be simplified:</p>
+<pre><code class="language-toml">[dependencies]
+more-di = { version = &quot;2.0&quot;, features = [&quot;alias&quot;], aliases { ref = &quot;Sr&quot; } }
+</code></pre>
+<p>The type aliasing feature comes from the <code>more-di-macros</code> crate; however, the <code>more-di</code> crate is the dependency that most consumers will reference directly.
+You can apply the <code>aliases</code> table to either the <code>more-di</code> or <code>more-di-macros</code> dependency configuration. If you specify both, <code>more-di</code> takes precedence.</p>
+<h3 id="backward-compatibility"><a class="header" href="#backward-compatibility">Backward Compatibility</a></h3>
+<p>In previous library versions, the primary type alias was <code>ServiceRef</code>. This added a lot of unnecessary verbosity that becomes prolific in your code. <code>Ref</code> is considerably
+more succinct and even the qualified form <code>di::Ref</code> is shorter, yet unambiguous. To facilitate a smooth upgrade to newer versions, the <code>ServiceRef</code> type alias is
+still automatically recognized without enabling the <strong>alias</strong> feature nor explicitly configuring the mapping with <code>key = &quot;ServiceRef&quot;</code>. The only requirement is that you
+must define the alias in your library or application.</p>
+<pre><code class="language-rust">type ServiceRef&lt;T&gt; = Ref&lt;T&gt;;</code></pre>
+<div style="break-before: page; page-break-before: always;"></div><!--
+This file contains links that can be shared across pages. RustDoc links cannot currently
+be used by mdBook directly. Links are stable on crates.io so we can centralize what is
+required in this file, albeit manually.
+
+REF: https://github.com/rust-lang/mdBook/issues/1356
+REF: https://github.com/rust-lang/cargo/issues/739
+REF: https://github.com/tag1consulting/goose/issues/320
+-->
+<h1 id="service-registration"><a class="header" href="#service-registration">Service Registration</a></h1>
+<h2 id="service-descriptors"><a class="header" href="#service-descriptors">Service Descriptors</a></h2>
+<p>The foundation of the entire crate revolves around a <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceDescriptor.html"><code>ServiceDescriptor</code></a>. A descriptor describes the following about a service:</p>
+<ul>
+<li>The service type</li>
+<li>The implementation type</li>
+<li>Its <a href="guide/lifetimes.html">lifetime</a></li>
+<li>Its <a href="guide/validation.html#service-dependency">dependencies</a>, if any</li>
+<li>The factory function used to instantiate the service</li>
+</ul>
+<p>Rust does not have a Reflection API so the <a href="https://docs.rs/more-di/3.1.0/di/struct.Type.html"><code>Type</code></a> struct is used to represent a pseudo-type. A <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceDescriptor.html"><code>ServiceDescriptor</code></a> also enables a collection of services to be explored, validated, and/or modified.</p>
+<p>To ensure that a <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceDescriptor.html"><code>ServiceDescriptor</code></a> is properly constructed, you can only create an instance through one of the provided factories:</p>
+<ul>
+<li><a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceDescriptorBuilder.html"><code>ServiceDescriptorBuilder</code></a></li>
+<li><a href="https://docs.rs/more-di/3.1.0/di/struct.InjectBuilder.html"><code>InjectBuilder</code></a></li>
+</ul>
+<h2 id="service-collection"><a class="header" href="#service-collection">Service Collection</a></h2>
+<p>A <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceCollection.html"><code>ServiceCollection</code></a> is a mutable container of <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceDescriptor.html"><code>ServiceDescriptor</code></a> instances that you can modify before creating an immutable <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceProvider.html"><code>ServiceProvider</code></a>. The <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceCollection.html"><code>ServiceCollection</code></a> allows you to register or modify services in any order. When you're ready to create a <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceProvider.html"><code>ServiceProvider</code></a>, the <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceCollection.html"><code>ServiceCollection</code></a> will validate all service dependencies before constructing the instance. The <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceCollection.html"><code>ServiceCollection</code></a> cannot guarantee you won't ask for a service that doesn't exist, but it can guarantee any service it knows about can be correctly resolved. The <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceCollection.html"><code>ServiceCollection</code></a> is ultimately a factory and can create multiple, independent <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceProvider.html"><code>ServiceProvider</code></a> instances if you want.</p>
+<p>For binary applications, most users will only add descriptors to the <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceCollection.html"><code>ServiceCollection</code></a>. The <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceCollection.html"><code>ServiceCollection</code></a> becomes much more useful in library crates and test applications. Here is a summary of the most useful functions:</p>
+<div class="table-wrapper"><table><thead><tr><th>Function</th><th>Description</th></tr></thead><tbody>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceCollection.html#method.add"><code>add</code></a></td><td>Adds a new item</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceCollection.html#method.try_add"><code>try_add</code></a></td><td>Attempts to add a new item if the same service is unregistered</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceCollection.html#method.try_add_to_all"><code>try_add_to_all</code></a></td><td>Attempts to add a new item to a set if it's unregistered</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceCollection.html#method.try_add_all"><code>try_add_all</code></a></td><td>Adds a sequence of new items</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceCollection.html#method.replace"><code>replace</code></a></td><td>Adds a new item or replaces an existing registration</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceCollection.html#method.try_replace"><code>try_replace</code></a></td><td>Equivalent to <code>try_add</code></td></tr>
+</tbody></table>
+</div>
+<h3 id="best-practice"><a class="header" href="#best-practice">Best Practice</a></h3>
+<p>To make it easy to test a binary application, it is recommended that you expose a public function that configures the default set of services. This will make it simple to use the same default configuration as the application and replace only the parts that are necessary for testing.</p>
+<pre><code class="language-rust">use di::*;
+
+#[injectable]
+pub struct Runner;
+
+impl Runner {
+    pub fn run(&amp;self) {
+        // TODO: implementation
+    }
+}
+    
+pub fn config_default_services(services: &amp;mut ServiceCollection) {
+    services.add(Runner::singleton());
+    // TODO: register other services
+    // replaceable services should use try_add so that any
+    // existing registration, say from a test, is not overridden
+}
+
+fn main() {
+    let mut services = ServiceCollection::new();
+
+    config_default_services(&amp;mut services);
+
+    let provider = services.build_provider().unwrap();
+    let runner = provider.get_required::&lt;Runner&gt;();
+
+    runner.run();
+}</code></pre>
+<p>You can now create a test replicating the same setup as the release application, but only changing the parts you need to for testing.</p>
+<pre><code class="language-rust">use crate::*;
+use di::*;
+
+#[test]
+fn runner_should_do_expected_work() {
+    // arrange
+    let mut services = ServiceCollection::new();
+
+    // TODO: add test replacements with: services.add(?);
+
+    config_default_services(&amp;mut services);
+
+    // TODO: optionally, override defaults with: services.replace(?);
+
+    let provider = services.build_provider().unwrap();
+    let runner = provider.get_required::&lt;Runner&gt;();
+
+    // act
+    runner.run();
+
+    // assert
+    // TODO: assertions
+}</code></pre>
+<h2 id="mutable-services"><a class="header" href="#mutable-services">Mutable Services</a></h2>
+<p>The borrowing rules imposed by Rust places limitations on creating mutable services. The service lifetimes supported by dependency injection make using the <code>mut</code> keyword in an idiomatic way impossible. There are, at least, three possible alternate solutions:</p>
+<ol>
+<li>Use <em>Interior Mutability</em> within your service implementation</li>
+<li>Design your service as a factory which is shared within DI, but can create instances owned outside the factory that are idiomatically mutable</li>
+<li>Decorate your service with <code>RefCell</code> or, if the <strong>async</strong> feature is activated, <code>RwLock</code></li>
+</ol>
+<p><strong>Option 3</strong> is the only method provided out-of-the-box as the other options are subjective design choices within the scope of your application. One of the consequences of this approach is that the types <code>RefCell</code> and <code>RwLock</code> themselves become part of the service registration; <code>Ref</code> and <code>Ref&lt;RefCell&gt;</code> (or <code>RefMut</code> for short) are considered different services. In most use cases, this is not a problem. Your service is either entirely read-only or it is read-write. If you need both and two different service instances will not work for you or you want finer-grained control over synchronization, you should consider <em>Interior Mutability</em> instead.</p>
+<h2 id="builder"><a class="header" href="#builder">Builder</a></h2>
+<blockquote>
+<p>These features are only available if the <strong>builder</strong> feature is activated</p>
+</blockquote>
+<p>The <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceDescriptorBuilder.html"><code>ServiceDescriptorBuilder</code></a> is the long-form approach used to create <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceDescriptor.html"><code>ServiceDescriptor</code></a> instances. It is most useful when you need to create <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceDescriptor.html"><code>ServiceDescriptor</code></a> instances and you don't want to use the provided macros. You might also need this capability for a scenario not supported by the macros or because you need to inject types defined in an external crate that do not provide extensibility points from the <code>more-di</code> crate.</p>
+<p>The <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceDescriptorBuilder.html"><code>ServiceDescriptorBuilder</code></a> is accompanied by numerous shorthand functions to simplify registration:</p>
+<div class="table-wrapper"><table><thead><tr><th>Function</th><th>Starts Building</th></tr></thead><tbody>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/fn.singleton.html"><code>singleton</code></a></td><td>A singleton service</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/fn.singleton_as_self.html"><code>singleton_as_self</code></a></td><td>A singleton service for a struct</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/fn.singleton_factory.html"><code>singleton_factory</code></a></td><td>A singleton service from a factory function</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/fn.singleton_with_key.html"><code>singleton_with_key</code></a></td><td>A singleton service with a key</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/fn.singleton_with_key_factory.html"><code>singleton_with_key_factory</code></a></td><td>A singleton service using a key and factory function</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/fn.scoped.html"><code>scoped</code></a></td><td>A scoped service</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/fn.scoped_factory.html"><code>scoped_factory</code></a></td><td>A scoped service from a factory function</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/fn.scoped_with_key.html"><code>scoped_with_key</code></a></td><td>A scoped service with a key</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/fn.scoped_with_key_factory.html"><code>scoped_with_key_factory</code></a></td><td>A scoped service using a key and factory function</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/fn.transient.html"><code>transient</code></a></td><td>A transient service</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/fn.transient_factory.html"><code>transient_factory</code></a></td><td>A transient service using a factory function</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/fn.transient_as_self.html"><code>transient_as_self</code></a></td><td>A transient service for struct</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/fn.transient_with_key.html"><code>transient_with_key</code></a></td><td>A transient service with a key</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/fn.transient_with_key_factory.html"><code>transient_with_key_factory</code></a></td><td>A transient service using a key and factory function</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/fn.transient_with_key_as_self.html"><code>transient_with_key_as_self</code></a></td><td>A transient service with key for a struct</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/fn.existing.html"><code>existing</code></a></td><td>A singleton service from an existing instance</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/fn.existing_as_self.html"><code>existing_as_self</code></a></td><td>A singleton service from an existing struct</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/fn.existing_with_key.html"><code>existing_with_key</code></a></td><td>A singleton service from an existing instance with a key</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/fn.existing_with_key_as_self.html"><code>existing_with_key_as_self</code></a></td><td>A singleton service from an existing struct for a struct</td></tr>
+</tbody></table>
+</div>
+<p>The following registers arbitrary traits and structs as services:</p>
+<pre><code class="language-rust">use di::*;
+use std::rc::Rc;
+
+pub struct Bar;
+
+impl Bar {
+    pub fn speak(&amp;self) -&gt; &amp;str {
+        &quot;Hello world!&quot;
+    }
+}
+
+pub trait Foo {
+    fn speak(&amp;self) -&gt; &amp;str;
+}
+
+pub struct FooImpl {
+    bar: Rc&lt;Bar&gt;
+}
+
+impl Foo for FooImpl {
+    fn speak(&amp;self) -&gt; &amp;str {
+        self.bar.speak()
+    }
+}
+
+fn run() {
+    let provider = ServiceCollection::new()
+        .add(transient_as_self::&lt;Bar&gt;().from(|_| Rc::new(Bar)))
+        .add(singleton::&lt;dyn Foo, FooImpl&gt;()
+             .from(|sp| Rc::new(FooImpl { bar: sp.get_required::&lt;Bar&gt;() })))
+        .build_provider()
+        .unwrap();
+    let foo = provider.get_required::&lt;dyn Foo&gt;();
+
+    println!(&quot;{}&quot;, foo.speak());
+}</code></pre>
+<h2 id="multiple-traits"><a class="header" href="#multiple-traits">Multiple Traits</a></h2>
+<p>In a few advanced scenarios, you might need a single service implementation to be mapped to multiple traits. This can be achieved, but ancillary service registrations must be explicit. There is currently no macro support for such a configuration.</p>
+<p>Consider the following:</p>
+<pre><code class="language-rust">use di::*;
+
+trait Service1 { }
+
+trait Service2 { }
+
+#[injectable]
+struct MultiService;
+
+impl Service1 for MultiService { }
+
+impl Service2 for MultiService { }</code></pre>
+<p>It is now possible to register a single service with multiple traits as follows:</p>
+<pre><code class="language-rust">use crate::*;
+use di::*;
+
+let provider = ServiceCollection::new()
+     // MultiService → Self
+    .add(MultiService::singleton())
+     // MultiService → dyn Service1
+    .add(transient_factory::&lt;dyn Service1&gt;(|sp| sp.get_required::&lt;MultiService&gt;()))
+     // MultiService → dyn Service2
+    .add(transient_factory::&lt;dyn Service2&gt;(|sp| sp.get_required::&lt;MultiService&gt;()))
+    .build_provider()
+    .unwrap();
+
+let svc1 = provider.get_required::&lt;dyn Service1&gt;();
+let svc2 = provider.get_required::&lt;dyn Service2&gt;();</code></pre>
+<p>Care must be taken to ensure the lifetime of the primary service is compatible with the ancillary services. Each ancillary service should never live longer than the primary service. This configuration is most common when primary service is a <strong>Singleton</strong> or <strong>Scoped</strong>. If the primary service is <strong>Transient</strong>, the two independent registrations can be used instead.</p>
+<h2 id="keyed-services"><a class="header" href="#keyed-services">Keyed Services</a></h2>
+<p>Occasionally there are edge cases where the same service might need to be registered more than once for different contexts. A few scenarios include the same service, but with different lifetimes or different implementations of the same service in an otherwise ambiguous context.</p>
+<p>Consider the following:</p>
+<pre><code class="language-rust">use di::*;
+
+pub trait Thing : ToString;
+
+#[injectable(Thing)]
+pub struct Thing1;
+
+impl Thing for Thing1;
+
+impl ToString for Thing1 {
+    fn to_string(&amp;self) -&gt; String {
+        String::from(std::any::type_name::&lt;Self&gt;())
+    }
+}
+
+#[injectable(Thing)]
+pub struct Thing2;
+
+impl Thing for Thing2;
+
+impl ToString for Thing2 {
+    fn to_string(&amp;self) -&gt; String {
+        String::from(std::any::type_name::&lt;Self&gt;())
+    }
+}
+
+#[injectable]
+pub struct CatInTheHat {
+    pub thing1: Ref&lt;dyn Thing&gt;,
+    pub thing2: Ref&lt;dyn Thing&gt;,
+}</code></pre>
+<p><code>CatInTheHat</code> has two different dependencies of <code>dyn Thing</code>, but they are not expected to be same implementation. One solution would be to simply use <code>Thing1</code> and <code>Thing2</code> directly. Another solution would be to have complementary <code>dyn Thing1</code> and <code>dyn Thing2</code> traits. The final approach would be to used <em>keyed</em> services.</p>
+<p>A keyed service allows a service to be resolved in conjunction with a key. In many dependency injection frameworks, keyed services are supported by using a <code>String</code> as the key. That approach has a number of different problems. The <code>more-di</code> crate uses a type as a key instead. This approach provides the following advantages:</p>
+<ul>
+<li>No <em>magic strings</em></li>
+<li>No attributes or other required metadata</li>
+<li>No hidden service location lookups</li>
+<li>No name collisions (because types are unique)</li>
+<li>No changes to <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceDescriptor.html"><code>ServiceDescriptor</code></a></li>
+</ul>
+<p>In the previous code example there is nothing in place that restricts or defines which <code>dyn Thing</code> needs to be mapped. By definition, any <code>dyn Thing</code> <em>could</em> be used, but a specific mapping is expected. To address that, we can refactor to use a <code>KeyedRef</code>.</p>
+<p>We also need to define some <em>keys</em>. A key is just a type used as a marker. A zero-sized <code>struct</code> is perfect for this case. For all intents and purposes, this struct acts like an enumeration. A key difference is that the required value is defined as part of the requested type, which an enumeration cannot do.</p>
+<p>Let's perform a little refactoring:</p>
+<pre><code class="language-rust">use crate::*;
+use di::*;
+
+pub mod key {
+    pub struct Thing1;
+    pub struct Thing2;
+}
+
+#[injectable]
+pub struct CatInTheHat {
+    pub thing1: KeyedRef&lt;key::Thing1, dyn Thing&gt;,
+    pub thing2: KeyedRef&lt;key::Thing2, dyn Thing&gt;,
+}</code></pre>
+<p>Introducing a key means that we can no longer provide just any <code>dyn Thing</code>; a specific registration must be mapped. Although it is still possible to configure the wrong key, the key specified will never collide with a key defined by another crate. The compiler will enforce the key specified exists and the configuration will be validated when the <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceProvider.html"><code>ServiceProvider</code></a> is created. Key types do not be need to be public or in nested modules unless you want them to be.</p>
+<p>It's important to know that we only need the key at the injection call site. We can safely convert down to <a href="https://docs.rs/more-di/3.1.0/di/type.Ref.html"><code>Ref</code></a> if we use an injected constructor as follows:</p>
+<pre><code class="language-rust">use crate::*;
+use di::*;
+
+pub struct CatInTheHat {
+    pub thing1: Ref&lt;dyn Thing&gt;,
+    pub thing2: Ref&lt;dyn Thing&gt;,
+}
+
+#[injectable]
+impl CatInTheHat {
+    pub fn new(
+        thing1: KeyedRef&lt;key::Thing1, dyn Thing&gt;,
+        thing2: KeyedRef&lt;key::Thing2, dyn Thing&gt;) -&gt; Self {
+        // the key isn't useful after the correct service is injected
+        Self {
+            thing1: thing1.into(),
+            thing2: thing2.into(),
+        }
+    }
+}</code></pre>
+<p>Putting it all together, the service registration now looks like:</p>
+<pre><code class="language-rust">use crate::*;
+use di::*;
+
+let services = ServiceCollection::new()
+    .add(Thing1::transient().with_key::&lt;key::Thing1&gt;())
+    .add(Thing2::transient().with_key::&lt;key::Thing2&gt;())
+    .add(CatInTheHat::singleton())
+    .build_provider()
+    .unwrap();
+
+let cat = provider.get_required::&lt;CatInTheHat&gt;();
+
+println!(&quot;Hi from {}&quot;, cat.thing1.to_string());
+println!(&quot;Hi from {}&quot;, cat.thing2.to_string());</code></pre>
+<blockquote>
+<p>If you're not using <code>#[injectable]</code>, the long-form <a href="guide/registration.html#builder">builder</a> functions provide variants that support specifying a key while creating a <code>ServiceDescriptor</code>.</p>
+</blockquote>
+<p>Creating a keyed service explicitly is still possible and useful for some scenarios such as testing:</p>
+<pre><code class="language-rust">#[test]
+fn setup_cat_in_the_hat() {
+    // arrange
+    let thing1 = KeyedRef::&lt;key::Thing1, dyn Thing&gt;::new(Ref::new(Thing1::default()));
+    let thing2 = KeyedRef::&lt;key::Thing2, dyn Thing&gt;::new(Ref::new(Thing2::default()));
+    let cat = CatInTheHat::new(thing1, thing2);
+
+    // act
+    let name = cat.thing1.to_string();
+
+    // assert
+    assert_eq!(&amp;name, &quot;crate::Thing1&quot;);
+}</code></pre>
+<div style="break-before: page; page-break-before: always;"></div><!--
+This file contains links that can be shared across pages. RustDoc links cannot currently
+be used by mdBook directly. Links are stable on crates.io so we can centralize what is
+required in this file, albeit manually.
+
+REF: https://github.com/rust-lang/mdBook/issues/1356
+REF: https://github.com/rust-lang/cargo/issues/739
+REF: https://github.com/tag1consulting/goose/issues/320
+-->
+<h1 id="service-validation"><a class="header" href="#service-validation">Service Validation</a></h1>
+<p>The consumers of a <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceProvider.html"><code>ServiceProvider</code></a> expect that it is correctly configured and ready for use. There are edge cases,
+however, which could lead to runtime failures or incorrect behavior such as:</p>
+<ul>
+<li>A required, dependent service that has not been registered</li>
+<li>A circular dependency, which will result in a stack overflow</li>
+<li>A service with a singleton lifetime that has a dependent service with a scoped lifetime</li>
+</ul>
+<p>Intrinsic validation is provided to ensure those scenarios cannot happen. The <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceCollection.html#method.build_provider"><code>ServiceCollection::build_provider()</code></a> function will return <code>Result&lt;ServiceProvider, ValidationError&gt;</code>, which will either contain a valid <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceProvider.html"><code>ServiceProvider</code></a> or a <a href="https://docs.rs/more-di/3.1.0/di/struct.ValidationError.html"><code>ValidationError</code></a> that will detail all of the errors. From that point forward, the <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceProvider.html"><code>ServiceProvider</code></a> will be considered semantically correct and safe to use. The same validation process can also be invoked imperatively on-demand by using the <a href="https://docs.rs/more-di/3.1.0/di/fn.validate.html"><code>validate</code></a> function on a given <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceCollection.html"><code>ServiceCollection</code></a>.</p>
+<h2 id="service-dependency"><a class="header" href="#service-dependency">Service Dependency</a></h2>
+<p>A <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceDependency.html"><code>ServiceDependency</code></a> is a simple mapping that indicates the dependent <a href="https://docs.rs/more-di/3.1.0/di/struct.Type.html"><code>Type</code></a> and its <a href="https://docs.rs/more-di/3.1.0/di/enum.ServiceCardinality.html"><code>ServiceCardinality</code></a>. The set of dependencies for a service are defined by the arity of the arguments required to construct it, which is based on either its constructor arguments or all of its fields.</p>
+<p>Rust does not have a Reflection API so the <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceDescriptorBuilder.html"><code>ServiceDescriptorBuilder</code></a> cannot automatically determine the dependencies your service requires; therefore, validation is an explicit, opt-in capability. If you do not configure any dependencies for a <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceDescriptor.html"><code>ServiceDescriptor</code></a>, then no validation will occur.</p>
+<p>While you can create a <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceDependency.html"><code>ServiceDependency</code></a> in its long-form, there are several shorthand functions available to make it more succinct:</p>
+<div class="table-wrapper"><table><thead><tr><th>Function</th><th>Dependency Type</th></tr></thead><tbody>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/fn.exactly_one.html"><code>exactly_one</code></a></td><td>Exactly one service of a specified type</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/fn.exactly_one_with_key.html"><code>exactly_one_with_key</code></a></td><td>Exactly one service of a specified type and key</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/fn.zero_or_one.html"><code>zero_or_one</code></a></td><td>Zero or one services of a specified type</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/fn.zero_or_one_with_key.html"><code>zero_or_one_with_key</code></a></td><td>Zero or one services of a specified type and key</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/fn.zero_or_more.html"><code>zero_or_more</code></a></td><td>Zero or more services of a specified type</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/fn.zero_or_more_with_key.html"><code>zero_or_more_with_key</code></a></td><td>Zero or more services of a specified type and key</td></tr>
+</tbody></table>
+</div>
+<blockquote>
+<p>Note: These functions are only available if the <strong>builder</strong> feature is activated</p>
+</blockquote>
+<p>Consider the following:</p>
+<pre><code class="language-rust">use di::*;
+
+pub struct Bar;
+
+pub struct Foo {
+    pub bar: Ref&lt;Bar&gt;
+}</code></pre>
+<p>Let's assume that we forgot to register <code>Bar</code>:</p>
+<pre><code class="language-rust">use di::*;
+
+let services = Services::new()
+    .add(transient_as_self::&lt;Foo&gt;().from(|_| Ref::new(Foo)))
+    .build_provider()
+    .unwrap(); // ← this will not panic
+
+// the following panics because Bar is required and it has not be registered
+let foo = provider.get_required::&lt;Foo&gt;();</code></pre>
+<p>While the mistake will be discovered at some point, it could be a long-time coming in a larger, more complex application. To alleviate that situation, we want to fail as early as possible.</p>
+<p>Let's refactor the service registration with some dependencies:</p>
+<pre><code class="language-rust">use di::*;
+
+let services = Services::new()
+    .add(transient_as_self::&lt;Foo&gt;()
+         .depends_on(exactly_one::&lt;Bar&gt;()) // ← indicate a Bar is required
+         .from(|_| Ref::new(Foo)))
+    .build_provider()
+    .unwrap(); // ← now panics because Bar is an unregistered dependency</code></pre>
+<p>Specifying dependencies using their long-form, while a valid configuration, is verbose and tedious. The <code>#[injectable]</code> attribute will automatically build dependencies for each injected call site and is the preferred approach.</p>
+<div style="break-before: page; page-break-before: always;"></div><!--
+This file contains links that can be shared across pages. RustDoc links cannot currently
+be used by mdBook directly. Links are stable on crates.io so we can centralize what is
+required in this file, albeit manually.
+
+REF: https://github.com/rust-lang/mdBook/issues/1356
+REF: https://github.com/rust-lang/cargo/issues/739
+REF: https://github.com/tag1consulting/goose/issues/320
+-->
+<h1 id="service-resolution"><a class="header" href="#service-resolution">Service Resolution</a></h1>
+<p>Once you've registered, validated, and instantiated a <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceProvider.html"><code>ServiceProvider</code></a>, you'll eventually need to get something out of it. This should typically only happen at the root of your application, but it might occur in other scenarios such as creating a new scope. The following functions are provided to resolve services:</p>
+<div class="table-wrapper"><table><thead><tr><th>Function</th><th>Resolution</th></tr></thead><tbody>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceProvider.html#method.get"><code>get</code></a></td><td>A single service, if it's registered</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceProvider.html#method.get_mut"><code>get_mut</code></a></td><td>A single, mutable service, if it's registered</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceProvider.html#method.get_by_key"><code>get_by_key</code></a></td><td>A single service by key, if it's registered</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceProvider.html#method.get_by_key_mut"><code>get_by_key_mut</code></a></td><td>A single, mutable service by key, if it's registered</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceProvider.html#method.get_all"><code>get_all</code></a></td><td>All services of the specified type</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceProvider.html#method.get_all_mut"><code>get_all_mut</code></a></td><td>All mutable services of the specified type</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceProvider.html#method.get_all_by_key"><code>get_all_by_key</code></a></td><td>All services of the specified type and key</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceProvider.html#method.get_all_by_key_mut"><code>get_all_by_key_mut</code></a></td><td>All mutable services of the specified type and key</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceProvider.html#method.get_required"><code>get_required</code></a></td><td>A single service or panics</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceProvider.html#method.get_required_mut"><code>get_required_mut</code></a></td><td>A single, mutable service or panics</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceProvider.html#method.get_required_by_key"><code>get_required_by_key</code></a></td><td>A single service by key or panics</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceProvider.html#method.get_required_by_key_mut"><code>get_required_by_key_mut</code></a></td><td>A single, mutable service by key or panics</td></tr>
+</tbody></table>
+</div>
+<h2 id="examples"><a class="header" href="#examples">Examples</a></h2>
+<p>Consider the following structures:</p>
+<pre><code class="language-rust">use di::*;
+
+trait Thing { }
+
+struct Thing1;
+
+impl Thing for Thing1 { }
+
+struct Thing2;
+
+impl Thing for Thing2 { }
+
+struct Thing3;
+
+impl Thing for Thing3 { }</code></pre>
+<p>Here are some ways that we can register and resolve them:</p>
+<pre><code class="language-rust">use crate::*;
+use di::*;
+
+let provider = ServiceCollection::new()
+    .add(transient_as_self::&lt;Thing1&gt;().from(|_| Ref::new(Thing1)))
+    .add(transient::&lt;dyn Thing, Thing1&gt;().from(|_| Ref::new(Thing1)))
+    .add(transient::&lt;dyn Thing, Thing2&gt;().from(|_| Ref::new(Thing2)))
+    .add(transient_mut::&lt;dyn Thing, Thing3&gt;().from(|_| RefMut::new(Thing3.into())))
+    .build_provider()
+    .unwrap();
+
+// Some(Thing1)
+assert!(provider.get::&lt;Thing1&gt;().is_some());
+
+// None
+assert!(provider.get::&lt;Thing3&gt;().is_none());
+
+// RwLock&lt;dyn Thing&gt; → RwLock&lt;Thing3&gt;
+assert!(provider.get_mut::&lt;dyn Thing&gt;().is_some());
+
+// dyn Thing → Thing1
+// dyn Thing → Thing2
+assert_eq!(provider.get_all::&lt;dyn Thing&gt;().count(), 2);</code></pre>
+<div style="break-before: page; page-break-before: always;"></div><!--
+This file contains links that can be shared across pages. RustDoc links cannot currently
+be used by mdBook directly. Links are stable on crates.io so we can centralize what is
+required in this file, albeit manually.
+
+REF: https://github.com/rust-lang/mdBook/issues/1356
+REF: https://github.com/rust-lang/cargo/issues/739
+REF: https://github.com/tag1consulting/goose/issues/320
+-->
+<h1 id="lazy-initialization"><a class="header" href="#lazy-initialization">Lazy Initialization</a></h1>
+<blockquote>
+<p>These features are only available if the <strong>lazy</strong> feature is activated</p>
+</blockquote>
+<p>There are some scenarios where you know or have high reason to believe that a particular service composition will
+be expensive to create. The requirement to eagerly load every injected service instance in such situations is
+undesirable. There are several methods by which you can differ dependency resolution, including declaring a
+parameter which would inject the <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceProvider.html"><code>ServiceProvider</code></a> itself. Using the <em>Service Locator</em> pattern in this manner
+hides dependencies and is considered to be an <em>anti-pattern</em>. The <strong>lazy</strong> feature provides an out-of-the-box
+facility to address this problem.</p>
+<p>The <a href="https://docs.rs/more-di/3.1.0/di/lazy/index.html"><code>Lazy</code></a> struct is a holder that resolves a service in a lazily evaluated manner. The <a href="https://docs.rs/more-di/3.1.0/di/lazy/index.html"><code>Lazy</code></a> struct itself is owned by the struct it is injected into and the lifetime of the service resolved is unchanged. The key difference is that the injected service dependency is well-known at the call site, but its evaluation is differed.</p>
+<p>Consider the following:</p>
+<pre><code class="language-rust">use di::*;
+
+#[derive(Default)]
+pub struct Expensive {
+    // expensive stuff here
+}
+
+impl Expensive {
+    pub fn do_work(&amp;self) {
+        // use expensive stuff
+    }
+}
+
+pub struct Needy {
+    expensive: Lazy&lt;Ref&lt;Expensive&gt;&gt;
+}
+
+impl Needy {
+    pub fn new(expensive: Lazy&lt;Ref&lt;Expensive&gt;&gt;) -&gt; Self {
+        Self { expensive }
+    }
+
+    pub fn run(&amp;self) {
+        self.expensive.value().do_work()
+    }
+}</code></pre>
+<p>The <code>Needy</code> struct defines a <a href="https://docs.rs/more-di/3.1.0/di/lazy/index.html"><code>Lazy</code></a> that wraps around a service dependency. This allows the service to
+be evaluated on-demand and also keeps the <code>Expensive</code> struct visible as a required collaborator.</p>
+<p>Despite being a generic type, <a href="https://docs.rs/more-di/3.1.0/di/lazy/index.html"><code>Lazy</code></a> can only be created using the utility functions from the <a href="https://docs.rs/more-di/3.1.0/di/lazy/index.html"><code>lazy</code></a>
+module as follows:</p>
+<div class="table-wrapper"><table><thead><tr><th>Function</th><th>Resolution</th></tr></thead><tbody>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/lazy/fn.exactly_one.html"><code>lazy::exactly_one</code></a></td><td>A required service lazily</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/lazy/fn.exactly_one_mut.html"><code>lazy::exactly_one_mut</code></a></td><td>A required, mutable service lazily</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/lazy/fn.exactly_one_with_key.html"><code>lazy::exactly_one_with_key</code></a></td><td>A required service with a key lazily</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/lazy/fn.exactly_one_with_key_mut.html"><code>lazy::exactly_one_with_key_mut</code></a></td><td>A required, mutable service with key lazily</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/lazy/fn.zero_or_one.html"><code>lazy::zero_or_one</code></a></td><td>An optional service lazily</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/lazy/fn.zero_or_one_mut.html"><code>lazy::zero_or_one_mut</code></a></td><td>An optional, mutable service lazily</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/lazy/fn.zero_or_one_by_key.html"><code>lazy::zero_or_one_by_key</code></a></td><td>An optional, service with a key lazily</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/lazy/fn.zero_or_one_by_key_mut.html"><code>lazy::zero_or_one_by_key_mut</code></a></td><td>An optional, mutable service with a key lazily</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/lazy/fn.zero_or_more.html"><code>lazy::zero_or_more</code></a></td><td>One or more services lazily</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/lazy/fn.zero_or_more_mut.html"><code>lazy::zero_or_more_mut</code></a></td><td>One or more mutable services lazily</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/lazy/fn.zero_or_more_by_key.html"><code>lazy::zero_or_more_by_key</code></a></td><td>One or more services with a key lazily</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/lazy/fn.zero_or_more_by_key_mut.html"><code>lazy::zero_or_more_by_key_mut</code></a></td><td>One or more mutable services with a key lazily</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/lazy/fn.missing.html"><code>lazy::missing</code></a></td><td>Always resolves <code>None</code></td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/lazy/fn.missing_with_key.html"><code>lazy::missing_with_key</code></a></td><td>Always resolves <code>None</code></td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/lazy/fn.empty.html"><code>lazy::empty</code></a></td><td>Always resolves <code>Vec::with_capacity(0)</code></td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/lazy/fn.empty_with_key.html"><code>lazy::empty_with_key</code></a></td><td>Always resolves <code>Vec::with_capacity(0)</code></td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/lazy/fn.init.html"><code>lazy::init</code></a></td><td>Initializes from an instance (ex: testing)</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/lazy/fn.init_mut.html"><code>lazy::init_mut</code></a></td><td>Initializes from a mutable instance (ex: testing)</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/lazy/fn.init_by_key.html"><code>lazy::init_by_key</code></a></td><td>Initializes from a keyed instance (ex: testing)</td></tr>
+<tr><td><a href="https://docs.rs/more-di/3.1.0/di/lazy/fn.init_by_key_mut.html"><code>lazy::init_by_key_mut</code></a></td><td>Initializes from a mutable, keyed instance (ex: testing)</td></tr>
+</tbody></table>
+</div>
+<p><a href="https://docs.rs/more-di/3.1.0/di/lazy/index.html"><code>Lazy</code></a> is a <em>special</em> type which cannot be resolved directly from a <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceProvider.html"><code>ServiceProvider</code></a>. You will
+need construct one or more <a href="https://docs.rs/more-di/3.1.0/di/lazy/index.html"><code>Lazy</code></a> registrations in the activation factory method. For example:</p>
+<pre><code class="language-rust">use crate::*;
+use di::*;
+
+fn main() {
+    let provider = ServiceCollection::new()
+        .add(singleton_as_self::&lt;Expensive&gt;()
+             .from(|_| Rc::new(Expensive::default())));
+        .add(singleton_as_self::&lt;Needy&gt;()
+             .depends_on(exactly_one::&lt;Expensive&gt;())
+             .from(|sp| Rc::new(Needy::new(lazy::exactly_one(sp.clone())))))
+        .build_provider()
+        .unwrap();
+    let needy = provider.get_required::&lt;Needy&gt;();
+    needy.run()
+}</code></pre>
+<blockquote>
+<p>Note: <code>singleton_as_self</code> and <code>exactly_one</code> are functions provided by the <strong>builder</strong> feature, while <code>lazy::exactly_one</code> is provided by the <strong>lazy</strong> feature.</p>
+</blockquote>
+<p>When <code>#[injectable]</code> is used, it will generate the appropriate <code>lazy</code> function for the injected call site.</p>
+<div style="break-before: page; page-break-before: always;"></div><!--
+This file contains links that can be shared across pages. RustDoc links cannot currently
+be used by mdBook directly. Links are stable on crates.io so we can centralize what is
+required in this file, albeit manually.
+
+REF: https://github.com/rust-lang/mdBook/issues/1356
+REF: https://github.com/rust-lang/cargo/issues/739
+REF: https://github.com/tag1consulting/goose/issues/320
+-->
+<h1 id="macros"><a class="header" href="#macros">Macros</a></h1>
+<blockquote>
+<p>These features are only available if the <strong>inject</strong> feature is activated</p>
+</blockquote>
+<h2 id="injectable"><a class="header" href="#injectable">Injectable</a></h2>
+<p>The <a href="https://docs.rs/more-di/3.1.0/di/trait.Injectable.html"><code>Injectable</code></a> trait provides the ability for a struct to be injected as a single trait that it implements or as itself.</p>
+<pre><code class="language-rust">pub trait Injectable: Sized {
+    fn inject(lifetime: ServiceLifetime) -&gt; InjectBuilder;
+
+    fn singleton() -&gt; InjectBuilder {
+        Self::inject(ServiceLifetime::Singleton)
+    }
+
+    fn scoped() -&gt; InjectBuilder {
+        Self::inject(ServiceLifetime::Scoped)
+    }
+
+    fn transient() -&gt; InjectBuilder {
+        Self::inject(ServiceLifetime::Transient)
+    }
+}</code></pre>
+<p>Default implementations are provided each of the specific <a href="guide/lifetimes.html">lifetimes</a>, thereby requiring only a single function to be implemented.</p>
+<pre><code class="language-rust">use di::*;
+
+pub struct Bar;
+
+pub struct Foo {
+    bar: Ref&lt;Bar&gt;
+}
+
+impl Injectable for Bar {
+  fn inject(lifetime: ServiceLifetime) -&gt; InjectBuilder {
+    InjectBuilder::new(
+      Activator::new::&lt;Self, Self&gt;(
+        |_| Ref::new(Self),
+        |_| RefMut::new(Self.into()),
+      ),
+      lifetime,
+    )
+  }
+}
+
+impl Injectable for Foo {
+  fn inject(lifetime: ServiceLifetime) -&gt; InjectBuilder {
+    InjectBuilder::new(
+      Activator::new::&lt;Self, Self&gt;(
+        |sp| Ref::new(Self { bar: sp.get_required::&lt;Bar&gt;() }),
+        |sp| RefMut::new(Self { bar: sp.get_required::&lt;Bar&gt;() }.into()),
+      ),
+      lifetime,
+    )
+    .depends_on(
+      ServiceDependency::new(
+        Type::of::&lt;Bar&gt;(),
+        ServiceCardinality::ExactlyOne))
+  }
+}</code></pre>
+<h2 id="injectable-1"><a class="header" href="#injectable-1"><code>#[injectable]</code></a></h2>
+<p>While implementing <a href="https://docs.rs/more-di/3.1.0/di/trait.Injectable.html"><code>Injectable</code></a> <em>might</em> be necessary or desired in a handful of scenarios, it is mostly tedious ceremony. If the injection call site were known, then it would be possible to provide the implementation automatically. This is exactly what the <code>#[injectable]</code> proc macro attribute provides.</p>
+<p>Instead of implementing <a href="https://docs.rs/more-di/3.1.0/di/trait.Injectable.html"><code>Injectable</code></a> explicitly, the entire implementation can be achieved with a simple decorator:</p>
+<pre><code class="language-rust">use di::*;
+
+#[injectable]
+pub struct Bar;
+
+#[injectable]
+pub struct Foo {
+    bar: Ref&lt;Bar&gt;
+}</code></pre>
+<p>The <code>#[injectable]</code> attribute also supports a single, optional parameter value: the name of the injected trait. When no value is specified, it is assumed that the struct will be injected as itself. When a value is specified, a constructed <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceDescriptor.html"><code>ServiceDescriptor</code></a> will map the struct to the specified trait.</p>
+<pre><code class="language-rust">use di::*;
+
+pub trait Foo;
+
+#[injectable(Foo)]  // dyn Foo → FooImpl
+pub struct FooImpl;</code></pre>
+<h3 id="multiple-traits-1"><a class="header" href="#multiple-traits-1">Multiple Traits</a></h3>
+<p>In most scenarios where you want to inject a trait, you will specify a single trait. There are a limited number of edge cases where you might need to specify multiple traits. The most common use case will be implementing a trait for a struct that is thread-safe, but the trait definition does not declare that itself.</p>
+<pre><code class="language-rust">use di::*;
+
+pub trait Foo;
+
+#[injectable(Foo + Send + Sync)]  // dyn Foo + Send + Sync → FooImpl
+pub struct FooImpl;</code></pre>
+<p>Note that the combination of all traits now defines the service. The complete set of traits must be specified in order to resolve the service.</p>
+<pre><code class="language-rust">let provider = ServiceCollection::new()
+    .add(FooImpl::transient())
+    .build_provider()
+    .unwrap();
+
+let foo = provider.get_required::&lt;dyn Foo + Send + Sync&gt;();</code></pre>
+<h3 id="injection-rules"><a class="header" href="#injection-rules">Injection Rules</a></h3>
+<p>The most basic form of injection allows <code>#[injectable]</code> to be applied to any struct or tuple struct, including generics.</p>
+<blockquote>
+<p>A generic type parameter requires a <code>'static</code> lifetime on it bounds due to the <code>Any</code> requirement; however, the actual type used will typically be coerced to a shorter lifetime.</p>
+</blockquote>
+<pre><code class="language-rust">use di::*;
+
+#[injectable]
+pub struct Simple;
+
+#[injectable]
+pub struct Tuple(pub Ref&lt;Simple&gt;);
+
+#[injectable]
+pub struct Generic&lt;T: 'static&gt; {
+    value: Ref&lt;T&gt;,
+}</code></pre>
+<p>If the target struct defines fields that are not meant to be injected, then it is assumed that those types implement <code>Default</code>. If they don't, then an error will occur.</p>
+<pre><code class="language-rust">use di::*;
+
+#[injectable]
+pub struct Complex {
+    simple: Ref&lt;Simple&gt;, // ← ServiceProvider.get_required::&lt;Simple&gt;()
+    counter: usize,      // ← Default::default()
+}</code></pre>
+<p>This behavior might be undesirable, unsupported, or you may just want more control over initialization. To support that capability, <code>#[injectable]</code> can also be applied on a struct <code>impl</code> block. This is because that is the location where the function that will be used to construct the struct is expected to be found. This allows the attribute to inspect the injection call site of the function to build the proper implementation.</p>
+<p>By default, <code>#[injectable]</code> will search for an associated function named <code>new</code>. The function does not need to be <code>pub</code>. This is a simple convention that works for most cases; however, if you want to use a different name, the intended function must be decorated with <code>#[inject]</code>. <code>#[inject]</code> simply indicates which function to use. If <code>new</code> and a decorated function are defined, the decorated function will take precedence. If multiple functions have <code>#[inject]</code> applied, an error will occur.</p>
+<p>The following basic example uses a constructor:</p>
+<pre><code class="language-rust">use di::*;
+
+pub struct Complex2 {
+    simple: Ref&lt;Simple&gt;
+    counter: usize
+}
+
+#[injectable]
+impl Complex2 {
+    // assumed to be the injection constructor by naming convention
+    pub fn new(simple: Ref&lt;Simple&gt;) -&gt; Self {
+        Self {
+            simple,
+            counter: 0,
+        }
+    }
+}</code></pre>
+<p>The following advanced example uses a custom constructor:</p>
+<pre><code class="language-rust">use di::*;
+
+pub trait Input { }
+
+pub trait Translator {
+    fn translate(&amp;self, text: &amp;str, lang: &amp;str) -&gt; String;
+}
+
+pub trait Logger {
+    fn log(&amp;self, message: &amp;str);
+}
+
+
+pub trait Runner {
+    fn run(&amp;self);
+}
+
+pub struct DefaultRunner {
+    input: Ref&lt;dyn Input&gt;,
+    translator: Option&lt;Ref&lt;dyn Input&gt;&gt;,
+    loggers: Vec&lt;Ref&lt;dyn Logger&gt;&gt;,
+}
+
+#[injectable(Runner)]
+impl DefaultRunner {
+    #[inject] // ↓ use 'create' instead of inferring 'new'
+    pub fn create(
+        input: Ref&lt;dyn Input&gt;,
+        translator: Option&lt;Ref&lt;dyn Input&gt;&gt;,
+        loggers: Vec&lt;Ref&lt;dyn Logger&gt;&gt;) -&gt; Self {
+        Self {
+            input,
+            translator,
+            loggers,
+        }
+    }
+}
+
+impl Runner for DefaultRunner {
+    fn run(&amp;self) {
+        // TODO: implementation
+    }
+}</code></pre>
+<p>The <a href="https://docs.rs/more-di/3.1.0/di/trait.Injectable.html"><code>Injectable</code></a> implementation for <code>DefaultRunner</code> expands to:</p>
+<pre><code class="language-rust">impl Injectable for DefaultRunner {
+    fn inject(lifetime: ServiceLifetime) -&gt; InjectBuilder {
+        InjectBuilder::new(
+            Activator::new::&lt;dyn Runner, Self&gt;(
+                |sp| Ref::new(
+                        Self::create(
+                            sp.get_required::&lt;dyn Input&gt;(),
+                            sp.get::&lt;dyn Input&gt;(),
+                            sp.get_all::&lt;dyn Logger&gt;().collect())),
+                |sp| RefMut::new(
+                        Self::create(
+                            sp.get_required::&lt;dyn Input&gt;(),
+                            sp.get::&lt;dyn Input&gt;(),
+                            sp.get_all::&lt;dyn Logger&gt;().collect()).into()),
+            )
+        )
+        .depends_on(
+            ServiceDependency::new(
+                Type::of::&lt;dyn Input&gt;(),
+                ServiceCardinality::ExactlyOne))
+        .depends_on(
+            ServiceDependency::new(
+                Type::of::&lt;dyn Translator&gt;(),
+                ServiceCardinality::ZeroOrOne))
+        .depends_on(
+            ServiceDependency::new(
+                Type::of::&lt;dyn Logger&gt;(),
+                ServiceCardinality::ZeroOrMore))
+    }
+}</code></pre>
+<h2 id="builder-1"><a class="header" href="#builder-1">Builder</a></h2>
+<p><a href="https://docs.rs/more-di/3.1.0/di/struct.InjectBuilder.html"><code>InjectBuilder</code></a> is similar to, but not exactly the same as, <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceDescriptorBuilder.html"><code>ServiceDescriptorBuilder</code></a>. <a href="https://docs.rs/more-di/3.1.0/di/struct.InjectBuilder.html"><code>InjectBuilder</code></a> is part of the <strong>inject</strong> feature, while <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceDescriptorBuilder.html"><code>ServiceDescriptorBuilder</code></a> is part of the <strong>builder</strong> feature. The key implementation differences are a non-generic type, mutable construction (<a href="https://docs.rs/more-di/3.1.0/di/struct.InjectBuilder.html#method.as_mut"><code>as_mut</code></a>), and deferred key configuration (<a href="https://docs.rs/more-di/3.1.0/di/struct.InjectBuilder.html#method.with_key"><code>with_key&lt;TKey&gt;</code></a>). This enables multiple registration scenarios with a single implementation. </p>
+<pre><code class="language-rust">let provider = ServiceCollection::new()
+    .add(Simple::transient())          // ← Ref&lt;Simple&gt;
+    .add(Simple::transient().as_mut()) // ← RefMut&lt;Simple&gt;
+    .add(Simple::transient()
+         .with_key::&lt;key::Alt&gt;())      // ← KeyedRef&lt;key::Alt, Simple&gt;
+    .add(Simple::transient()
+         .with_key::&lt;key::Alt&gt;()
+         .as_mut())                    // ← KeyedRefMut&lt;key::Alt, Simple&gt;
+    .build_provider()
+    .unwrap();</code></pre>
+<div style="break-before: page; page-break-before: always;"></div><!--
+This file contains links that can be shared across pages. RustDoc links cannot currently
+be used by mdBook directly. Links are stable on crates.io so we can centralize what is
+required in this file, albeit manually.
+
+REF: https://github.com/rust-lang/mdBook/issues/1356
+REF: https://github.com/rust-lang/cargo/issues/739
+REF: https://github.com/tag1consulting/goose/issues/320
+-->
+<h1 id="extensibility"><a class="header" href="#extensibility">Extensibility</a></h1>
+<p>Using dependency injection in your own application is certainly useful; however, the strength of the <code>more-di</code> crate really starts to shine when you enable DI composition across different crates. It effectively enables a DI ecosystem that crate library authors can elect to make required or opt into as a conditional feature.</p>
+<h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
+<p>There are few requirements to make it possible to interleave DI into a library. This will typically be configured in <code>Cargo.toml</code>.</p>
+<pre><code class="language-toml">[package]
+name = &quot;logger&quot;
+version = &quot;1.0.0&quot;
+description = &quot;An example logger&quot;
+
+[lib]
+name = &quot;logger&quot;
+
+[features]
+di = [&quot;more-di&quot;]
+async = [&quot;more-di/async&quot;] # our 'async' feature actives the 'more-di/async' feature
+
+[dependencies.more-di]
+version = &quot;3.0&quot;
+default-features = false
+features = [&quot;inject&quot;]
+optional = true           # only bring di when requested
+</code></pre>
+<p>The next part is to create a trait that can apply the extensions. It is not a hard requirement, but this typically takes the form of:</p>
+<ul>
+<li><code>pub trait &lt;Feature&gt;ServiceExtensions</code></li>
+<li>Defined in the <code>crate::ext</code> module</li>
+</ul>
+<p>The library module would then configure the extensions as optional.</p>
+<h4 id="librs"><a class="header" href="#librs">lib.rs</a></h4>
+<pre><code class="language-rust">#[cfg(feature = &quot;di&quot;)]
+mod di_ext;
+
+#[cfg(feature = &quot;di&quot;)]
+pub mod ext {
+    use super::*;    
+    pub use di_ext::*;
+}</code></pre>
+<p>The extensions will then look something like the following and apply to <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceCollection.html"><code>ServiceCollection</code></a>.</p>
+<h4 id="di_extrs"><a class="header" href="#di_extrs">di_ext.rs</a></h4>
+<pre><code class="language-rust">use di::*;
+
+// define extensions that can be applied to ServiceCollection
+// note: remember to flow a mutable reference to make it easy
+// to compose with other extensions
+pub trait CustomServiceExtensions {
+    fn add_custom_services(&amp;mut self) -&gt; &amp;mut Self;
+}
+
+impl CustomServiceExtensions for ServiceCollection {
+    fn add_custom_services(&amp;mut self) -&gt; &amp;mut Self {
+        // add custom services
+        self.try_add(transient::&lt;dyn Service, DefaultImpl&gt;())
+    }
+}</code></pre>
+<h2 id="example-1"><a class="header" href="#example-1">Example</a></h2>
+<p>Let's consider several composable library crates for logging.</p>
+<h3 id="logger-crate"><a class="header" href="#logger-crate">Logger Crate</a></h3>
+<p>This crate would include the core abstractions common to all extenders.</p>
+<pre><code class="language-rust">// map to DI type when enabled
+#[cfg(feature = &quot;di&quot;)]
+pub type Ref&lt;T&gt; = di::Ref&lt;T&gt;;
+
+// default to Rc&lt;T&gt;
+#[cfg(not(feature = &quot;di&quot;))]
+pub type Ref&lt;T&gt; = std::rc::Rc&lt;T&gt;;
+
+pub trait Logger {
+    fn log(&amp;self, text: &amp;str);
+}
+
+pub trait LoggerSource {
+    fn log(&amp;self, text: &amp;str);
+}
+
+// #[injectable(Logger)] only when the &quot;di&quot; feature is enabled
+#[cfg_attr(feature = &quot;di&quot;, di::injectable(Logger))]
+pub struct DefaultLogger {
+    loggers: Vec&lt;Ref&lt;dyn LoggerSource&gt;&gt;,
+}
+
+impl DefaultLogger {
+    pub fn new(loggers: impl Iterator&lt;Item = Ref&lt;dyn LoggerSource&gt;&gt;) -&gt; Self {
+        Self {
+            loggers: loggers.collect(),
+        }
+    }
+}
+
+impl Logger for DefaultLogger {
+    fn log(&amp;self, text: &amp;str) {
+        for logger in self.loggers {
+            logger.log(text)
+        }
+    }
+}
+
+#[cfg(feature = &quot;di&quot;)]
+pub mod ext {
+    use di::*;
+
+    pub trait LoggerServiceExtensions {
+        fn add_logging(&amp;mut self) -&gt; &amp;mut Self;
+    }
+
+    impl LoggerServiceExtensions for ServiceCollection {
+        fn add_logging(&amp;mut self) -&gt; &amp;mut Self {
+            self.try_add(DefaultLogger::singleton())
+        }
+    }
+}</code></pre>
+<h2 id="console-logger-crate"><a class="header" href="#console-logger-crate">Console Logger Crate</a></h2>
+<p>This crate would provide a logger which writes to the console.</p>
+<pre><code class="language-rust">#[cfg_attr(feature = &quot;di&quot;, di::injectable(LoggerSource))]
+pub struct ConsoleLogger;
+
+impl LoggerSource for ConsoleLogger {
+    fn log(&amp;self, text: &amp;str) {
+        println!(&quot;{}&quot;, text)
+    }
+}
+
+#[cfg(feature = &quot;di&quot;)]
+pub mod ext {
+    use di::*;
+
+    pub trait ConsoleLoggerServiceExtensions {
+        fn add_console_logging(&amp;mut self) -&gt; &amp;mut Self;
+    }
+
+    impl ConsoleLoggerServiceExtensions for ServiceCollection {
+        fn add_console_logging(&amp;mut self) -&gt; &amp;mut Self {
+            self.try_add(ConsoleLogger::transient())
+        }
+    }
+}</code></pre>
+<h2 id="file-logger-crate"><a class="header" href="#file-logger-crate">File Logger Crate</a></h2>
+<p>This crate would provide a logger which writes to a file.</p>
+<pre><code class="language-rust">use std::fs::File;
+
+pub struct FileLogger {
+    file: File,
+}
+
+impl FileLogger {
+    pub fn new&lt;S: AsRef&lt;str&gt;&gt;(filename: S) -&gt; Self {
+        Self {
+            file: File::create(Path::new(s.as_ref())).unwrap(),
+        }
+    }
+}
+
+impl LoggerSource for FileLogger {
+    fn log(&amp;self, text: &amp;str) {
+        self.file.write_all(text.as_bytes()).ok()
+    }
+}
+
+#[cfg(feature = &quot;di&quot;)]
+pub mod ext {
+    use di::*;
+
+    pub trait FileLoggerServiceExtensions {
+        fn add_file_logging&lt;S: AsRef&lt;str&gt;&gt;(&amp;mut self, filename: S) -&gt; &amp;mut Self;
+    }
+
+    impl FileLoggerServiceExtensions for ServiceCollection {
+        fn add_file_logging&lt;S: AsRef&lt;str&gt;&gt;(&amp;mut self, filename: S) -&gt; &amp;mut Self {
+            let path = filename.as_ref().clone();
+            self.try_add(transient::&lt;dyn LoggerSource, FileLogger&gt;()
+                         .from(move |_| Ref::new(FileLogger::new(path))))
+        }
+    }
+}</code></pre>
+<h2 id="putting-it-all-together"><a class="header" href="#putting-it-all-together">Putting It All Together</a></h2>
+<p>We can now put it all together in an application. Our configuration will look something like:</p>
+<pre><code class="language-toml">[package]
+name = &quot;myapp&quot;
+version = &quot;1.0.0&quot;
+description = &quot;An example application&quot;
+
+[[bin]]
+name = &quot;myapp&quot;
+path = &quot;main.rs&quot;
+
+[dependencies]
+more-di = &quot;3.0&quot;
+logger = { &quot;1.0.0&quot;, features = [&quot;di&quot;] }
+console-logger = { &quot;1.0.0&quot;, features = [&quot;di&quot;] }
+file-logger = { &quot;1.0.0&quot;, features = [&quot;di&quot;] }
+</code></pre>
+<h4 id="mainrs"><a class="header" href="#mainrs">main.rs</a></h4>
+<pre><code class="language-rust">use di::*;
+use logger::{*, ext::*};
+use console_logger::{*, ext::*};
+use file_logger::{*, ext::*};
+
+fn main() {
+    let provider = ServiceCollection::new()
+        .add_logging()
+        .add_console_logging()
+        .add_file_logging(&quot;example.log&quot;)
+        .build_provider()
+        .unwrap();
+
+    let logger = provider.get_required::&lt;dyn Logger&gt;();
+
+    logger.log(&quot;Hello world!&quot;);
+}</code></pre>
+<h2 id="dependency-injected-enabled-crates"><a class="header" href="#dependency-injected-enabled-crates">Dependency Injected Enabled Crates</a></h2>
+<p>The following are crates which provide DI extensions:</p>
+<ul>
+<li><a href="https://crates.io/crates/more-options">more-options</a></li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><!--
+This file contains links that can be shared across pages. RustDoc links cannot currently
+be used by mdBook directly. Links are stable on crates.io so we can centralize what is
+required in this file, albeit manually.
+
+REF: https://github.com/rust-lang/mdBook/issues/1356
+REF: https://github.com/rust-lang/cargo/issues/739
+REF: https://github.com/tag1consulting/goose/issues/320
+-->
+<h1 id="troubleshooting"><a class="header" href="#troubleshooting">Troubleshooting</a></h1>
+<p>Despite numerous forms of automatic code generation and validation, it's still possible to encounter misconfiguration where it's not clear what has gone wrong. While a validation error will tell you <em>what</em> is wrong, it doesn't do a lot to tell you <em>where</em> it is wrong. In these scenarios, a picture is worth a thousand words.</p>
+<p>In order to make it easy to understand which services have been configured and for which types, <a href="https://docs.rs/more-di/3.1.0/di/struct.ServiceCollection.html"><code>ServiceCollection</code></a> implements the <code>std::fmt::Debug</code> trait and, when the <strong>fmt</strong> feature is enabled, it also implements the <code>std::fmt::Display</code> trait with terminal colorization. You might take advantage of this capability for debug output, logging, or one-off inspection.</p>
+<pre><code class="language-rust">use di::*;
+
+#[injectable]
+struct Bar;
+
+impl Bar {
+    fn do_work(&amp;self) {
+       println!(&quot;Hello world!&quot;); 
+    }
+}
+
+trait Foo {
+    fn do_work(&amp;self);
+}
+
+#[injectable(Foo)]
+struct FooImpl {
+    bar: Ref&lt;Bar&gt;,
+}
+
+impl Foo for FooImpl {
+    fn do_work(&amp;self) {
+        self.bar.do_work()
+    }
+}
+
+fn main() {
+    let mut services = ServiceCollection::new();
+
+    services.add(Bar::transient())
+            .add(FooImpl::transient());
+
+    // we can print the service collection at any time, including here:
+    // println!(&quot;{}\n&quot;, services);
+
+    match services.build_provider() {
+        Ok(provider) =&gt; {
+            let foo = provider.get_required::&lt;dyn Foo&gt;();
+            foo.do_work();
+        },
+        Err(validation_errors) =&gt; {
+            // display the validation errors and entire service collection
+            println!(&quot;{}\n{}&quot;, validation_errors, services);
+        }
+    }
+}</code></pre>
+<p>A distinct difference between validation and display is that validation will only show errors, whereas display can show warnings and relationships.</p>
+<h2 id="display-output"><a class="header" href="#display-output">Display Output</a></h2>
+<h3 id="symbols"><a class="header" href="#symbols">Symbols</a></h3>
+<ul>
+<li><code>?</code>  = zero or one</li>
+<li><code>*</code>  = zero or more</li>
+<li><code>⚿</code> = service key</li>
+<li><code>▲</code>  = warning</li>
+<li><code>‼</code>  = error</li>
+<li><code>♺</code> = circular reference</li>
+<li><code>⧗</code>  = lifetime</li>
+</ul>
+<h3 id="warnings"><a class="header" href="#warnings">Warnings</a></h3>
+<ul>
+<li>An optional service is missing</li>
+<li>A list has no registered services</li>
+</ul>
+<h3 id="errors"><a class="header" href="#errors">Errors</a></h3>
+<blockquote>
+<p>These are the same errors detected and raised by validation</p>
+</blockquote>
+<ul>
+<li>A required service is missing</li>
+<li>A service has a circular reference</li>
+<li>A service with the lifetime <code>ServiceLifetime::Singleton</code> depends on a service with the lifetime <code>ServiceLifetime::Scoped</code></li>
+</ul>
+<h2 id="example-output"><a class="header" href="#example-output">Example Output</a></h2>
+<p>The following example demonstrates outputting an entire service hierarchy, including warnings and errors.</p>
+<blockquote>
+<p>Colorization is supported when the <strong>fmt</strong> feature is activated</p>
+</blockquote>
+<p><img src="guide/../img/display-fmt.png" alt="Display" /></p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="ace.js"></script>
+        <script src="editor.js"></script>
+        <script src="mode-rust.js"></script>
+        <script src="theme-dawn.js"></script>
+        <script src="theme-tomorrow_night.js"></script>
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+        <script>
+        window.addEventListener('load', function() {
+            window.setTimeout(window.print, 100);
+        });
+        </script>
+
+    </div>
+    </body>
+</html>

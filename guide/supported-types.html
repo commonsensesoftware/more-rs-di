@@ -1,0 +1,317 @@
+<!DOCTYPE HTML>
+<html lang="en" class="ayu" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Supported Types - More DI Documentation</title>
+
+
+        <!-- Custom HTML head -->
+        
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="../highlight.css">
+        <link rel="stylesheet" href="../tomorrow-night.css">
+        <link rel="stylesheet" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../theme/custom.css">
+
+    </head>
+    <body class="sidebar-visible no-js">
+    <div id="body-container">
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "../";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "ayu";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('ayu')
+            html.classList.add(theme);
+            var body = document.querySelector('body');
+            body.classList.remove('no-js')
+            body.classList.add('js');
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var body = document.querySelector('body');
+            var sidebar = null;
+            var sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            sidebar_toggle.checked = sidebar === 'visible';
+            body.classList.remove('sidebar-visible');
+            body.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="../index.html">Introduction</a></li><li class="chapter-item expanded affix "><li class="part-title">User Guide</li><li class="chapter-item expanded "><a href="../getting-started.html"><strong aria-hidden="true">1.</strong> Getting Started</a></li><li class="chapter-item expanded affix "><li class="part-title">Reference Guide</li><li class="chapter-item expanded "><a href="../guide/lifetimes.html"><strong aria-hidden="true">2.</strong> Service Lifetimes</a></li><li class="chapter-item expanded "><a href="../guide/supported-types.html" class="active"><strong aria-hidden="true">3.</strong> Supported Types</a></li><li class="chapter-item expanded "><a href="../guide/registration.html"><strong aria-hidden="true">4.</strong> Service Registration</a></li><li class="chapter-item expanded "><a href="../guide/validation.html"><strong aria-hidden="true">5.</strong> Registration Validation</a></li><li class="chapter-item expanded "><a href="../guide/resolution.html"><strong aria-hidden="true">6.</strong> Service Resolution</a></li><li class="chapter-item expanded "><a href="../guide/lazy.html"><strong aria-hidden="true">7.</strong> Lazy Initialization</a></li><li class="chapter-item expanded "><a href="../guide/macros.html"><strong aria-hidden="true">8.</strong> Macros</a></li><li class="chapter-item expanded "><a href="../guide/extensibility.html"><strong aria-hidden="true">9.</strong> Extensibility</a></li><li class="chapter-item expanded "><a href="../guide/troubleshooting.html"><strong aria-hidden="true">10.</strong> Troubleshooting</a></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <!-- Track and set sidebar scroll position -->
+        <script>
+            var sidebarScrollbox = document.querySelector('#sidebar .sidebar-scrollbox');
+            sidebarScrollbox.addEventListener('click', function(e) {
+                if (e.target.tagName === 'A') {
+                    sessionStorage.setItem('sidebar-scroll', sidebarScrollbox.scrollTop);
+                }
+            }, { passive: true });
+            var sidebarScrollTop = sessionStorage.getItem('sidebar-scroll');
+            sessionStorage.removeItem('sidebar-scroll');
+            if (sidebarScrollTop) {
+                // preserve sidebar scroll position when navigating via links within sidebar
+                sidebarScrollbox.scrollTop = sidebarScrollTop;
+            } else {
+                // scroll sidebar to current active section when navigating via "next/previous chapter" buttons
+                var activeSection = document.querySelector('#sidebar .active');
+                if (activeSection) {
+                    activeSection.scrollIntoView({ block: 'center' });
+                }
+            }
+        </script>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">More DI Documentation</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/commonsensesoftware/more-rs-di/tree/main/guide" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+                        <a href="https://github.com/commonsensesoftware/more-rs-di/edit/main/guide/src/guide/supported-types.md" title="Suggest an edit" aria-label="Suggest an edit">
+                            <i id="git-edit-button" class="fa fa-edit"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <!--
+This file contains links that can be shared across pages. RustDoc links cannot currently
+be used by mdBook directly. Links are stable on crates.io so we can centralize what is
+required in this file, albeit manually.
+
+REF: https://github.com/rust-lang/mdBook/issues/1356
+REF: https://github.com/rust-lang/cargo/issues/739
+REF: https://github.com/tag1consulting/goose/issues/320
+-->
+<h1 id="supported-types"><a class="header" href="#supported-types">Supported Types</a></h1>
+<p>While you are able to use any <code>trait</code> or <code>struct</code> you want for service registration, there are a few limitations as to how they can be resolved in order to satisfy the necessary service <a href="lifetimes.html">lifetime</a> requirements.</p>
+<p>There are a few basic forms in which you can request a service:</p>
+<ol>
+<li><code>Rc</code> - a required service</li>
+<li><code>Rc&lt;RefCell&gt;</code> - a required, mutable service</li>
+<li><code>Option&lt;Rc&gt;</code> - an optional service (e.g. unregistered)</li>
+<li><code>Option&lt;Rc&lt;RefCell&gt;&gt;</code> - an optional, mutable service (e.g. unregistered)</li>
+<li><code>Iterator&lt;Item = Rc&gt;</code> - a sequence of services</li>
+<li><code>Iterator&lt;Item = Rc&lt;RefCell&gt;&gt;</code> - a sequence of mutable services</li>
+<li><code>Lazy</code> - a <a href="lazy.html">lazy</a>-initialized service</li>
+<li><code>KeyedRef&lt;K,T&gt;</code> - a required, keyed service</li>
+<li><code>Option&lt;KeyedRef&lt;K,T&gt;&gt;</code> - an optional, keyed service</li>
+<li><code>Iterator&lt;Item = KeyedRef&lt;K,T&gt;&gt;</code> - a sequence of keyed services</li>
+<li><code>ServiceProvider</code> - the service provider itself</li>
+<li><code>ScopedServiceProvider</code> - a new, scoped service provider from the resolving instance</li>
+</ol>
+<p>When the <strong>async</strong> feature is enabled, you <strong>must</strong> use <code>Arc</code> instead of <code>Rc</code>. To facilitate switching between synchronous and asynchronous contexts as well as making the syntax slightly more succinct, the following type aliases are provided:</p>
+<ul>
+<li><code>Ref</code> = <code>Rc</code> or <code>Arc</code></li>
+<li><code>RefMut</code> = <code>Rc&lt;RefCell&gt;</code> or <code>Arc&lt;RwLock&gt;</code></li>
+<li><code>KeyedRefMut&lt;K,T&gt;</code> = <code>KeyedRef&lt;K,RefCell&gt;</code> or <code>KeyedRef&lt;K,RwLock&gt;</code></li>
+</ul>
+<h2 id="macro-support"><a class="header" href="#macro-support">Macro Support</a></h2>
+<p><code>#[injectable]</code> understands all of the forms listed above and supports mixed forms as well; for example, <code>Ref&lt;RefCell&gt;</code> is equivalent to <code>RefMut</code>. Since the results of an iterator must be owned, <code>#[injectable]</code> also supports using <code>Vec</code> at any injected call site that would otherwise use <code>Iterator</code>. The combinations <code>Option&lt;Vec&gt;</code> and <code>Vec&lt;Option&gt;</code>, however, are invalid.</p>
+<p>Injecting <code>Iterator</code> is only supported when using an injection constructor. This is useful when you may not want to own the injected sequence of services or you want to use a collection other than <code>Vec</code>, such as <code>HashMap</code>.</p>
+<p>For more information see <a href="macros.html">macros</a>.</p>
+<h2 id="custom-type-aliases"><a class="header" href="#custom-type-aliases">Custom Type Aliases</a></h2>
+<blockquote>
+<p>These features are only available if the <strong>alias</strong> feature is activated</p>
+</blockquote>
+<p>User-defined type aliases are usually not a problem for a library. When you use the <code>#[injectable]</code> attribute macro, however, it becomes important because the macro needs to understand the call site that it inspects so that it can generate the appropriate code. To overcome this limitation, you can define a custom mapping in the crate dependency configuration using the <code>aliases</code> table with the following keys:</p>
+<div class="table-wrapper"><table><thead><tr><th>Key</th><th>Default Alias</th></tr></thead><tbody>
+<tr><td><code>ref</code></td><td><code>Ref</code></td></tr>
+<tr><td><code>ref-mut</code></td><td><code>RefMut</code></td></tr>
+<tr><td><code>keyed-ref</code></td><td><code>KeyedRef</code></td></tr>
+<tr><td><code>keyed-ref-mut</code></td><td><code>KeyedRefMut</code></td></tr>
+</tbody></table>
+</div>
+<p>For example, if you prefer the prefix <code>Svc</code>, you can remap them all as follows:</p>
+<pre><code class="language-toml">[dependencies.more-di.aliases]
+ref = &quot;Svc&quot;
+ref-mut = &quot;SvcMut&quot;
+keyed-ref = &quot;KeyedSvc&quot;
+keyed-ref-mut = &quot;KeyedSvcMut&quot;
+</code></pre>
+<p>You are still required define the aliases in your library or application:</p>
+<pre><code class="language-rust">type Svc&lt;T&gt; = Ref&lt;T&gt;;
+type SvcMut&lt;T&gt; = RefMut&lt;T&gt;;
+type KeyedSvc&lt;K,T&gt; = KeyedRef&lt;K,T&gt;;
+type KeyedSvcMut&lt;K,T&gt; = KeyedRefMut&lt;K,T&gt;;</code></pre>
+<p>The only constraints are that the aliases you define must have the same number of generic type arguments. You are not required to use the built-in aliases.
+If you prefer to directly alias the underlying type, that is also allowed:</p>
+<pre><code class="language-rust">type Svc&lt;T&gt; = std::rc::Rc&lt;T&gt;;</code></pre>
+<p>You are not required to alias every type. If all of your services are read-only and don't use keys, then the configuration can be simplified:</p>
+<pre><code class="language-toml">[dependencies]
+more-di = { version = &quot;2.0&quot;, features = [&quot;alias&quot;], aliases { ref = &quot;Sr&quot; } }
+</code></pre>
+<p>The type aliasing feature comes from the <code>more-di-macros</code> crate; however, the <code>more-di</code> crate is the dependency that most consumers will reference directly.
+You can apply the <code>aliases</code> table to either the <code>more-di</code> or <code>more-di-macros</code> dependency configuration. If you specify both, <code>more-di</code> takes precedence.</p>
+<h3 id="backward-compatibility"><a class="header" href="#backward-compatibility">Backward Compatibility</a></h3>
+<p>In previous library versions, the primary type alias was <code>ServiceRef</code>. This added a lot of unnecessary verbosity that becomes prolific in your code. <code>Ref</code> is considerably
+more succinct and even the qualified form <code>di::Ref</code> is shorter, yet unambiguous. To facilitate a smooth upgrade to newer versions, the <code>ServiceRef</code> type alias is
+still automatically recognized without enabling the <strong>alias</strong> feature nor explicitly configuring the mapping with <code>key = &quot;ServiceRef&quot;</code>. The only requirement is that you
+must define the alias in your library or application.</p>
+<pre><code class="language-rust">type ServiceRef&lt;T&gt; = Ref&lt;T&gt;;</code></pre>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../guide/lifetimes.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="../guide/registration.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../guide/lifetimes.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="../guide/registration.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+        <script>
+            window.playground_line_numbers = true;
+        </script>
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+        <script src="../ace.js"></script>
+        <script src="../editor.js"></script>
+        <script src="../mode-rust.js"></script>
+        <script src="../theme-dawn.js"></script>
+        <script src="../theme-tomorrow_night.js"></script>
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+    </div>
+    </body>
+</html>
