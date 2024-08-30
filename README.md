@@ -1,4 +1,4 @@
-# More Dependency Injection &emsp; ![CI][ci-badge] [![Crates.io][crates-badge]][crates-url] [![MIT licensed][mit-badge]][mit-url] 
+                            # More Dependency Injection &emsp; ![CI][ci-badge] [![Crates.io][crates-badge]][crates-url] [![MIT licensed][mit-badge]][mit-url] 
 
 [crates-badge]: https://img.shields.io/crates/v/more-di.svg
 [crates-url]: https://crates.io/crates/more-di
@@ -49,7 +49,7 @@ trait Phrase {
 }
 
 #[injectable(Phrase)]
-struct EnglishPhase;
+struct EnglishPhrase;
 
 impl Phrase for EnglishPhrase {
     fn salutation(&self) -> &str {
@@ -59,7 +59,7 @@ impl Phrase for EnglishPhrase {
 
 #[injectable]
 struct Person {
-    phase: Rc<dyn Phrase>,
+    phrase: Rc<dyn Phrase>,
 }
 
 impl Person {
