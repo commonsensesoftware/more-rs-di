@@ -1,4 +1,4 @@
-use crate::{Activator, ServiceDependency, Type, ServiceLifetime, ServiceDescriptor};
+use crate::{Activator, ServiceDependency, ServiceDescriptor, ServiceLifetime, Type};
 use spin::Once;
 
 /// Represents the builder for an injected type.

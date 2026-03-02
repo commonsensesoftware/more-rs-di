@@ -1,6 +1,4 @@
-use crate::{
-    ServiceDependency, ServiceDescriptor, ServiceLifetime, ServiceProvider, Ref, Type,
-};
+use crate::{Ref, ServiceDependency, ServiceDescriptor, ServiceLifetime, ServiceProvider, Type};
 use spin::Once;
 use std::any::Any;
 use std::marker::PhantomData;

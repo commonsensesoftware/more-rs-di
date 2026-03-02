@@ -4,8 +4,8 @@
 
 #![allow(dead_code)]
 
-use di::{injectable, lazy::Lazy, Ref, RefMut};
 use cfg_if::cfg_if;
+use di::{injectable, lazy::Lazy, Ref, RefMut};
 
 cfg_if! {
     if #[cfg(feature = "async")] {
@@ -43,7 +43,6 @@ cfg_if! {
     }
 }
 
-
 pub struct MutStructImpl {
     dep: RefMut<MutDep>,
 }
@@ -71,7 +70,7 @@ cfg_if! {
         pub struct MutStructImplRef {
             dep: Ref<RefCell<MutDep>>,
         }
-        
+
         #[injectable]
         impl MutStructImplRef {
             fn new(dep: Ref<RefCell<MutDep>>) -> Self {
@@ -93,9 +92,7 @@ pub struct MutStructIter {
 #[injectable]
 impl MutStructIter {
     pub fn new(deps: impl Iterator<Item = RefMut<MutDep>>) -> Self {
-        Self {
-            vec: deps.collect(),
-        }
+        Self { vec: deps.collect() }
     }
 }
 
@@ -104,7 +101,7 @@ cfg_if! {
         pub struct MutStructIterRef {
             pub vec: Vec<Ref<RwLock<MutDep>>>,
         }
-        
+
         #[injectable]
         impl MutStructIterRef {
             pub fn new(deps: impl Iterator<Item = Ref<RwLock<MutDep>>>) -> Self {
@@ -117,7 +114,7 @@ cfg_if! {
         pub struct MutStructIterRef {
             pub vec: Vec<Ref<RefCell<MutDep>>>,
         }
-        
+
         #[injectable]
         impl MutStructIterRef {
             pub fn new(deps: impl Iterator<Item = Ref<RefCell<MutDep>>>) -> Self {
@@ -128,7 +125,6 @@ cfg_if! {
         }
     }
 }
-
 
 #[injectable]
 pub struct MutStructLazy {

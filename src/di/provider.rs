@@ -36,13 +36,7 @@ impl ServiceProvider {
 
         if let Some(descriptors) = self.services.get(&key) {
             if let Some(descriptor) = descriptors.last() {
-                return Some(
-                    descriptor
-                        .get(self)
-                        .downcast_ref::<Ref<T>>()
-                        .unwrap()
-                        .clone(),
-                );
+                return Some(descriptor.get(self).downcast_ref::<Ref<T>>().unwrap().clone());
             }
         }
 
@@ -61,11 +55,7 @@ impl ServiceProvider {
         if let Some(descriptors) = self.services.get(&key) {
             if let Some(descriptor) = descriptors.last() {
                 return Some(KeyedRef::new(
-                    descriptor
-                        .get(self)
-                        .downcast_ref::<Ref<TSvc>>()
-                        .unwrap()
-                        .clone(),
+                    descriptor.get(self).downcast_ref::<Ref<TSvc>>().unwrap().clone(),
                 ));
             }
         }
@@ -95,9 +85,7 @@ impl ServiceProvider {
     }
 
     /// Gets all of the services of the specified key and type.
-    pub fn get_all_by_key<'a, TKey: 'a, TSvc>(
-        &'a self,
-    ) -> impl Iterator<Item = KeyedRef<TKey, TSvc>> + 'a
+    pub fn get_all_by_key<'a, TKey: 'a, TSvc>(&'a self) -> impl Iterator<Item = KeyedRef<TKey, TSvc>> + 'a
     where
         TSvc: Any + ?Sized,
     {
@@ -111,9 +99,7 @@ impl ServiceProvider {
     }
 
     /// Gets all of the mutable services of the specified key and type.
-    pub fn get_all_by_key_mut<'a, TKey: 'a, TSvc>(
-        &'a self,
-    ) -> impl Iterator<Item = KeyedRefMut<TKey, TSvc>> + 'a
+    pub fn get_all_by_key_mut<'a, TKey: 'a, TSvc>(&'a self) -> impl Iterator<Item = KeyedRefMut<TKey, TSvc>> + 'a
     where
         TSvc: Any + ?Sized,
     {
@@ -129,10 +115,7 @@ impl ServiceProvider {
         if let Some(service) = self.get::<T>() {
             service
         } else {
-            panic!(
-                "No service for type '{}' has been registered.",
-                type_name::<T>()
-            );
+            panic!("No service for type '{}' has been registered.", type_name::<T>());
         }
     }
 
@@ -255,13 +238,7 @@ impl<'a, T: Any + ?Sized> Iterator for ServiceIterator<'a, T> {
     type Item = Ref<T>;
     fn next(&mut self) -> Option<Self::Item> {
         if let Some(descriptor) = self.descriptors.next() {
-            Some(
-                descriptor
-                    .get(self.provider)
-                    .downcast_ref::<Ref<T>>()
-                    .unwrap()
-                    .clone(),
-            )
+            Some(descriptor.get(self.provider).downcast_ref::<Ref<T>>().unwrap().clone())
         } else {
             None
         }
@@ -348,10 +325,7 @@ mod tests {
     fn get_should_return_registered_service() {
         // arrange
         let services = ServiceCollection::new()
-            .add(
-                singleton::<dyn TestService, TestServiceImpl>()
-                    .from(|_| Ref::new(TestServiceImpl::default())),
-            )
+            .add(singleton::<dyn TestService, TestServiceImpl>().from(|_| Ref::new(TestServiceImpl::default())))
             .build_provider()
             .unwrap();
 
@@ -366,10 +340,7 @@ mod tests {
     fn get_by_key_should_return_registered_service() {
         // arrange
         let services = ServiceCollection::new()
-            .add(
-                singleton_with_key::<key::Thingy, dyn Thing, Thing1>()
-                    .from(|_| Ref::new(Thing1::default())),
-            )
+            .add(singleton_with_key::<key::Thingy, dyn Thing, Thing1>().from(|_| Ref::new(Thing1::default())))
             .add(singleton::<dyn Thing, Thing1>().from(|_| Ref::new(Thing1::default())))
             .build_provider()
             .unwrap();
@@ -385,10 +356,7 @@ mod tests {
     fn get_required_should_return_registered_service() {
         // arrange
         let services = ServiceCollection::new()
-            .add(
-                singleton::<dyn TestService, TestServiceImpl>()
-                    .from(|_| Ref::new(TestServiceImpl::default())),
-            )
+            .add(singleton::<dyn TestService, TestServiceImpl>().from(|_| Ref::new(TestServiceImpl::default())))
             .build_provider()
             .unwrap();
 
@@ -403,10 +371,7 @@ mod tests {
     fn get_required_by_key_should_return_registered_service() {
         // arrange
         let services = ServiceCollection::new()
-            .add(
-                singleton_with_key::<key::Thingy, dyn Thing, Thing3>()
-                    .from(|_| Ref::new(Thing3::default())),
-            )
+            .add(singleton_with_key::<key::Thingy, dyn Thing, Thing3>().from(|_| Ref::new(Thing3::default())))
             .add(singleton::<dyn Thing, Thing1>().from(|_| Ref::new(Thing1::default())))
             .build_provider()
             .unwrap();
@@ -419,9 +384,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(
-        expected = "No service for type 'dyn di::test::TestService' has been registered."
-    )]
+    #[should_panic(expected = "No service for type 'dyn di::test::TestService' has been registered.")]
     fn get_required_should_panic_when_service_is_unregistered() {
         // arrange
         let services = ServiceCollection::new().build_provider().unwrap();
@@ -457,11 +420,8 @@ mod tests {
                 TestServiceImpl::default(),
             )))
             .add(
-                singleton::<dyn OtherTestService, OtherTestServiceImpl>().from(|sp| {
-                    Ref::new(OtherTestServiceImpl::new(
-                        sp.get_required::<dyn TestService>(),
-                    ))
-                }),
+                singleton::<dyn OtherTestService, OtherTestServiceImpl>()
+                    .from(|sp| Ref::new(OtherTestServiceImpl::new(sp.get_required::<dyn TestService>()))),
             )
             .build_provider()
             .unwrap();
@@ -479,10 +439,7 @@ mod tests {
     fn get_should_return_different_instances_for_transient_service() {
         // arrange
         let services = ServiceCollection::new()
-            .add(
-                transient::<dyn TestService, TestServiceImpl>()
-                    .from(|_| Ref::new(TestServiceImpl::default())),
-            )
+            .add(transient::<dyn TestService, TestServiceImpl>().from(|_| Ref::new(TestServiceImpl::default())))
             .build_provider()
             .unwrap();
 
@@ -500,14 +457,8 @@ mod tests {
         let mut collection = ServiceCollection::new();
 
         collection
-            .add(
-                singleton::<dyn TestService, TestServiceImpl>()
-                    .from(|_| Ref::new(TestServiceImpl { value: 1 })),
-            )
-            .add(
-                singleton::<dyn TestService, TestService2Impl>()
-                    .from(|_| Ref::new(TestService2Impl { value: 2 })),
-            );
+            .add(singleton::<dyn TestService, TestServiceImpl>().from(|_| Ref::new(TestServiceImpl { value: 1 })))
+            .add(singleton::<dyn TestService, TestService2Impl>().from(|_| Ref::new(TestService2Impl { value: 2 })));
 
         let provider = collection.build_provider().unwrap();
 
@@ -525,18 +476,9 @@ mod tests {
         let mut collection = ServiceCollection::new();
 
         collection
-            .add(
-                singleton_with_key::<key::Thingies, dyn Thing, Thing1>()
-                    .from(|_| Ref::new(Thing1::default())),
-            )
-            .add(
-                singleton_with_key::<key::Thingies, dyn Thing, Thing2>()
-                    .from(|_| Ref::new(Thing2::default())),
-            )
-            .add(
-                singleton_with_key::<key::Thingies, dyn Thing, Thing3>()
-                    .from(|_| Ref::new(Thing3::default())),
-            );
+            .add(singleton_with_key::<key::Thingies, dyn Thing, Thing1>().from(|_| Ref::new(Thing1::default())))
+            .add(singleton_with_key::<key::Thingies, dyn Thing, Thing2>().from(|_| Ref::new(Thing2::default())))
+            .add(singleton_with_key::<key::Thingies, dyn Thing, Thing3>().from(|_| Ref::new(Thing3::default())));
 
         let provider = collection.build_provider().unwrap();
 
@@ -560,10 +502,7 @@ mod tests {
     fn two_scoped_service_providers_should_create_different_instances() {
         // arrange
         let services = ServiceCollection::new()
-            .add(
-                scoped::<dyn TestService, TestServiceImpl>()
-                    .from(|_| Ref::new(TestServiceImpl::default())),
-            )
+            .add(scoped::<dyn TestService, TestServiceImpl>().from(|_| Ref::new(TestServiceImpl::default())))
             .build_provider()
             .unwrap();
         let scope1 = services.create_scope();
@@ -582,10 +521,7 @@ mod tests {
     fn parent_child_scoped_service_providers_should_create_different_instances() {
         // arrange
         let services = ServiceCollection::new()
-            .add(
-                scoped::<dyn TestService, TestServiceImpl>()
-                    .from(|_| Ref::new(TestServiceImpl::default())),
-            )
+            .add(scoped::<dyn TestService, TestServiceImpl>().from(|_| Ref::new(TestServiceImpl::default())))
             .build_provider()
             .unwrap();
         let scope1 = services.create_scope();
@@ -604,10 +540,7 @@ mod tests {
     fn scoped_service_provider_should_have_same_singleton_when_eager_created_in_parent() {
         // arrange
         let services = ServiceCollection::new()
-            .add(
-                singleton::<dyn TestService, TestServiceImpl>()
-                    .from(|_| Ref::new(TestServiceImpl::default())),
-            )
+            .add(singleton::<dyn TestService, TestServiceImpl>().from(|_| Ref::new(TestServiceImpl::default())))
             .build_provider()
             .unwrap();
         let svc1 = services.get_required::<dyn TestService>();
@@ -628,10 +561,7 @@ mod tests {
     fn scoped_service_provider_should_have_same_singleton_when_lazy_created_in_parent() {
         // arrange
         let services = ServiceCollection::new()
-            .add(
-                singleton::<dyn TestService, TestServiceImpl>()
-                    .from(|_| Ref::new(TestServiceImpl::default())),
-            )
+            .add(singleton::<dyn TestService, TestServiceImpl>().from(|_| Ref::new(TestServiceImpl::default())))
             .build_provider()
             .unwrap();
         let scope1 = services.create_scope();
@@ -672,14 +602,11 @@ mod tests {
 
         // act
         {
-            let provider =
-                ServiceCollection::new()
-                    .add(existing::<Path, PathBuf>(file.clone().into_boxed_path()))
-                    .add(singleton_as_self().from(|sp| {
-                        Ref::new(Droppable::new(sp.get_required::<Path>().to_path_buf()))
-                    }))
-                    .build_provider()
-                    .unwrap();
+            let provider = ServiceCollection::new()
+                .add(existing::<Path, PathBuf>(file.clone().into_boxed_path()))
+                .add(singleton_as_self().from(|sp| Ref::new(Droppable::new(sp.get_required::<Path>().to_path_buf()))))
+                .build_provider()
+                .unwrap();
             let _ = provider.get_required::<Droppable>();
         }
 
@@ -696,14 +623,11 @@ mod tests {
 
         // act
         {
-            let _ =
-                ServiceCollection::new()
-                    .add(existing::<Path, PathBuf>(file.clone().into_boxed_path()))
-                    .add(singleton_as_self().from(|sp| {
-                        Ref::new(Droppable::new(sp.get_required::<Path>().to_path_buf()))
-                    }))
-                    .build_provider()
-                    .unwrap();
+            let _ = ServiceCollection::new()
+                .add(existing::<Path, PathBuf>(file.clone().into_boxed_path()))
+                .add(singleton_as_self().from(|sp| Ref::new(Droppable::new(sp.get_required::<Path>().to_path_buf()))))
+                .build_provider()
+                .unwrap();
         }
 
         // assert
@@ -717,10 +641,7 @@ mod tests {
     fn clone_should_be_shallow() {
         // arrange
         let provider1 = ServiceCollection::new()
-            .add(
-                transient::<dyn TestService, TestServiceImpl>()
-                    .from(|_| Ref::new(TestServiceImpl::default())),
-            )
+            .add(transient::<dyn TestService, TestServiceImpl>().from(|_| Ref::new(TestServiceImpl::default())))
             .build_provider()
             .unwrap();
 
@@ -729,10 +650,7 @@ mod tests {
 
         // assert
         assert!(Ref::ptr_eq(&provider1.services, &provider2.services));
-        assert!(std::ptr::eq(
-            provider1.services.as_ref(),
-            provider2.services.as_ref()
-        ));
+        assert!(std::ptr::eq(provider1.services.as_ref(), provider2.services.as_ref()));
     }
 
     #[cfg(feature = "async")]

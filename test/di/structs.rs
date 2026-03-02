@@ -48,9 +48,7 @@ pub struct GenericBar<T: Default> {
 #[injectable]
 impl<T: Default + 'static> GenericBar<T> {
     pub fn new() -> Self {
-        Self {
-            _phantom: PhantomData,
-        }
+        Self { _phantom: PhantomData }
     }
 
     pub fn echo(&self) -> T {
@@ -111,8 +109,4 @@ pub struct NormalStruct {
 }
 
 #[injectable]
-pub struct Record(
-    pub Ref<UnitStruct>,
-    pub Lazy<Ref<UnitStruct>>,
-    pub usize,
-);
+pub struct Record(pub Ref<UnitStruct>, pub Lazy<Ref<UnitStruct>>, pub usize);

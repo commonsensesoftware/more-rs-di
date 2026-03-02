@@ -1,4 +1,4 @@
-use crate::{Ref, KeyedRef};
+use crate::{KeyedRef, Ref};
 use std::any::type_name;
 use std::env;
 use std::fs::{remove_file, File};
@@ -134,10 +134,7 @@ pub(crate) struct TestAllKindOfProblems {
 }
 
 impl TestAllKindOfProblems {
-    pub fn new(
-        other: Ref<dyn OtherTestService>,
-        another: Ref<dyn AnotherTestService>,
-    ) -> Self {
+    pub fn new(other: Ref<dyn OtherTestService>, another: Ref<dyn AnotherTestService>) -> Self {
         Self {
             _other: other,
             _another: another,
@@ -251,11 +248,7 @@ pub(crate) struct ServiceZImpl {
 }
 
 impl ServiceZImpl {
-    pub(crate) fn new(
-        _m: Ref<dyn ServiceM>,
-        _a: Ref<dyn ServiceA>,
-        _x: Ref<dyn ServiceX>,
-    ) -> Self {
+    pub(crate) fn new(_m: Ref<dyn ServiceM>, _a: Ref<dyn ServiceA>, _x: Ref<dyn ServiceX>) -> Self {
         Self { _m, _a, _x }
     }
 }
@@ -304,14 +297,10 @@ pub(crate) mod key {
     pub(crate) struct Thing2;
 }
 
-pub(crate) struct CatInTheHat {
-}
+pub(crate) struct CatInTheHat {}
 
 impl CatInTheHat {
-    pub fn new(
-        _thing1: KeyedRef<key::Thing1, dyn Thing>,
-        _thing2: Option<KeyedRef<key::Thing2, dyn Thing>>,
-    ) -> Self {
-        Self { }
+    pub fn new(_thing1: KeyedRef<key::Thing1, dyn Thing>, _thing2: Option<KeyedRef<key::Thing2, dyn Thing>>) -> Self {
+        Self {}
     }
 }

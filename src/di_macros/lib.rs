@@ -14,23 +14,14 @@ use syn::{
 };
 
 #[proc_macro_attribute]
-pub fn inject(
-    _metadata: proc_macro::TokenStream,
-    input: proc_macro::TokenStream,
-) -> proc_macro::TokenStream {
+pub fn inject(_metadata: proc_macro::TokenStream, input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     // this attribute is intentionally inert
     input
 }
 
 #[proc_macro_attribute]
-pub fn injectable(
-    metadata: proc_macro::TokenStream,
-    input: proc_macro::TokenStream,
-) -> proc_macro::TokenStream {
-    proc_macro::TokenStream::from(_injectable(
-        TokenStream::from(metadata),
-        TokenStream::from(input),
-    ))
+pub fn injectable(metadata: proc_macro::TokenStream, input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    proc_macro::TokenStream::from(_injectable(TokenStream::from(metadata), TokenStream::from(input)))
 }
 
 fn _injectable(metadata: TokenStream, input: TokenStream) -> TokenStream {
@@ -116,9 +107,7 @@ fn build_path_from_struct(struct_: &ItemStruct) -> Path {
                         qself: None,
                         path: Path::from(type_.ident.clone()),
                     })),
-                    GenericParam::Lifetime(param) => {
-                        GenericArgument::Lifetime(param.lifetime.clone())
-                    }
+                    GenericParam::Lifetime(param) => GenericArgument::Lifetime(param.lifetime.clone()),
                 });
             }
 
@@ -229,7 +218,8 @@ mod test {
             "| sp : & di :: ServiceProvider | di :: RefMut :: new (Self :: create () . into ())) , ",
             "lifetime) ",
             "} ",
-            "}");
+            "}"
+        );
 
         assert_eq!(expected, result.to_string());
     }

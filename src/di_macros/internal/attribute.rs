@@ -1,6 +1,8 @@
 use syn::{
     parse::{Parse, ParseStream},
-    Path, Result, punctuated::Punctuated, token::Plus,
+    punctuated::Punctuated,
+    token::Plus,
+    Path, Result,
 };
 
 pub struct InjectableAttribute {

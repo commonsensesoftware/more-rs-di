@@ -1,6 +1,6 @@
 use crate::{
-    validate, Ref, ServiceCardinality, ServiceDescriptor, ServiceDescriptorBuilder,
-    ServiceLifetime, ServiceProvider, Type, ValidationError,
+    validate, Ref, ServiceCardinality, ServiceDescriptor, ServiceDescriptorBuilder, ServiceLifetime, ServiceProvider,
+    Type, ValidationError,
 };
 use std::any::Any;
 use std::collections::HashMap;
@@ -101,9 +101,7 @@ impl ServiceCollection {
         }
 
         for item in &self.items {
-            if item.service_type() == service_type
-                && item.implementation_type() == implementation_type
-            {
+            if item.service_type() == service_type && item.implementation_type() == implementation_type {
                 return self;
             }
         }
@@ -118,10 +116,7 @@ impl ServiceCollection {
     /// # Arguments
     ///
     /// * `descriptors` - The [`ServiceDescriptor`](crate::ServiceDescriptor) sequence to register
-    pub fn try_add_all(
-        &mut self,
-        descriptors: impl IntoIterator<Item = ServiceDescriptor>,
-    ) -> &mut Self {
+    pub fn try_add_all(&mut self, descriptors: impl IntoIterator<Item = ServiceDescriptor>) -> &mut Self {
         for descriptor in descriptors {
             self.try_add_to_all(descriptor);
         }
@@ -197,9 +192,7 @@ impl ServiceCollection {
     }
 
     /// Gets a read-only iterator for the collection
-    pub fn iter(
-        &self,
-    ) -> impl Iterator<Item = &ServiceDescriptor> + ExactSizeIterator + DoubleEndedIterator {
+    pub fn iter(&self) -> impl Iterator<Item = &ServiceDescriptor> + ExactSizeIterator + DoubleEndedIterator {
         self.items.iter()
     }
 
@@ -272,17 +265,12 @@ impl ServiceCollection {
             }
 
             let original = item.clone();
+            let builder = ServiceDescriptorBuilder::<TSvc, TImpl>::new(original.lifetime(), impl_type);
 
-            *item = ServiceDescriptorBuilder::<TSvc, TImpl>::new(original.lifetime(), impl_type)
-                .from(move |sp| {
-                    let decorated = original
-                        .get(sp)
-                        .downcast_ref::<Ref<TSvc>>()
-                        .unwrap()
-                        .clone();
-
-                    activate(sp, decorated)
-                });
+            *item = builder.from(move |sp| {
+                let decorated = original.get(sp).downcast_ref::<Ref<TSvc>>().unwrap().clone();
+                activate(sp, decorated)
+            });
 
             break;
         }
@@ -295,13 +283,13 @@ impl ServiceCollection {
     /// # Arguments
     ///
     /// * `activate` - The function that will be called to decorate the resolved service instance
-    /// 
+    ///
     /// # Remarks
-    /// 
+    ///
     /// This function decorates all registered [ServiceDescriptor] for the specified service type. If there are none,
     /// this function does nothing. The decorator [ServiceDescriptor] is created with the same lifetime as the original.
     /// If the original, decorated [ServiceDescriptor] is the same the decorator type, it is ignored.
-    /// 
+    ///
     /// # Example
     ///
     /// ```
@@ -319,7 +307,7 @@ impl ServiceCollection {
     ///     fn show(&self) {
     ///     }
     /// }
-    /// 
+    ///
     /// #[injectable(Feature)]
     /// struct Feature2;
     ///
@@ -327,15 +315,15 @@ impl ServiceCollection {
     ///     fn show(&self) {
     ///     }
     /// }
-    /// 
+    ///
     /// #[injectable]
     /// struct Tracker(AtomicUsize);
-    /// 
+    ///
     /// impl Tracker {
     ///     fn track(&self) {
     ///         self.0.fetch_add(1, Ordering::Relaxed);
     ///     }
-    /// 
+    ///
     ///     fn count(&self) -> usize {
     ///         self.0.load(Ordering::Relaxed)
     ///     }
@@ -364,7 +352,7 @@ impl ServiceCollection {
     ///     .unwrap();
     /// let features = provider.get_all::<dyn Feature>();
     /// let tracker = provider.get_required::<Tracker>();
-    /// 
+    ///
     /// for feature in features {
     ///     feature.show();
     /// }
@@ -387,17 +375,12 @@ impl ServiceCollection {
 
             let original = item.clone();
             let activate = func.clone();
+            let builder = ServiceDescriptorBuilder::<TSvc, TImpl>::new(original.lifetime(), impl_type);
 
-            *item = ServiceDescriptorBuilder::<TSvc, TImpl>::new(original.lifetime(), impl_type)
-                .from(move |sp| {
-                    let decorated = original
-                        .get(sp)
-                        .downcast_ref::<Ref<TSvc>>()
-                        .unwrap()
-                        .clone();
-
-                    (activate)(sp, decorated)
-                });
+            *item = builder.from(move |sp| {
+                let decorated = original.get(sp).downcast_ref::<Ref<TSvc>>().unwrap().clone();
+                (activate)(sp, decorated)
+            });
         }
 
         self
@@ -571,9 +554,7 @@ impl<'a> PrintContext<'a> {
     }
 
     fn enter(&mut self, descriptor: &'a ServiceDescriptor) {
-        if self.scope != ServiceLifetime::Singleton
-            && descriptor.lifetime() == ServiceLifetime::Singleton
-        {
+        if self.scope != ServiceLifetime::Singleton && descriptor.lifetime() == ServiceLifetime::Singleton {
             self.scope = ServiceLifetime::Singleton;
         }
 
@@ -591,10 +572,7 @@ impl<'a> PrintContext<'a> {
             }
         }
 
-        self.scope = self
-            .visited
-            .last()
-            .map_or(ServiceLifetime::Transient, |s| s.lifetime());
+        self.scope = self.visited.last().map_or(ServiceLifetime::Transient, |s| s.lifetime());
     }
 
     fn is_circular_ref(&self, descriptor: &ServiceDescriptor) -> bool {
@@ -612,11 +590,7 @@ impl<'a> PrintContext<'a> {
     }
 }
 
-fn print<R: Renderer>(
-    services: &ServiceCollection,
-    mut renderer: R,
-    f: &mut Formatter<'_>,
-) -> FormatResult {
+fn print<R: Renderer>(services: &ServiceCollection, mut renderer: R, f: &mut Formatter<'_>) -> FormatResult {
     let count = services.items.len();
 
     if count == 0 {
@@ -684,11 +658,7 @@ fn print_item<R: Renderer>(
 
             if context.is_invalid_lifetime(sd) {
                 renderer.error(
-                    format!(
-                        "⧗ {} [{:?}]",
-                        sd.implementation_type().name(),
-                        sd.lifetime()
-                    ),
+                    format!("⧗ {} [{:?}]", sd.implementation_type().name(), sd.lifetime()),
                     formatter,
                 )?;
             } else {
@@ -712,12 +682,8 @@ fn print_item<R: Renderer>(
     renderer.write('\n', formatter)?;
 
     match item {
-        PrintItem::One(child) => {
-            traverse_dependencies(child, context, depth, branches, formatter, renderer)
-        }
-        PrintItem::Many((_, _, children)) => {
-            traverse_services(children, context, depth, branches, formatter, renderer)
-        }
+        PrintItem::One(child) => traverse_dependencies(child, context, depth, branches, formatter, renderer),
+        PrintItem::Many((_, _, children)) => traverse_services(children, context, depth, branches, formatter, renderer),
         _ => Ok(()),
     }
 }
@@ -754,11 +720,7 @@ fn append_service<R: Renderer>(
     renderer.write_str(" → ", f)
 }
 
-fn append_implementation<R: Renderer>(
-    item: &ServiceDescriptor,
-    renderer: &mut R,
-    f: &mut Formatter,
-) -> FormatResult {
+fn append_implementation<R: Renderer>(item: &ServiceDescriptor, renderer: &mut R, f: &mut Formatter) -> FormatResult {
     renderer.implementation(item.implementation_type().name(), f)?;
     renderer.write(' ', f)?;
 
@@ -839,15 +801,7 @@ fn traverse_dependencies<R: Renderer>(
                     };
 
                     context.enter(child);
-                    print_item(
-                        item,
-                        cardinality,
-                        context,
-                        depth + 1,
-                        branches,
-                        formatter,
-                        renderer,
-                    )?;
+                    print_item(item, cardinality, context, depth + 1, branches, formatter, renderer)?;
                     context.exit();
                 }
             }
@@ -858,15 +812,7 @@ fn traverse_dependencies<R: Renderer>(
                 ServiceCardinality::ZeroOrMore => PrintItem::Warning((type_, "▲ Count: 0")),
             };
 
-            print_item(
-                item,
-                cardinality,
-                context,
-                depth + 1,
-                branches,
-                formatter,
-                renderer,
-            )?;
+            print_item(item, cardinality, context, depth + 1, branches, formatter, renderer)?;
         }
 
         unindent(branches);
@@ -937,8 +883,7 @@ mod tests {
     #[test]
     fn is_empty_should_return_false_when_not_empty() {
         // arrange
-        let descriptor =
-            existing::<dyn TestService, TestServiceImpl>(Box::new(TestServiceImpl::default()));
+        let descriptor = existing::<dyn TestService, TestServiceImpl>(Box::new(TestServiceImpl::default()));
         let mut collection = ServiceCollection::new();
 
         collection.add(descriptor);
@@ -953,8 +898,7 @@ mod tests {
     #[test]
     fn length_should_return_count_when_not_empty() {
         // arrange
-        let descriptor =
-            existing::<dyn TestService, TestServiceImpl>(Box::new(TestServiceImpl::default()));
+        let descriptor = existing::<dyn TestService, TestServiceImpl>(Box::new(TestServiceImpl::default()));
         let mut collection = ServiceCollection::new();
 
         collection.add(descriptor);
@@ -969,8 +913,7 @@ mod tests {
     #[test]
     fn clear_should_remove_all_elements() {
         // arrange
-        let descriptor =
-            existing::<dyn TestService, TestServiceImpl>(Box::new(TestServiceImpl::default()));
+        let descriptor = existing::<dyn TestService, TestServiceImpl>(Box::new(TestServiceImpl::default()));
         let mut collection = ServiceCollection::new();
 
         collection.add(descriptor);
@@ -987,16 +930,11 @@ mod tests {
         // arrange
         let mut collection = ServiceCollection::new();
 
-        collection.add(
-            singleton::<dyn TestService, TestServiceImpl>()
-                .from(|_| Ref::new(TestServiceImpl::default())),
-        );
+        collection.add(singleton::<dyn TestService, TestServiceImpl>().from(|_| Ref::new(TestServiceImpl::default())));
 
         // act
-        collection.try_add(
-            singleton::<dyn TestService, TestServiceImpl>()
-                .from(|_| Ref::new(TestServiceImpl::default())),
-        );
+        collection
+            .try_add(singleton::<dyn TestService, TestServiceImpl>().from(|_| Ref::new(TestServiceImpl::default())));
 
         // assert
         assert_eq!(collection.len(), 1);
@@ -1012,11 +950,8 @@ mod tests {
         )));
 
         collection.try_add_to_all(
-            singleton::<dyn OtherTestService, OtherTestServiceImpl>().from(|sp| {
-                Ref::new(OtherTestServiceImpl::new(
-                    sp.get_required::<dyn TestService>(),
-                ))
-            }),
+            singleton::<dyn OtherTestService, OtherTestServiceImpl>()
+                .from(|sp| Ref::new(OtherTestServiceImpl::new(sp.get_required::<dyn TestService>()))),
         );
 
         // act
@@ -1036,8 +971,7 @@ mod tests {
         )));
 
         collection.try_add_to_all(
-            transient::<dyn TestService, TestServiceImpl>()
-                .from(|_| Ref::new(TestServiceImpl::default())),
+            transient::<dyn TestService, TestServiceImpl>().from(|_| Ref::new(TestServiceImpl::default())),
         );
 
         // act
@@ -1052,8 +986,7 @@ mod tests {
         // arrange
         let descriptors = vec![
             existing::<dyn TestService, TestServiceImpl>(Box::new(TestServiceImpl::default())),
-            transient::<dyn TestService, TestServiceImpl>()
-                .from(|_| Ref::new(TestServiceImpl::default())),
+            transient::<dyn TestService, TestServiceImpl>().from(|_| Ref::new(TestServiceImpl::default())),
         ];
         let mut collection = ServiceCollection::new();
 
@@ -1072,20 +1005,12 @@ mod tests {
         let mut collection = ServiceCollection::new();
 
         collection
-            .add(
-                singleton::<dyn TestService, TestServiceImpl>()
-                    .from(|_| Ref::new(TestServiceImpl::default())),
-            )
-            .add(
-                singleton::<dyn TestService, TestServiceImpl>()
-                    .from(|_| Ref::new(TestServiceImpl::default())),
-            );
+            .add(singleton::<dyn TestService, TestServiceImpl>().from(|_| Ref::new(TestServiceImpl::default())))
+            .add(singleton::<dyn TestService, TestServiceImpl>().from(|_| Ref::new(TestServiceImpl::default())));
 
         // act
-        collection.replace(
-            singleton::<dyn TestService, TestServiceImpl>()
-                .from(|_| Ref::new(TestServiceImpl::default())),
-        );
+        collection
+            .replace(singleton::<dyn TestService, TestServiceImpl>().from(|_| Ref::new(TestServiceImpl::default())));
 
         // assert
         assert_eq!(collection.len(), 2);
@@ -1097,14 +1022,8 @@ mod tests {
         let mut collection = ServiceCollection::new();
 
         collection
-            .add(
-                singleton::<dyn TestService, TestServiceImpl>()
-                    .from(|_| Ref::new(TestServiceImpl::default())),
-            )
-            .add(
-                singleton::<dyn TestService, TestServiceImpl>()
-                    .from(|_| Ref::new(TestServiceImpl::default())),
-            );
+            .add(singleton::<dyn TestService, TestServiceImpl>().from(|_| Ref::new(TestServiceImpl::default())))
+            .add(singleton::<dyn TestService, TestServiceImpl>().from(|_| Ref::new(TestServiceImpl::default())));
 
         // act
         collection.remove_all::<dyn TestService>();
@@ -1118,15 +1037,12 @@ mod tests {
         // arrange
         let mut collection = ServiceCollection::new();
 
-        collection.add(
-            singleton::<dyn TestService, TestServiceImpl>()
-                .from(|_| Ref::new(TestServiceImpl { value: 1 })),
-        );
+        collection
+            .add(singleton::<dyn TestService, TestServiceImpl>().from(|_| Ref::new(TestServiceImpl { value: 1 })));
 
         // act
         collection.try_replace(
-            singleton::<dyn TestService, TestServiceImpl>()
-                .from(|_| Ref::new(TestServiceImpl { value: 2 })),
+            singleton::<dyn TestService, TestServiceImpl>().from(|_| Ref::new(TestServiceImpl { value: 2 })),
         );
 
         // assert
@@ -1141,8 +1057,7 @@ mod tests {
     #[test]
     fn remove_should_remove_element_at_index() {
         // arrange
-        let descriptor =
-            existing::<dyn TestService, TestServiceImpl>(Box::new(TestServiceImpl::default()));
+        let descriptor = existing::<dyn TestService, TestServiceImpl>(Box::new(TestServiceImpl::default()));
         let mut collection = ServiceCollection::new();
 
         collection.add(descriptor);
@@ -1181,11 +1096,7 @@ mod tests {
         {
             services
                 .add(existing::<Path, PathBuf>(file.clone().into_boxed_path()))
-                .add(
-                    singleton_as_self().from(|sp| {
-                        Ref::new(Droppable::new(sp.get_required::<Path>().to_path_buf()))
-                    }),
-                );
+                .add(singleton_as_self().from(|sp| Ref::new(Droppable::new(sp.get_required::<Path>().to_path_buf()))));
         }
 
         // assert

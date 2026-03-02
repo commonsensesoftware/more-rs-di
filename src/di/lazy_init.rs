@@ -36,9 +36,7 @@ fn to_keyed_vec<TKey, TSvc: Any + ?Sized>(services: &ServiceProvider) -> Vec<Key
     services.get_all_by_key::<TKey, TSvc>().collect()
 }
 
-fn to_keyed_vec_mut<TKey, TSvc: Any + ?Sized>(
-    services: &ServiceProvider,
-) -> Vec<KeyedRefMut<TKey, TSvc>> {
+fn to_keyed_vec_mut<TKey, TSvc: Any + ?Sized>(services: &ServiceProvider) -> Vec<KeyedRefMut<TKey, TSvc>> {
     services.get_all_by_key_mut::<TKey, TSvc>().collect()
 }
 
@@ -68,9 +66,7 @@ pub fn exactly_one_mut<T: Any + ?Sized>(services: ServiceProvider) -> Lazy<RefMu
 ///
 /// * `services` - The [`ServiceProvider`](crate::ServiceProvider) used to resolve the service
 #[inline]
-pub fn exactly_one_with_key<TKey, TSvc: Any + ?Sized>(
-    services: ServiceProvider,
-) -> Lazy<KeyedRef<TKey, TSvc>> {
+pub fn exactly_one_with_key<TKey, TSvc: Any + ?Sized>(services: ServiceProvider) -> Lazy<KeyedRef<TKey, TSvc>> {
     Lazy::new(services, ServiceProvider::get_required_by_key::<TKey, TSvc>)
 }
 
@@ -80,13 +76,8 @@ pub fn exactly_one_with_key<TKey, TSvc: Any + ?Sized>(
 ///
 /// * `services` - The [`ServiceProvider`](crate::ServiceProvider) used to resolve the service
 #[inline]
-pub fn exactly_one_with_key_mut<TKey, TSvc: Any + ?Sized>(
-    services: ServiceProvider,
-) -> Lazy<KeyedRefMut<TKey, TSvc>> {
-    Lazy::new(
-        services,
-        ServiceProvider::get_required_by_key_mut::<TKey, TSvc>,
-    )
+pub fn exactly_one_with_key_mut<TKey, TSvc: Any + ?Sized>(services: ServiceProvider) -> Lazy<KeyedRefMut<TKey, TSvc>> {
+    Lazy::new(services, ServiceProvider::get_required_by_key_mut::<TKey, TSvc>)
 }
 
 /// Creates and returns a holder for a lazily-initialized, optional service.
@@ -115,9 +106,7 @@ pub fn zero_or_one_mut<T: Any + ?Sized>(services: ServiceProvider) -> Lazy<Optio
 ///
 /// * `services` - The [`ServiceProvider`](crate::ServiceProvider) used to resolve the service
 #[inline]
-pub fn zero_or_one_with_key<TKey, TSvc: Any + ?Sized>(
-    services: ServiceProvider,
-) -> Lazy<Option<KeyedRef<TKey, TSvc>>> {
+pub fn zero_or_one_with_key<TKey, TSvc: Any + ?Sized>(services: ServiceProvider) -> Lazy<Option<KeyedRef<TKey, TSvc>>> {
     Lazy::new(services, ServiceProvider::get_by_key::<TKey, TSvc>)
 }
 
@@ -159,9 +148,7 @@ pub fn zero_or_more_mut<T: Any + ?Sized>(services: ServiceProvider) -> Lazy<Vec<
 ///
 /// * `services` - The [`ServiceProvider`](crate::ServiceProvider) used to resolve the services
 #[inline]
-pub fn zero_or_more_with_key<TKey, TSvc: Any + ?Sized>(
-    services: ServiceProvider,
-) -> Lazy<Vec<KeyedRef<TKey, TSvc>>> {
+pub fn zero_or_more_with_key<TKey, TSvc: Any + ?Sized>(services: ServiceProvider) -> Lazy<Vec<KeyedRef<TKey, TSvc>>> {
     Lazy::new(services, to_keyed_vec::<TKey, TSvc>)
 }
 
@@ -186,10 +173,7 @@ pub fn missing<T: Any + ?Sized>() -> Lazy<Option<Ref<T>>> {
 /// Creates and return a holder for a lazy-initialized, keyed, optional service that is missing.
 #[inline]
 pub fn missing_with_key<TKey, TSvc: Any + ?Sized>() -> Lazy<Option<KeyedRef<TKey, TSvc>>> {
-    Lazy::new(
-        ServiceProvider::default(),
-        ServiceProvider::get_by_key::<TKey, TSvc>,
-    )
+    Lazy::new(ServiceProvider::default(), ServiceProvider::get_by_key::<TKey, TSvc>)
 }
 
 /// Creates and return a holder for any empty collection of lazy-initialized services.
@@ -205,9 +189,9 @@ pub fn empty_with_key<TKey, TSvc: Any + ?Sized>() -> Lazy<Vec<KeyedRef<TKey, TSv
 }
 
 /// Creates and returns a holder from an existing instance.
-/// 
+///
 /// # Arguments
-/// 
+///
 /// * `instance` - The existing instance used to initialize with
 pub fn init<T: Any + ?Sized>(instance: Box<T>) -> Lazy<Ref<T>> {
     Lazy {
@@ -218,9 +202,9 @@ pub fn init<T: Any + ?Sized>(instance: Box<T>) -> Lazy<Ref<T>> {
 }
 
 /// Creates and returns a holder from an existing, mutable instance.
-/// 
+///
 /// # Arguments
-/// 
+///
 /// * `instance` - The existing instance used to initialize with
 pub fn init_mut<T: Any + ?Sized>(instance: Box<Mut<T>>) -> Lazy<RefMut<T>> {
     Lazy {
@@ -231,9 +215,9 @@ pub fn init_mut<T: Any + ?Sized>(instance: Box<Mut<T>>) -> Lazy<RefMut<T>> {
 }
 
 /// Creates and returns a holder from an existing instance with a key.
-/// 
+///
 /// # Arguments
-/// 
+///
 /// * `instance` - The existing instance used to initialize with
 pub fn init_with_key<TKey, TSvc: Any + ?Sized>(instance: Box<TSvc>) -> Lazy<KeyedRef<TKey, TSvc>> {
     Lazy {
@@ -244,13 +228,11 @@ pub fn init_with_key<TKey, TSvc: Any + ?Sized>(instance: Box<TSvc>) -> Lazy<Keye
 }
 
 /// Creates and returns a holder from an existing, mutable instance with a key.
-/// 
+///
 /// # Arguments
-/// 
+///
 /// * `instance` - The existing instance used to initialize with
-pub fn init_with_key_mut<TKey, TSvc: Any + ?Sized>(
-    instance: Box<Mut<TSvc>>,
-) -> Lazy<KeyedRefMut<TKey, TSvc>> {
+pub fn init_with_key_mut<TKey, TSvc: Any + ?Sized>(instance: Box<Mut<TSvc>>) -> Lazy<KeyedRefMut<TKey, TSvc>> {
     Lazy {
         resolve: |_| unimplemented!(),
         services: ServiceProvider::default(),

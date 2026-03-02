@@ -242,14 +242,8 @@ fn inject_should_implemented_keyed_dependencies() {
     let cat_in_the_hat = provider.get_required::<CatInTheHat>();
 
     // assert
-    assert_eq!(
-        &cat_in_the_hat.thing1.to_string(),
-        "more_di_tests::traits::Thing1"
-    );
-    assert_eq!(
-        &cat_in_the_hat.thing2.to_string(),
-        "more_di_tests::traits::Thing2"
-    );
+    assert_eq!(&cat_in_the_hat.thing1.to_string(), "more_di_tests::traits::Thing1");
+    assert_eq!(&cat_in_the_hat.thing2.to_string(), "more_di_tests::traits::Thing2");
 }
 
 #[test]
@@ -428,11 +422,7 @@ fn inject_should_resolve_mut_dependency() {
 fn inject_should_resolve_keyed_mut() {
     // arrange
     let provider = ServiceCollection::new()
-        .add(
-            traits::Thing1::transient()
-                .with_key::<key::Thing2>()
-                .as_mut(),
-        )
+        .add(traits::Thing1::transient().with_key::<key::Thing2>().as_mut())
         .build_provider()
         .unwrap();
 
@@ -475,10 +465,7 @@ fn inject_should_support_multiple_traits() {
 
     impl IPityTheFoo for Foo {}
 
-    let provider = ServiceCollection::new()
-        .add(Foo::transient())
-        .build_provider()
-        .unwrap();
+    let provider = ServiceCollection::new().add(Foo::transient()).build_provider().unwrap();
 
     // act
     let _ = provider.get_required::<dyn IPityTheFoo + Send + Sync>();

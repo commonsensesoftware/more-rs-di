@@ -3,9 +3,7 @@ use super::{
     ServiceProviderInjector, StructInjector, TraitInjector,
 };
 use proc_macro2::{Ident, Span};
-use syn::{
-    spanned::Spanned, Error, GenericArgument, PathArguments, Result, Type, TypeParamBound, TypePath,
-};
+use syn::{spanned::Spanned, Error, GenericArgument, PathArguments, Result, Type, TypeParamBound, TypePath};
 
 use crate::alias::{try_get_aliases, Aliases};
 
@@ -104,12 +102,8 @@ impl CallSite {
                 2 => {
                     if let Type::Path(ref key) = args[0] {
                         match args[1] {
-                            Type::TraitObject(ref trait_) => {
-                                Ok(Box::new(TraitInjector::keyed(trait_, key)))
-                            }
-                            Type::Path(ref struct_) => {
-                                Ok(Box::new(StructInjector::keyed(struct_, key)))
-                            }
+                            Type::TraitObject(ref trait_) => Ok(Box::new(TraitInjector::keyed(trait_, key))),
+                            Type::Path(ref struct_) => Ok(Box::new(StructInjector::keyed(struct_, key))),
                             _ => Err(Error::new(args[1].span(), "Expected a trait or struct.")),
                         }
                     } else {
@@ -122,8 +116,7 @@ impl CallSite {
                 )),
             }
         } else if context.scoped
-            || context.type_.path.segments.last().unwrap().ident
-                == Ident::new("ServiceProvider", Span::call_site())
+            || context.type_.path.segments.last().unwrap().ident == Ident::new("ServiceProvider", Span::call_site())
         {
             Ok(Box::new(ServiceProviderInjector))
         } else if allow_default {
@@ -133,10 +126,7 @@ impl CallSite {
         }
     }
 
-    fn new_context<'a>(
-        arg: &'a Type,
-        known_types: &'a Vec<KnownType>,
-    ) -> Result<CallSiteContext<'a>> {
+    fn new_context<'a>(arg: &'a Type, known_types: &'a Vec<KnownType>) -> Result<CallSiteContext<'a>> {
         let mut builder = CallSiteContextBuilder::default();
         let mut read_only = true;
         let input = if let Some(ty) = Self::try_visit_iterator(arg) {
@@ -193,9 +183,7 @@ impl CallSite {
                     builder.is_mutable();
                 }
 
-                if type_.path.segments.last().unwrap().ident
-                    == Ident::new("ScopedServiceProvider", Span::call_site())
-                {
+                if type_.path.segments.last().unwrap().ident == Ident::new("ScopedServiceProvider", Span::call_site()) {
                     builder.is_scoped();
                 }
 
@@ -266,10 +254,7 @@ impl CallSite {
         }
     }
 
-    fn visit_first_of<'a>(
-        context: &CallSiteContext<'a>,
-        known_types: &Vec<KnownType>,
-    ) -> Vec<&'a Type> {
+    fn visit_first_of<'a>(context: &CallSiteContext<'a>, known_types: &Vec<KnownType>) -> Vec<&'a Type> {
         for KnownType { name, mutable } in known_types {
             let mut args = Self::visit_generic_type_args(context.type_, name);
 
@@ -341,9 +326,7 @@ impl CallSite {
                     if iterator.ident == Ident::new("Iterator", Span::call_site()) {
                         if let PathArguments::AngleBracketed(ref generic) = iterator.arguments {
                             if generic.args.len() == 1 {
-                                if let GenericArgument::AssocType(item) =
-                                    generic.args.first().unwrap()
-                                {
+                                if let GenericArgument::AssocType(item) = generic.args.first().unwrap() {
                                     return Some(&item.ty);
                                 }
                             }

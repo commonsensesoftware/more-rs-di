@@ -48,8 +48,7 @@ pub fn singleton_with_key_factory<TKey, TSvc: Any + ?Sized, F>(factory: F) -> Se
 where
     F: Fn(&ServiceProvider) -> Ref<TSvc> + 'static,
 {
-    Builder::<TSvc, ()>::keyed::<TKey>(ServiceLifetime::Singleton, Type::factory_of::<TSvc>())
-        .from(factory)
+    Builder::<TSvc, ()>::keyed::<TKey>(ServiceLifetime::Singleton, Type::factory_of::<TSvc>()).from(factory)
 }
 
 /// Initializes a new singleton [`ServiceDescriptorBuilder`](crate::ServiceDescriptorBuilder).
@@ -102,8 +101,7 @@ where
     TSvc: Any + ?Sized,
     F: Fn(&ServiceProvider) -> Ref<TSvc> + 'static,
 {
-    Builder::<TSvc, ()>::keyed::<TKey>(ServiceLifetime::Scoped, Type::factory_of::<TSvc>())
-        .from(factory)
+    Builder::<TSvc, ()>::keyed::<TKey>(ServiceLifetime::Scoped, Type::factory_of::<TSvc>()).from(factory)
 }
 
 /// Initializes a new transient [`ServiceDescriptorBuilder`](crate::ServiceDescriptorBuilder).
@@ -114,8 +112,7 @@ pub fn transient<TSvc: Any + ?Sized, TImpl>() -> ServiceDescriptorBuilder<TSvc, 
 
 /// Initializes a new keyed transient [`ServiceDescriptorBuilder`](crate::ServiceDescriptorBuilder).
 #[inline]
-pub fn transient_with_key<TKey, TSvc: Any + ?Sized, TImpl>() -> ServiceDescriptorBuilder<TSvc, TImpl>
-{
+pub fn transient_with_key<TKey, TSvc: Any + ?Sized, TImpl>() -> ServiceDescriptorBuilder<TSvc, TImpl> {
     Builder::keyed::<TKey>(ServiceLifetime::Transient, Type::of::<TImpl>())
 }
 
@@ -143,8 +140,7 @@ pub fn transient_with_key_factory<TKey, TSvc: Any + ?Sized, F>(factory: F) -> Se
 where
     F: Fn(&ServiceProvider) -> Ref<TSvc> + 'static,
 {
-    Builder::<TSvc, ()>::keyed::<TKey>(ServiceLifetime::Transient, Type::factory_of::<TSvc>())
-        .from(factory)
+    Builder::<TSvc, ()>::keyed::<TKey>(ServiceLifetime::Transient, Type::factory_of::<TSvc>()).from(factory)
 }
 
 /// Initializes a new transient [`ServiceDescriptorBuilder`](crate::ServiceDescriptorBuilder).
@@ -219,9 +215,7 @@ pub fn existing_as_self<T: Any>(instance: T) -> ServiceDescriptor {
 ///
 /// This function maps an existing instance to a trait.
 #[inline]
-pub fn existing_with_key<TKey, TSvc: Any + ?Sized, TImpl>(
-    instance: Box<TSvc>,
-) -> ServiceDescriptor {
+pub fn existing_with_key<TKey, TSvc: Any + ?Sized, TImpl>(instance: Box<TSvc>) -> ServiceDescriptor {
     ServiceDescriptor::new(
         ServiceLifetime::Singleton,
         Type::keyed::<TKey, TSvc>(),
