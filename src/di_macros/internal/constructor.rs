@@ -1,6 +1,27 @@
 use super::{CallSite, InjectedCallSite};
 use proc_macro2::{Ident, Span};
-use syn::{spanned::Spanned, Error, FnArg, ImplItem, ItemImpl, Path, Result, Signature};
+use syn::punctuated::Punctuated;
+use syn::{spanned::Spanned, Attribute, Error, FnArg, ImplItem, ItemImpl, Meta, Path, Result, Signature, Token};
+
+fn is_inject(attribute: &Attribute) -> bool {
+    if attribute.path().segments.last().unwrap().ident == "inject" {
+        return true;
+    }
+
+    if attribute.path().is_ident("cfg_attr") {
+        let Ok(list) = attribute.parse_args_with(Punctuated::<Meta, Token![,]>::parse_terminated) else {
+            return false;
+        };
+
+        for meta in list.iter().skip(1) {
+            if meta.path().segments.last().unwrap().ident == "inject" {
+                return true;
+            }
+        }
+    }
+
+    false
+}
 
 pub struct Constructor;
 
@@ -14,7 +35,7 @@ impl Constructor {
             if let ImplItem::Fn(method) = item {
                 let signature = &method.sig;
 
-                if method.attrs.iter().any(|a| a.path().is_ident("inject")) {
+                if method.attrs.iter().any(is_inject) {
                     methods.push(signature);
                 }
 

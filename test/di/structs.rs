@@ -110,3 +110,23 @@ pub struct NormalStruct {
 
 #[injectable]
 pub struct Record(pub Ref<UnitStruct>, pub Lazy<Ref<UnitStruct>>, pub usize);
+
+pub struct UnqualifiedConditional(Ref<Bar>);
+
+#[cfg_attr(test, injectable)]
+impl UnqualifiedConditional {
+    #[cfg_attr(test, inject)]
+    fn _inject(bar: Ref<Bar>) -> Self {
+        Self(bar)
+    }
+}
+
+pub struct QualifiedConditional(Ref<Bar>);
+
+#[cfg_attr(test, di::injectable)]
+impl QualifiedConditional {
+    #[cfg_attr(test, di::inject)]
+    fn _inject(bar: Ref<Bar>) -> Self {
+        Self(bar)
+    }
+}

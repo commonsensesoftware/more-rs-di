@@ -261,3 +261,35 @@ pub struct MultiService;
 impl Service1 for MultiService {}
 
 impl Service2 for MultiService {}
+
+pub struct UnqualifiedConditional(Ref<dyn Bar>);
+
+impl Foo for UnqualifiedConditional {
+    fn echo(&self) -> &str {
+        self.0.echo()
+    }
+}
+
+#[cfg_attr(test, injectable(Foo))]
+impl UnqualifiedConditional {
+    #[cfg_attr(test, inject)]
+    fn _inject(bar: Ref<dyn Bar>) -> Self {
+        Self(bar)
+    }
+}
+
+pub struct QualifiedConditional(Ref<dyn Bar>);
+
+impl Foo for QualifiedConditional {
+    fn echo(&self) -> &str {
+        self.0.echo()
+    }
+}
+
+#[cfg_attr(test, di::injectable(Foo))]
+impl QualifiedConditional {
+    #[cfg_attr(test, di::inject)]
+    fn _inject(bar: Ref<dyn Bar>) -> Self {
+        Self(bar)
+    }
+}
