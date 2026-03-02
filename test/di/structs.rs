@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use di::{inject, injectable, lazy::Lazy, Ref};
 use std::marker::PhantomData;
 

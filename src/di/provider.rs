@@ -1,6 +1,4 @@
-use crate::{
-    KeyedRef, KeyedRefMut, Mut, ServiceDescriptor, Ref, RefMut, Type,
-};
+use crate::{KeyedRef, KeyedRefMut, Mut, Ref, RefMut, ServiceDescriptor, Type};
 use std::any::{type_name, Any};
 use std::borrow::Borrow;
 use std::collections::HashMap;
@@ -76,9 +74,7 @@ impl ServiceProvider {
     }
 
     /// Gets a keyed, mutable service of the specified type.
-    pub fn get_by_key_mut<TKey, TSvc: Any + ?Sized>(
-        &self,
-    ) -> Option<KeyedRefMut<TKey, TSvc>> {
+    pub fn get_by_key_mut<TKey, TSvc: Any + ?Sized>(&self) -> Option<KeyedRefMut<TKey, TSvc>> {
         self.get_by_key::<TKey, Mut<TSvc>>()
     }
 
@@ -101,7 +97,7 @@ impl ServiceProvider {
     /// Gets all of the services of the specified key and type.
     pub fn get_all_by_key<'a, TKey: 'a, TSvc>(
         &'a self,
-    ) -> impl Iterator<Item = KeyedRef<TKey, TSvc>> + '_
+    ) -> impl Iterator<Item = KeyedRef<TKey, TSvc>> + 'a
     where
         TSvc: Any + ?Sized,
     {
@@ -117,7 +113,7 @@ impl ServiceProvider {
     /// Gets all of the mutable services of the specified key and type.
     pub fn get_all_by_key_mut<'a, TKey: 'a, TSvc>(
         &'a self,
-    ) -> impl Iterator<Item = KeyedRefMut<TKey, TSvc>> + '_
+    ) -> impl Iterator<Item = KeyedRefMut<TKey, TSvc>> + 'a
     where
         TSvc: Any + ?Sized,
     {
@@ -171,9 +167,7 @@ impl ServiceProvider {
     /// # Panics
     ///
     /// The requested service of type `TSvc` with key `TKey` does not exist.
-    pub fn get_required_by_key_mut<TKey, TSvc: Any + ?Sized>(
-        &self,
-    ) -> KeyedRefMut<TKey, TSvc> {
+    pub fn get_required_by_key_mut<TKey, TSvc: Any + ?Sized>(&self) -> KeyedRefMut<TKey, TSvc> {
         self.get_required_by_key::<TKey, Mut<TSvc>>()
     }
 
@@ -185,21 +179,23 @@ impl ServiceProvider {
 }
 
 /// Represents a scoped [`ServiceProvider`].
-/// 
+///
 /// # Remarks
-/// 
+///
 /// This struct has the exact same functionality as [`ServiceProvider`](crate::ServiceProvider).
 /// When a new instance is created, it also creates a new scope from the source
 /// [`ServiceProvider`](crate::ServiceProvider). The primary use case for this struct is to
 /// explicitly declare that a new scope should be created at the injection call site.
 #[derive(Clone, Default)]
 pub struct ScopedServiceProvider {
-    sp: ServiceProvider
+    sp: ServiceProvider,
 }
 
 impl From<&ServiceProvider> for ScopedServiceProvider {
     fn from(value: &ServiceProvider) -> Self {
-        Self { sp: value.create_scope() }
+        Self {
+            sp: value.create_scope(),
+        }
     }
 }
 
@@ -676,13 +672,14 @@ mod tests {
 
         // act
         {
-            let provider = ServiceCollection::new()
-                .add(existing::<Path, PathBuf>(file.clone().into_boxed_path()))
-                .add(singleton_as_self().from(|sp| {
-                    Ref::new(Droppable::new(sp.get_required::<Path>().to_path_buf()))
-                }))
-                .build_provider()
-                .unwrap();
+            let provider =
+                ServiceCollection::new()
+                    .add(existing::<Path, PathBuf>(file.clone().into_boxed_path()))
+                    .add(singleton_as_self().from(|sp| {
+                        Ref::new(Droppable::new(sp.get_required::<Path>().to_path_buf()))
+                    }))
+                    .build_provider()
+                    .unwrap();
             let _ = provider.get_required::<Droppable>();
         }
 
@@ -699,13 +696,14 @@ mod tests {
 
         // act
         {
-            let _ = ServiceCollection::new()
-                .add(existing::<Path, PathBuf>(file.clone().into_boxed_path()))
-                .add(singleton_as_self().from(|sp| {
-                    Ref::new(Droppable::new(sp.get_required::<Path>().to_path_buf()))
-                }))
-                .build_provider()
-                .unwrap();
+            let _ =
+                ServiceCollection::new()
+                    .add(existing::<Path, PathBuf>(file.clone().into_boxed_path()))
+                    .add(singleton_as_self().from(|sp| {
+                        Ref::new(Droppable::new(sp.get_required::<Path>().to_path_buf()))
+                    }))
+                    .build_provider()
+                    .unwrap();
         }
 
         // assert
