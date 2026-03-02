@@ -358,3 +358,57 @@ fn setup_cat_in_the_hat() {
     assert_eq!(&name, "crate::Thing1");
 }
 ```
+
+## Service Decoration
+
+Service _decoration_ is a unique edge case where you need to change the behavior of an existing service without completing replacing it or reregistering it. Reregistration may not even be possible if you do not know how the service was originally registered, which is typical for extensions.
+
+The following table summarizes [`ServiceCollection`] functions provided for service decoration:
+
+| Function           | Description                                                       |
+| ------------------ | ----------------------------------------------------------------- |
+| [`decorate`]       | Attempts to decorate a specific service type                      |
+| [`decorate_all`]   | Attempts to decorate all registrations of a specific service type |
+
+Consider there is some generic component defined as a `Feature` and you would like to track usage of features. If the `Feature` is external, then decoration is the only option. If the `Feature` is in the same application, you still might choose this approach to keep a clear separation of concerns. The following example illustrates creating a `FeatureTracker` that decorates a registered `Feature` and tracks how many times it is shown. 
+
+```rust
+use di::*;
+use std::sync::atomic::{AtomicUsize, Ordering};
+
+trait Feature {
+    fn show(&self);
+}
+
+#[injectable(Feature)]
+struct FeatureImpl;
+
+impl Feature for FeatureImpl {
+    fn show(&self) {
+    }
+}
+
+struct FeatureTracker {
+    decorated: Ref<dyn Feature>,
+    count: AtomicUsize,
+}
+
+impl Feature for FeatureTracker {
+    fn show(&self) {
+        self.count.fetch_add(0, Ordering::Relaxed);
+        self.decorated.show()
+    }
+}
+
+let services = ServiceCollection::new()
+    .add(FeatureImpl::transient())
+    .decorate::<dyn Feature, FeatureTracker>(|sp, decorated| {
+        Ref::new(FeatureTracker { decorated, count: Default::default() })
+    })
+    .build_provider()
+    .unwrap();
+
+let feature = provider.get_required::<dyn Feature>();
+
+feature.show();
+```

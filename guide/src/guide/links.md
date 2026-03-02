@@ -23,6 +23,8 @@ REF: https://github.com/tag1consulting/goose/issues/320
 [`try_add_all`]: https://docs.rs/more-di/3.1.0/di/struct.ServiceCollection.html#method.try_add_all
 [`replace`]: https://docs.rs/more-di/3.1.0/di/struct.ServiceCollection.html#method.replace
 [`try_replace`]: https://docs.rs/more-di/3.1.0/di/struct.ServiceCollection.html#method.try_replace
+[`decorate`]: https://docs.rs/more-di/3.1.0/di/struct.ServiceCollection.html#method.decorate
+[`decorate_all`]: https://docs.rs/more-di/3.1.0/di/struct.ServiceCollection.html#method.decorate_all
 
 [`ValidationError`]: https://docs.rs/more-di/3.1.0/di/struct.ValidationError.html
 [`validate`]: https://docs.rs/more-di/3.1.0/di/fn.validate.html
