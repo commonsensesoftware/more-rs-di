@@ -36,13 +36,12 @@ A service can have the following lifetimes:
 
 ## Dependency Injection in Action
 
-Consider the following traits and structures.
+Consider the following traits and structures. After they ar defined, the information can be composed into a simple application.
 
 >Proc macro attributes are not required, but they are the fastest and simplest approach to add DI in your applications.
 
 ```rust
 use di::*;
-use std::rc::Rc;
 
 trait Phrase {
     fn salutation(&self) -> &str;
@@ -59,7 +58,7 @@ impl Phrase for EnglishPhrase {
 
 #[injectable]
 struct Person {
-    phrase: Rc<dyn Phrase>,
+    phrase: Ref<dyn Phrase>,
 }
 
 impl Person {
@@ -67,13 +66,6 @@ impl Person {
         self.phrase.salutation()
     }
 }
-```
-
-This information can now be composed into a simple application:
-
-```rust
-use crate::*;
-use di::*;
 
 fn main() {
     let provider = ServiceCollection::new()
