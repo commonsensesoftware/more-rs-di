@@ -5,7 +5,6 @@
 	// List of extensions which should be recommended for users of this workspace.
 	"recommendations": [
 		"rust-lang.rust-analyzer",
-		"eamodio.gitlens",
 		"streetsidesoftware.code-spell-checker",
 		"vadimcn.vscode-lldb",
 		"tamasfe.even-better-toml"
