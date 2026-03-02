@@ -473,3 +473,67 @@ fn inject_should_support_multiple_traits() {
     // assert
     // no panic!
 }
+
+#[test]
+fn inject_should_implement_struct_with_qualified_conditional_attribute() {
+    // arrange
+    let provider = ServiceCollection::new()
+        .add(structs::Bar::transient())
+        .add(structs::QualifiedConditional::singleton())
+        .build_provider()
+        .unwrap();
+
+    // act
+    let service = provider.get::<structs::QualifiedConditional>();
+
+    // assert
+    assert!(service.is_some());
+}
+
+#[test]
+fn inject_should_implement_struct_with_unqualified_conditional_attribute() {
+    // arrange
+    let provider = ServiceCollection::new()
+        .add(structs::Bar::transient())
+        .add(structs::UnqualifiedConditional::singleton())
+        .build_provider()
+        .unwrap();
+
+    // act
+    let service = provider.get::<structs::UnqualifiedConditional>();
+
+    // assert
+    assert!(service.is_some());
+}
+
+#[test]
+fn inject_should_implement_trait_with_qualified_conditional_attribute() {
+    // arrange
+    let provider = ServiceCollection::new()
+        .add(traits::BarImpl::transient())
+        .add(traits::QualifiedConditional::singleton())
+        .build_provider()
+        .unwrap();
+
+    // act
+    let foo = provider.get_required::<dyn Foo>();
+
+    // assert
+    assert_eq!("Success!", foo.echo());
+}
+
+#[test]
+fn inject_should_implement_trait_with_unqualified_conditional_attribute() {
+    // arrange
+    let provider = ServiceCollection::new()
+        .add(traits::BarImpl::transient())
+        .add(traits::UnqualifiedConditional::singleton())
+        .build_provider()
+        .unwrap();
+
+    // act
+    let foo = provider.get_required::<dyn Foo>();
+
+    // assert
+    assert_eq!("Success!", foo.echo());
+}
