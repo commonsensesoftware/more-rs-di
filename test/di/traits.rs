@@ -199,10 +199,7 @@ pub struct CatInTheHat {
 
 #[injectable]
 impl CatInTheHat {
-    pub fn new(
-        thing1: KeyedRef<key::Thing1, dyn Thing>,
-        thing2: KeyedRef<key::Thing2, dyn Thing>,
-    ) -> Self {
+    pub fn new(thing1: KeyedRef<key::Thing1, dyn Thing>, thing2: KeyedRef<key::Thing2, dyn Thing>) -> Self {
         Self {
             thing1: thing1.into(),
             thing2: thing2.into(),
@@ -217,9 +214,7 @@ pub struct Thingies {
 #[injectable]
 impl Thingies {
     pub fn new(items: impl Iterator<Item = Ref<dyn Thing>>) -> Self {
-        Self {
-            items: items.collect(),
-        }
+        Self { items: items.collect() }
     }
 
     pub fn count(&self) -> usize {

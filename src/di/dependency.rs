@@ -22,9 +22,9 @@ pub struct ServiceDependency {
 
 impl ServiceDependency {
     /// Initializes a new service dependency.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `injected_type` - The [injected type](crate::Type) of the service dependency
     /// * `cardinality` - The [cardinality](crate::ServiceCardinality) of the service dependency
     pub fn new(injected_type: Type, cardinality: ServiceCardinality) -> Self {

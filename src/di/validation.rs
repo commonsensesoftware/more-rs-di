@@ -1,7 +1,4 @@
-use crate::{
-    ServiceCardinality, ServiceCollection, ServiceDependency, ServiceDescriptor, ServiceLifetime,
-    Type,
-};
+use crate::{ServiceCardinality, ServiceCollection, ServiceDependency, ServiceDescriptor, ServiceLifetime, Type};
 use std::collections::{HashMap, HashSet};
 use std::fmt::{Display, Formatter};
 
@@ -227,11 +224,7 @@ pub fn validate(services: &ServiceCollection) -> Result<(), ValidationError> {
     let mut missing_type = MissingRequiredType::new(&lookup);
     let mut circular_dep = CircularDependency::new(&lookup);
     let mut scoped_in_singleton = SingletonDependsOnScoped::new(&lookup);
-    let mut rules: Vec<&mut dyn ValidationRule> = vec![
-        &mut missing_type,
-        &mut circular_dep,
-        &mut scoped_in_singleton,
-    ];
+    let mut rules: Vec<&mut dyn ValidationRule> = vec![&mut missing_type, &mut circular_dep, &mut scoped_in_singleton];
 
     for descriptor in services {
         for rule in rules.iter_mut() {
@@ -259,11 +252,7 @@ mod tests {
         services.add(
             singleton::<dyn OtherTestService, OtherTestServiceImpl>()
                 .depends_on(exactly_one::<dyn TestService>())
-                .from(|sp| {
-                    Ref::new(OtherTestServiceImpl::new(
-                        sp.get_required::<dyn TestService>(),
-                    ))
-                }),
+                .from(|sp| Ref::new(OtherTestServiceImpl::new(sp.get_required::<dyn TestService>()))),
         );
 
         // act
@@ -294,10 +283,7 @@ mod tests {
                         ))
                     }),
             )
-            .add(
-                transient_with_key::<key::Thing2, dyn Thing, Thing2>()
-                    .from(|_| Ref::new(Thing2::default())),
-            );
+            .add(transient_with_key::<key::Thing2, dyn Thing, Thing2>().from(|_| Ref::new(Thing2::default())));
 
         // act
         let result = validate(&services);
@@ -345,10 +331,7 @@ mod tests {
                         ))
                     }),
             )
-            .add(
-                transient_with_key::<key::Thing1, dyn Thing, Thing1>()
-                    .from(|_| Ref::new(Thing1::default())),
-            );
+            .add(transient_with_key::<key::Thing1, dyn Thing, Thing1>().from(|_| Ref::new(Thing1::default())));
 
         // act
         let result = validate(&services);
@@ -365,11 +348,7 @@ mod tests {
         services.add(
             singleton::<dyn TestService, TestCircularDepImpl>()
                 .depends_on(exactly_one::<dyn TestService>())
-                .from(|sp| {
-                    Ref::new(TestCircularDepImpl::new(
-                        sp.get_required::<dyn TestService>(),
-                    ))
-                }),
+                .from(|sp| Ref::new(TestCircularDepImpl::new(sp.get_required::<dyn TestService>()))),
         );
 
         // act
@@ -403,11 +382,7 @@ mod tests {
             .add(
                 singleton::<dyn OtherTestService, OtherTestServiceImpl>()
                     .depends_on(exactly_one::<dyn TestService>())
-                    .from(|sp| {
-                        Ref::new(OtherTestServiceImpl::new(
-                            sp.get_required::<dyn TestService>(),
-                        ))
-                    }),
+                    .from(|sp| Ref::new(OtherTestServiceImpl::new(sp.get_required::<dyn TestService>()))),
             );
 
         // act
@@ -428,18 +403,11 @@ mod tests {
         let mut services = ServiceCollection::new();
 
         services
-            .add(
-                scoped::<dyn TestService, TestServiceImpl>()
-                    .from(|_| Ref::new(TestServiceImpl::default())),
-            )
+            .add(scoped::<dyn TestService, TestServiceImpl>().from(|_| Ref::new(TestServiceImpl::default())))
             .add(
                 singleton::<dyn OtherTestService, OtherTestServiceImpl>()
                     .depends_on(exactly_one::<dyn TestService>())
-                    .from(|sp| {
-                        Ref::new(OtherTestServiceImpl::new(
-                            sp.get_required::<dyn TestService>(),
-                        ))
-                    }),
+                    .from(|sp| Ref::new(OtherTestServiceImpl::new(sp.get_required::<dyn TestService>()))),
             );
 
         // act
@@ -459,27 +427,16 @@ mod tests {
         let mut services = ServiceCollection::new();
 
         services
-            .add(
-                scoped::<dyn TestService, TestServiceImpl>()
-                    .from(|_| Ref::new(TestServiceImpl::default())),
-            )
+            .add(scoped::<dyn TestService, TestServiceImpl>().from(|_| Ref::new(TestServiceImpl::default())))
             .add(
                 transient::<dyn OtherTestService, OtherTestServiceImpl>()
                     .depends_on(exactly_one::<dyn TestService>())
-                    .from(|sp| {
-                        Ref::new(OtherTestServiceImpl::new(
-                            sp.get_required::<dyn TestService>(),
-                        ))
-                    }),
+                    .from(|sp| Ref::new(OtherTestServiceImpl::new(sp.get_required::<dyn TestService>()))),
             )
             .add(
                 singleton::<dyn AnotherTestService, AnotherTestServiceImpl>()
                     .depends_on(exactly_one::<dyn OtherTestService>())
-                    .from(|sp| {
-                        Ref::new(AnotherTestServiceImpl::new(
-                            sp.get_required::<dyn OtherTestService>(),
-                        ))
-                    }),
+                    .from(|sp| Ref::new(AnotherTestServiceImpl::new(sp.get_required::<dyn OtherTestService>()))),
             );
 
         // act
@@ -499,22 +456,16 @@ mod tests {
         let mut services = ServiceCollection::new();
 
         services
-            .add(
-                singleton::<dyn ServiceM, ServiceMImpl>().from(|_sp| Ref::new(ServiceMImpl)),
-            )
+            .add(singleton::<dyn ServiceM, ServiceMImpl>().from(|_sp| Ref::new(ServiceMImpl)))
             .add(
                 singleton::<dyn ServiceB, ServiceBImpl>()
                     .depends_on(exactly_one::<dyn ServiceM>())
-                    .from(|sp| {
-                        Ref::new(ServiceBImpl::new(sp.get_required::<dyn ServiceM>()))
-                    }),
+                    .from(|sp| Ref::new(ServiceBImpl::new(sp.get_required::<dyn ServiceM>()))),
             )
             .add(
                 singleton::<dyn ServiceC, ServiceCImpl>()
                     .depends_on(exactly_one::<dyn ServiceM>())
-                    .from(|sp| {
-                        Ref::new(ServiceCImpl::new(sp.get_required::<dyn ServiceM>()))
-                    }),
+                    .from(|sp| Ref::new(ServiceCImpl::new(sp.get_required::<dyn ServiceM>()))),
             )
             .add(
                 singleton::<dyn ServiceA, ServiceAImpl>()
@@ -576,15 +527,11 @@ mod tests {
         let mut services = ServiceCollection::new();
 
         services
-            .add(
-                singleton::<dyn ServiceM, ServiceMImpl>().from(|_sp| Ref::new(ServiceMImpl)),
-            )
+            .add(singleton::<dyn ServiceM, ServiceMImpl>().from(|_sp| Ref::new(ServiceMImpl)))
             .add(
                 singleton::<dyn ServiceB, ServiceBImpl>()
                     .depends_on(exactly_one::<dyn ServiceM>())
-                    .from(|sp| {
-                        Ref::new(ServiceBImpl::new(sp.get_required::<dyn ServiceM>()))
-                    }),
+                    .from(|sp| Ref::new(ServiceBImpl::new(sp.get_required::<dyn ServiceM>()))),
             )
             .add(
                 singleton::<dyn ServiceC, ServiceCWithCircleRefToXImpl>()

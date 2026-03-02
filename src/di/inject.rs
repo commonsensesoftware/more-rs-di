@@ -64,9 +64,7 @@ mod tests {
             InjectBuilder::new(
                 Activator::new::<dyn OtherTestService, Self>(
                     |sp| Ref::new(Self::new(sp.get_required::<dyn TestService>())),
-                    |sp| {
-                        Ref::new(Mut::new(Self::new(sp.get_required::<dyn TestService>())))
-                    },
+                    |sp| Ref::new(Mut::new(Self::new(sp.get_required::<dyn TestService>()))),
                 ),
                 lifetime,
             )

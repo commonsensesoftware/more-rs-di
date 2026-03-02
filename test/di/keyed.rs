@@ -4,8 +4,8 @@
 
 #![allow(dead_code)]
 
-use di::{injectable, lazy::Lazy, KeyedRef, KeyedRefMut};
 use cfg_if::cfg_if;
+use di::{injectable, lazy::Lazy, KeyedRef, KeyedRefMut};
 
 cfg_if! {
     if #[cfg(feature = "async")] {
@@ -65,7 +65,7 @@ cfg_if! {
         pub struct KeyedStructImplRef {
             dep: KeyedRef<key::Key1, RwLock<KeyedDep>>,
         }
-        
+
         #[injectable]
         impl KeyedStructImplRef {
             fn new(dep: KeyedRef<key::Key1, RwLock<KeyedDep>>) -> Self {
@@ -76,7 +76,7 @@ cfg_if! {
         pub struct KeyedStructImplRef {
             dep: KeyedRef<key::Key1, RefCell<KeyedDep>>,
         }
-        
+
         #[injectable]
         impl KeyedStructImplRef {
             fn new(dep: KeyedRef<key::Key1, RefCell<KeyedDep>>) -> Self {
@@ -98,9 +98,7 @@ pub struct KeyedStructIter {
 #[injectable]
 impl KeyedStructIter {
     pub fn new(deps: impl Iterator<Item = KeyedRef<key::Key1, KeyedDep>>) -> Self {
-        Self {
-            vec: deps.collect(),
-        }
+        Self { vec: deps.collect() }
     }
 }
 
@@ -109,7 +107,7 @@ cfg_if! {
         pub struct KeyedStructIterRef {
             pub vec: Vec<KeyedRef<key::Key1, RwLock<KeyedDep>>>,
         }
-        
+
         #[injectable]
         impl KeyedStructIterRef {
             pub fn new(deps: impl Iterator<Item = KeyedRef<key::Key1, RwLock<KeyedDep>>>) -> Self {
@@ -122,7 +120,7 @@ cfg_if! {
         pub struct KeyedStructIterRef {
             pub vec: Vec<KeyedRef<key::Key1, RefCell<KeyedDep>>>,
         }
-        
+
         #[injectable]
         impl KeyedStructIterRef {
             pub fn new(deps: impl Iterator<Item = KeyedRef<key::Key1, RefCell<KeyedDep>>>) -> Self {
@@ -152,5 +150,5 @@ impl KeyedStructLazyImpl {
 
 #[injectable]
 pub struct KeyedStructMut {
-    pub dep: KeyedRefMut<key::Key3, KeyedDep>
+    pub dep: KeyedRefMut<key::Key3, KeyedDep>,
 }

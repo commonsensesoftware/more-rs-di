@@ -1,4 +1,4 @@
-use crate::{ServiceProvider, Ref};
+use crate::{Ref, ServiceProvider};
 use std::any::type_name;
 use std::collections::hash_map::DefaultHasher;
 use std::fmt::{Display, Formatter, Result as FormatResult};
@@ -20,19 +20,13 @@ impl Type {
 
     /// Initializes a new instance of a type based on another type as a key.
     pub fn keyed<TKey, TType: ?Sized>() -> Self {
-        Type::new(
-            type_name::<TType>().to_string(),
-            Some(type_name::<TKey>().to_string()),
-        )
+        Type::new(type_name::<TType>().to_string(), Some(type_name::<TKey>().to_string()))
     }
 
     /// Initializes a new instance of a type for a factory function based
     /// on the specified return type.
     pub fn factory_of<TSvc: ?Sized>() -> Self {
-        Type::new(
-            type_name::<dyn Fn(&ServiceProvider) -> Ref<TSvc>>().to_string(),
-            None,
-        )
+        Type::new(type_name::<dyn Fn(&ServiceProvider) -> Ref<TSvc>>().to_string(), None)
     }
 
     /// Initializes a new instance for an unknown type.

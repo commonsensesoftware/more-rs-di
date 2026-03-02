@@ -9,17 +9,11 @@ pub struct TraitInjector<'a> {
 
 impl<'a> TraitInjector<'a> {
     pub fn new(trait_: &'a TypeTraitObject) -> Self {
-        Self {
-            trait_,
-            key: None,
-        }
+        Self { trait_, key: None }
     }
 
     pub fn keyed(trait_: &'a TypeTraitObject, key: &'a TypePath) -> Self {
-        Self {
-            trait_,
-            key: Some(key),
-        }
+        Self { trait_, key: Some(key) }
     }
 }
 

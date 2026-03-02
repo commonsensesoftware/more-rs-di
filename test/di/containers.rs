@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 
 use crate::traits::*;
-use di::{inject, injectable, ServiceProvider, Ref, ScopedServiceProvider};
+use di::{inject, injectable, Ref, ScopedServiceProvider, ServiceProvider};
 
 pub struct Container {
     provider: ServiceProvider,
@@ -42,7 +42,7 @@ impl ScopedContainer {
 
 #[injectable]
 pub struct ScopedContainer2 {
-    provider: ScopedServiceProvider
+    provider: ScopedServiceProvider,
 }
 
 impl ScopedContainer2 {
