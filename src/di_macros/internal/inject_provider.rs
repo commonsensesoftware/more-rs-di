@@ -7,9 +7,9 @@ impl InjectionStrategy for ServiceProviderInjector {
     fn inject(&self, context: &CallSiteContext) -> InjectedCallSite {
         InjectedCallSite {
             resolve: if context.scoped {
-                quote! { sp.into() } // ServiceProvider.into() -> ScopedServiceProvider
+                quote! { ScopedServiceProvider::from(sp) }
             } else {
-                quote! { sp.clone() } // ServiceProvider.clone() -> ServiceProvider
+                quote! { sp.clone() }
             },
             dependency: None,
         }
