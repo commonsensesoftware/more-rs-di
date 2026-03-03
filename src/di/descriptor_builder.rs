@@ -25,7 +25,7 @@ impl<TSvc: Any + ?Sized, TImpl> ServiceDescriptorBuilder<TSvc, TImpl> {
             self.service_type,
             self.implementation_type,
             if self.dependencies.is_empty() {
-                Vec::with_capacity(0)
+                Vec::new()
             } else {
                 self.dependencies.shrink_to_fit();
                 self.dependencies

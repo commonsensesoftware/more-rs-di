@@ -23,7 +23,7 @@ impl Fields {
                 }
             }
             syn::Fields::Unit => {
-                callsites = Vec::with_capacity(0);
+                callsites = Vec::new();
             }
         }
 

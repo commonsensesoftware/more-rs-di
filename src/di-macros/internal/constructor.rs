@@ -74,7 +74,7 @@ impl Constructor {
         let count = ctor.inputs.len();
 
         if count == 0 {
-            return Ok(Vec::with_capacity(0));
+            return Ok(Vec::new());
         }
 
         let mut callsites = Vec::with_capacity(count);

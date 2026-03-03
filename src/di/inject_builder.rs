@@ -60,7 +60,7 @@ impl InjectBuilder {
             },
             self.activator.implementation_type().clone(),
             if self.dependencies.is_empty() {
-                Vec::with_capacity(0)
+                Vec::new()
             } else {
                 self.dependencies.shrink_to_fit();
                 self.dependencies

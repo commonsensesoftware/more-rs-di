@@ -279,7 +279,7 @@ impl<'a, TKey, TSvc: Any + ?Sized> Iterator for KeyedServiceIterator<'a, TKey, T
 impl Default for ServiceProvider {
     fn default() -> Self {
         Self {
-            services: Ref::new(HashMap::with_capacity(0)),
+            services: Ref::new(HashMap::new()),
         }
     }
 }

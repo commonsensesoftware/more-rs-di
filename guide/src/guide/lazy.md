@@ -66,8 +66,8 @@ module as follows:
 | [`lazy::zero_or_more_by_key_mut`]  | One or more mutable services with a key lazily           |
 | [`lazy::missing`]                  | Always resolves `None`                                   |
 | [`lazy::missing_with_key`]         | Always resolves `None`                                   |
-| [`lazy::empty`]                    | Always resolves `Vec::with_capacity(0)`                  |
-| [`lazy::empty_with_key`]           | Always resolves `Vec::with_capacity(0)`                  |
+| [`lazy::empty`]                    | Always resolves `Vec::new()`                             |
+| [`lazy::empty_with_key`]           | Always resolves `Vec::new()`                             |
 | [`lazy::init`]                     | Initializes from an instance (ex: testing)               |
 | [`lazy::init_mut`]                 | Initializes from a mutable instance (ex: testing)        |
 | [`lazy::init_by_key`]              | Initializes from a keyed instance (ex: testing)          |

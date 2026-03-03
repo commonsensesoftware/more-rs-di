@@ -272,7 +272,7 @@ impl CallSite {
             }
         }
 
-        Vec::with_capacity(0)
+        Vec::new()
     }
 
     /* visit generic type arguments of:
@@ -311,7 +311,7 @@ impl CallSite {
             }
         }
 
-        Vec::with_capacity(0)
+        Vec::new()
     }
 
     // impl Iterator<Item = ?>
