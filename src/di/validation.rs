@@ -6,8 +6,8 @@ fn expand_type(t: &Type) -> String {
     let (name, key) = Type::deconstruct(t);
 
     match key {
-        Some(val) => format!("'{}' with the key '{}'", name, val),
-        _ => format!("'{}'", name),
+        Some(val) => format!("'{name}' with the key '{val}'"),
+        _ => format!("'{name}'"),
     }
 }
 
@@ -191,9 +191,8 @@ impl<'a> ValidationRule<'a> for SingletonDependsOnScoped<'a> {
                         if next.lifetime() == ServiceLifetime::Scoped {
                             results.push(ValidationResult::fail(format!(
                                 "The service {} has a singleton lifetime, \
-                                 but its {}dependency '{}' has a scoped lifetime",
+                                 but its {level}dependency '{}' has a scoped lifetime",
                                 expand_type(descriptor.implementation_type()),
-                                level,
                                 next.service_type().name()
                             )));
                         }

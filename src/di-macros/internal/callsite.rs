@@ -112,7 +112,7 @@ impl CallSite {
                 }
                 count => Err(Error::new(
                     arg.span(),
-                    format!("Expected 1-2 type arguments, but found {}.", count),
+                    format!("Expected 1-2 type arguments, but found {count}."),
                 )),
             }
         } else if context.scoped

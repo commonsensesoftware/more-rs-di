@@ -1,4 +1,5 @@
 use crate::{KeyedRef, KeyedRefMut, Mut, Ref, RefMut, ServiceDescriptor, Type};
+use cfg_if::cfg_if;
 use std::any::{type_name, Any};
 use std::borrow::Borrow;
 use std::collections::HashMap;
@@ -12,11 +13,12 @@ pub struct ServiceProvider {
     services: Ref<HashMap<Type, Vec<ServiceDescriptor>>>,
 }
 
-#[cfg(feature = "async")]
-unsafe impl Send for ServiceProvider {}
-
-#[cfg(feature = "async")]
-unsafe impl Sync for ServiceProvider {}
+cfg_if! {
+    if #[cfg(feature = "async")] {
+        unsafe impl Send for ServiceProvider {}
+        unsafe impl Sync for ServiceProvider {}
+    }
+}
 
 impl ServiceProvider {
     /// Initializes a new service provider.
@@ -202,19 +204,13 @@ impl Deref for ScopedServiceProvider {
     }
 }
 
-struct ServiceIterator<'a, T>
-where
-    T: Any + ?Sized,
-{
+struct ServiceIterator<'a, T: Any + ?Sized> {
     provider: &'a ServiceProvider,
     descriptors: Box<dyn Iterator<Item = &'a ServiceDescriptor> + 'a>,
     _marker: PhantomData<T>,
 }
 
-struct KeyedServiceIterator<'a, TKey, TSvc>
-where
-    TSvc: Any + ?Sized,
-{
+struct KeyedServiceIterator<'a, TKey, TSvc: Any + ?Sized> {
     provider: &'a ServiceProvider,
     descriptors: Box<dyn Iterator<Item = &'a ServiceDescriptor> + 'a>,
     _key: PhantomData<TKey>,
@@ -261,6 +257,7 @@ impl<'a, TKey, TSvc: Any + ?Sized> KeyedServiceIterator<'a, TKey, TSvc> {
 
 impl<'a, TKey, TSvc: Any + ?Sized> Iterator for KeyedServiceIterator<'a, TKey, TSvc> {
     type Item = KeyedRef<TKey, TSvc>;
+
     fn next(&mut self) -> Option<Self::Item> {
         if let Some(descriptor) = self.descriptors.next() {
             Some(KeyedRef::new(
@@ -286,6 +283,7 @@ impl Default for ServiceProvider {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     use crate::{
         existing, existing_as_self, scoped, singleton, singleton_as_self, singleton_with_key, test::*, transient, Ref,
         ServiceCollection,
@@ -293,11 +291,12 @@ mod tests {
     use std::fs::remove_file;
     use std::path::{Path, PathBuf};
 
-    #[cfg(feature = "async")]
-    use std::sync::{Arc, Mutex};
-
-    #[cfg(feature = "async")]
-    use std::thread;
+    cfg_if! {
+        if #[cfg(feature = "async")] {
+            use std::sync::{Arc, Mutex};
+            use std::thread;
+        }
+    }
 
     #[test]
     fn get_should_return_none_when_service_is_unregistered() {

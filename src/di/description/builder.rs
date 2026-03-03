@@ -1,4 +1,5 @@
-use crate::{Ref, ServiceDependency, ServiceDescriptor, ServiceLifetime, ServiceProvider, Type};
+use super::{ServiceDescriptor, ServiceLifetime};
+use crate::{Ref, ServiceDependency, ServiceProvider, Type};
 use std::any::Any;
 use std::marker::PhantomData;
 use std::sync::OnceLock;
