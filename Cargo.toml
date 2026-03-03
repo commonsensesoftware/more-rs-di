@@ -1,5 +1,5 @@
 [workspace]
-members = ["src/di", "src/di_*", "test/di"]
+members = ["src/di", "src/di-*", "test/di"]
 
 [workspace.package]
 version = "3.2.0"
