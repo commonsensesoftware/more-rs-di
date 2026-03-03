@@ -1,7 +1,22 @@
-use super::ServiceLifetime;
-use crate::{Ref, ServiceDependency, ServiceFactory, ServiceProvider, Type};
+use crate::{Mut, ServiceDependency, ServiceProvider, Type};
 use std::any::Any;
 use std::sync::OnceLock;
+
+
+
+/// Represents the type alias for a service reference.
+#[cfg(not(feature = "async"))]
+pub type Ref<T> = std::rc::Rc<T>;
+
+/// Represents the type alias for a service reference.
+#[cfg(feature = "async")]
+pub type Ref<T> = std::sync::Arc<T>;
+
+/// Represents the type alias for a mutable service reference.
+pub type RefMut<T> = Ref<Mut<T>>;
+
+/// Represents the callback function used to create a service.
+pub type ServiceFactory = dyn Fn(&ServiceProvider) -> Ref<dyn Any>;
 
 /// Represents the description of a service with its service type, implementation, and lifetime.
 pub struct ServiceDescriptor {

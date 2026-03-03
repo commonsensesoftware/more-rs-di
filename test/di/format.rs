@@ -73,7 +73,7 @@ fn debug_should_format_service_collection() {
         .add(Thing3::scoped());
 
     // act
-    let output = format!("{:?}", services);
+    let output = format!("{services:?}");
 
     // assert
     assert_eq!(
