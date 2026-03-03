@@ -100,7 +100,7 @@ impl ServiceDescriptor {
             dependencies: if dependencies {
                 self.dependencies.clone()
             } else {
-                Vec::with_capacity(0)
+                Vec::new()
             },
             instance: if self.lifetime == ServiceLifetime::Singleton {
                 self.instance.clone()
