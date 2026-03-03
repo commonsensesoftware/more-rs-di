@@ -21,7 +21,7 @@ jobs:
       security-events: write
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install Rust
         run: |
@@ -35,19 +35,19 @@ jobs:
 
       - name: Cargo Build
         run: |
-          cargo build
+          cargo build --features alias,fmt,lazy
           cargo build --features async
 
       - name: Cargo Test
         run: |
-          cargo test -- -Z unstable-options --format json --report-time | cargo2junit > target/debug/results.xml
+          cargo test --features alias,fmt,lazy -- -Z unstable-options --format json --report-time | cargo2junit > target/debug/results.xml
           cargo test --features async -- -Z unstable-options --format json --report-time | cargo2junit > target/debug/results-async.xml
 
       # REF: https://github.com/marketplace/actions/publish-test-results
 
       - name: Publish Test Results
         uses: EnricoMi/publish-unit-test-result-action@v2
-        if: always()
+        if: (!cancelled())
         with:
           files: |
             target/debug/*.xml
