@@ -8,3 +8,6 @@ license = "MIT"
 homepage = "https://commonsensesoftware.github.io/more-rs-di/"
 repository = "https://github.com/commonsensesoftware/more-rs-di"
 edition = "2018"
+
+[workspace.dependencies]
+cfg-if = "1.0"
