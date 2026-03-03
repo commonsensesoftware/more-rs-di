@@ -167,9 +167,7 @@ impl ServiceCollection {
 
     /// Builds and returns a new [`ServiceProvider`](crate::ServiceProvider).
     pub fn build_provider(&self) -> Result<ServiceProvider, ValidationError> {
-        if let Err(error) = validate(self) {
-            return Err(error);
-        }
+        validate(self)?;
 
         let mut services = HashMap::with_capacity(self.items.len());
 
@@ -192,7 +190,7 @@ impl ServiceCollection {
     }
 
     /// Gets a read-only iterator for the collection
-    pub fn iter(&self) -> impl Iterator<Item = &ServiceDescriptor> + ExactSizeIterator + DoubleEndedIterator {
+    pub fn iter(&self) -> impl ExactSizeIterator<Item = &ServiceDescriptor> + DoubleEndedIterator {
         self.items.iter()
     }
 
@@ -424,14 +422,14 @@ impl Index<usize> for ServiceCollection {
 
 impl std::fmt::Debug for ServiceCollection {
     fn fmt(&self, f: &mut Formatter<'_>) -> FormatResult {
-        print(self, TextRenderer::default(), f)
+        print(self, TextRenderer, f)
     }
 }
 
 #[cfg(feature = "fmt")]
 impl Display for ServiceCollection {
     fn fmt(&self, f: &mut Formatter<'_>) -> FormatResult {
-        print(self, TerminalRenderer::default(), f)
+        print(self, TerminalRenderer, f)
     }
 }
 
@@ -737,8 +735,8 @@ fn indent<R: Renderer>(
     renderer: &mut R,
     last: bool,
 ) -> FormatResult {
-    for i in 0..branches.len() {
-        renderer.write(branches[i], formatter)?;
+    for branch in &*branches {
+        renderer.write(*branch, formatter)?;
     }
 
     if last {

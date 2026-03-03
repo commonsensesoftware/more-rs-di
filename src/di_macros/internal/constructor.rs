@@ -81,7 +81,7 @@ impl Constructor {
 
         for input in ctor.inputs.iter() {
             let callsite = match input {
-                FnArg::Typed(ref type_) => CallSite::visit(&*type_.ty, false)?,
+                FnArg::Typed(ref type_) => CallSite::visit(&type_.ty, false)?,
                 _ => {
                     return Err(Error::new(
                         input.span(),

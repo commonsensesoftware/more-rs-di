@@ -126,7 +126,7 @@ impl CallSite {
         }
     }
 
-    fn new_context<'a>(arg: &'a Type, known_types: &'a Vec<KnownType>) -> Result<CallSiteContext<'a>> {
+    fn new_context<'a>(arg: &'a Type, known_types: &'a [KnownType]) -> Result<CallSiteContext<'a>> {
         let mut builder = CallSiteContextBuilder::default();
         let mut read_only = true;
         let input = if let Some(ty) = Self::try_visit_iterator(arg) {
@@ -195,7 +195,7 @@ impl CallSite {
         }
     }
 
-    fn is_mutable_type(type_: &TypePath, known_types: &Vec<KnownType>) -> bool {
+    fn is_mutable_type(type_: &TypePath, known_types: &[KnownType]) -> bool {
         if let Some(name) = type_.path.segments.last() {
             if let Some(known_type) = known_types
                 .iter()
@@ -208,12 +208,10 @@ impl CallSite {
                 // KeyedRef<K,Mut<T>>
                 if known_type.mutable {
                     if let PathArguments::AngleBracketed(ref generics) = name.arguments {
-                        if let GenericArgument::Type(arg) = generics.args.last().unwrap() {
-                            if let Type::Path(ty) = arg {
-                                if let Some(name) = ty.path.segments.last() {
-                                    return name.ident == Ident::new("RefCell", Span::call_site())
-                                        || name.ident == Ident::new("RwLock", Span::call_site());
-                                }
+                        if let GenericArgument::Type(Type::Path(ty)) = generics.args.last().unwrap() {
+                            if let Some(name) = ty.path.segments.last() {
+                                return name.ident == Ident::new("RefCell", Span::call_site())
+                                    || name.ident == Ident::new("RwLock", Span::call_site());
                             }
                         }
                     }
@@ -225,21 +223,21 @@ impl CallSite {
             }
         }
 
-        return false;
+        false
     }
 
     #[inline]
-    fn try_visit_lazy<'a>(type_: &'a TypePath) -> Option<&'a Type> {
+    fn try_visit_lazy(type_: &TypePath) -> Option<&Type> {
         Self::visit_generic_type_arg(type_, "Lazy")
     }
 
     #[inline]
-    fn try_visit_option<'a>(type_: &'a TypePath) -> Option<&'a Type> {
+    fn try_visit_option(type_: &TypePath) -> Option<&Type> {
         Self::visit_generic_type_arg(type_, "Option")
     }
 
     #[inline]
-    fn try_visit_vector<'a>(type_: &'a TypePath) -> Option<&'a Type> {
+    fn try_visit_vector(type_: &TypePath) -> Option<&Type> {
         Self::visit_generic_type_arg(type_, "Vec")
     }
 
@@ -317,7 +315,7 @@ impl CallSite {
     }
 
     // impl Iterator<Item = ?>
-    fn try_visit_iterator<'a>(arg: &'a Type) -> Option<&'a Type> {
+    fn try_visit_iterator(arg: &Type) -> Option<&Type> {
         if let Type::ImplTrait(impl_) = arg {
             for bound in impl_.bounds.iter() {
                 if let TypeParamBound::Trait(trait_) = bound {
