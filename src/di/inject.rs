@@ -28,7 +28,7 @@ pub trait Injectable: Sized {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::*;
+    use crate::{Activator, Mut, Ref, ServiceCollection};
 
     trait TestService {}
     trait OtherTestService {}

@@ -242,7 +242,10 @@ pub fn validate(services: &ServiceCollection) -> Result<(), ValidationError> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{test::*, *};
+    use crate::{
+        exactly_one, exactly_one_with_key, scoped, singleton, singleton_as_self, test::*, transient,
+        transient_with_key, zero_or_one, zero_or_one_with_key, Ref,
+    };
 
     #[test]
     fn validate_should_report_missing_required_type() {
