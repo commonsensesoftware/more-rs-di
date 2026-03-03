@@ -62,13 +62,13 @@ pub(crate) fn try_get_aliases() -> Option<Aliases> {
 
     let mut input = String::new();
 
-    if let Ok(_) = File::open(path).and_then(|mut f| f.read_to_string(&mut input)) {
+    if File::open(path).and_then(|mut f| f.read_to_string(&mut input)).is_ok() {
         if let Ok(manifest) = toml::from_str::<Manifest>(&input) {
             if let Some(deps) = manifest.dependencies {
-                return deps.di.or(deps.di_macros).map_or(None, |d| d.aliases);
+                return deps.di.or(deps.di_macros).and_then(|d| d.aliases);
             }
         }
     }
 
-    return None;
+    None
 }

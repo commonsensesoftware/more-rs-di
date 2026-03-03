@@ -138,12 +138,10 @@ pub trait CallSiteInjector<'a> {
                     } else {
                         quote! { sp.get_all_by_key::<#key, #svc>() }
                     }
+                } else if context.mutable {
+                    quote! { sp.get_all_by_key_mut::<#key, #svc>().collect() }
                 } else {
-                    if context.mutable {
-                        quote! { sp.get_all_by_key_mut::<#key, #svc>().collect() }
-                    } else {
-                        quote! { sp.get_all_by_key::<#key, #svc>().collect() }
-                    }
+                    quote! { sp.get_all_by_key::<#key, #svc>().collect() }
                 },
                 dependency: if context.mutable {
                     Some(quote! {
@@ -171,12 +169,10 @@ pub trait CallSiteInjector<'a> {
                     } else {
                         quote! { sp.get_all::<#svc>() }
                     }
+                } else if context.mutable {
+                    quote! { sp.get_all_mut::<#svc>().collect() }
                 } else {
-                    if context.mutable {
-                        quote! { sp.get_all_mut::<#svc>().collect() }
-                    } else {
-                        quote! { sp.get_all::<#svc>().collect() }
-                    }
+                    quote! { sp.get_all::<#svc>().collect() }
                 },
                 dependency: if context.mutable {
                     Some(quote! {

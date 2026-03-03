@@ -89,7 +89,7 @@ impl ServiceDescriptor {
             return (self.factory)(services);
         }
 
-        return self.instance.call_once(|| (self.factory)(services)).clone();
+        self.instance.call_once(|| (self.factory)(services)).clone()
     }
 
     pub(crate) fn clone_with(&self, dependencies: bool) -> Self {

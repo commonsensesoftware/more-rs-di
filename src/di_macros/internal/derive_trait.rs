@@ -61,6 +61,6 @@ impl InjectableTrait {
             }
         };
 
-        Ok(code.into())
+        Ok(code)
     }
 }

@@ -25,12 +25,12 @@ pub fn injectable(metadata: proc_macro::TokenStream, input: proc_macro::TokenStr
 }
 
 fn _injectable(metadata: TokenStream, input: TokenStream) -> TokenStream {
-    let original = TokenStream::from(input.clone());
+    let original = input.clone();
     let result = match parse2::<InjectableAttribute>(metadata) {
         Ok(attribute) => {
-            if let Ok(impl_) = parse2::<ItemImpl>(TokenStream::from(input.clone())) {
+            if let Ok(impl_) = parse2::<ItemImpl>(input.clone()) {
                 derive_from_struct_impl(impl_, attribute, original)
-            } else if let Ok(struct_) = parse2::<ItemStruct>(TokenStream::from(input)) {
+            } else if let Ok(struct_) = parse2::<ItemStruct>(input) {
                 derive_from_struct(struct_, attribute, original)
             } else {
                 Err(Error::new(
@@ -44,7 +44,7 @@ fn _injectable(metadata: TokenStream, input: TokenStream) -> TokenStream {
 
     match result {
         Ok(output) => output,
-        Err(error) => error.to_compile_error().into(),
+        Err(error) => error.to_compile_error(),
     }
 }
 
@@ -81,7 +81,7 @@ fn derive_from_struct(
 }
 
 fn service_from_attribute(impl_: &Path, mut attribute: InjectableAttribute) -> Punctuated<Path, Plus> {
-    let mut punctuated = attribute.trait_.take().unwrap_or_else(Punctuated::<Path, Plus>::new);
+    let mut punctuated = attribute.trait_.take().unwrap_or_default();
 
     if punctuated.is_empty() {
         punctuated.push(impl_.clone());
@@ -132,7 +132,7 @@ fn build_path_from_struct(struct_: &ItemStruct) -> Path {
 fn derive<'a>(context: DeriveContext<'a>, mut original: TokenStream) -> Result<TokenStream> {
     match InjectableTrait::derive(&context) {
         Ok(injectable) => {
-            original.extend(injectable.into_iter());
+            original.extend(injectable);
             Ok(original)
         }
         Err(error) => Err(error),
