@@ -4,7 +4,7 @@
 
 Despite numerous forms of automatic code generation and validation, it's still possible to encounter misconfiguration where it's not clear what has gone wrong. While a validation error will tell you _what_ is wrong, it doesn't do a lot to tell you _where_ it is wrong. In these scenarios, a picture is worth a thousand words.
 
-In order to make it easy to understand which services have been configured and for which types, [`ServiceCollection`] implements the `std::fmt::Debug` trait and, when the **fmt** feature is enabled, it also implements the `std::fmt::Display` trait with terminal colorization. You might take advantage of this capability for debug output, logging, or one-off inspection.
+In order to make it easy to understand which services have been configured and for which types, [`ServiceCollection`] implements the `std::fmt::Debug` and `std::fmt::Display` traits. When the **fmt** feature is enabled and the alternate format option is specified (e.g. `{:#}`) the output uses terminal colorization. You might take advantage of this capability for debug output, logging, or one-off inspection.
 
 ```rust
 use di::*;
@@ -40,7 +40,7 @@ fn main() {
             .add(FooImpl::transient());
 
     // we can print the service collection at any time, including here:
-    // println!("{}\n", services);
+    // println!("{services}\n");
 
     match services.build_provider() {
         Ok(provider) => {
@@ -49,7 +49,7 @@ fn main() {
         },
         Err(validation_errors) => {
             // display the validation errors and entire service collection
-            println!("{}\n{}", validation_errors, services);
+            println!("{validation_errors}\n{services}");
         }
     }
 }
@@ -86,6 +86,6 @@ A distinct difference between validation and display is that validation will onl
 
 The following example demonstrates outputting an entire service hierarchy, including warnings and errors.
 
->Colorization is supported when the **fmt** feature is activated
+>Colorization is supported when the **fmt** feature is activated and the alternate format option is specified
 
 ![Display](../img/display-fmt.png)

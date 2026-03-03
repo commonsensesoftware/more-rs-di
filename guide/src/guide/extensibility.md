@@ -143,7 +143,7 @@ pub struct ConsoleLogger;
 
 impl LoggerSource for ConsoleLogger {
     fn log(&self, text: &str) {
-        println!("{}", text)
+        println!("{text}")
     }
 }
 

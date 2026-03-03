@@ -417,10 +417,13 @@ impl std::fmt::Debug for ServiceCollection {
     }
 }
 
-#[cfg(feature = "fmt")]
 impl std::fmt::Display for ServiceCollection {
     fn fmt(&self, f: &mut Formatter<'_>) -> FormatResult {
-        fmt::write(self, fmt::terminal::Renderer, f)
+        if f.alternate() && cfg!(feature = "fmt") {
+            fmt::write(self, fmt::terminal::Renderer, f)
+        } else {
+            fmt::write(self, fmt::text::Renderer, f)
+        }
     }
 }
 
