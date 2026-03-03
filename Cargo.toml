@@ -1,6 +1,10 @@
 [workspace]
-members = [
-	"src/di",
-	"src/di_macros",
-	"test/di",
-]
+members = ["src/di", "src/di_*", "test/di"]
+
+[workspace.package]
+version = "3.2.0"
+authors = ["Chris Martinez <chris.s.martinez@outlook.com>"]
+license = "MIT"
+homepage = "https://commonsensesoftware.github.io/more-rs-di/"
+repository = "https://github.com/commonsensesoftware/more-rs-di"
+edition = "2018"
