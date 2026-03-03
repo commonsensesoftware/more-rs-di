@@ -1,12 +1,12 @@
 use crate::{KeyedRef, KeyedRefMut, Mut, Ref, RefMut, ServiceProvider};
-use spin::Once;
 use std::any::Any;
+use std::sync::OnceLock;
 
 /// Represents a holder for lazily-initialized service resolution.
 pub struct Lazy<T> {
     services: ServiceProvider,
     resolve: fn(&ServiceProvider) -> T,
-    value: Once<T>,
+    value: OnceLock<T>,
 }
 
 impl<T> Lazy<T> {
@@ -14,13 +14,13 @@ impl<T> Lazy<T> {
         Self {
             services,
             resolve,
-            value: Once::new(),
+            value: OnceLock::new(),
         }
     }
 
     /// Resolves and returns a reference to the underlying, lazy-initialized service.
     pub fn value(&self) -> &T {
-        self.value.call_once(|| (self.resolve)(&self.services))
+        self.value.get_or_init(|| (self.resolve)(&self.services))
     }
 }
 
@@ -197,7 +197,7 @@ pub fn init<T: Any + ?Sized>(instance: Box<T>) -> Lazy<Ref<T>> {
     Lazy {
         resolve: |_| unimplemented!(),
         services: ServiceProvider::default(),
-        value: Once::initialized(Ref::from(instance)),
+        value: OnceLock::from(Ref::from(instance)),
     }
 }
 
@@ -210,7 +210,7 @@ pub fn init_mut<T: Any + ?Sized>(instance: Box<Mut<T>>) -> Lazy<RefMut<T>> {
     Lazy {
         resolve: |_| unimplemented!(),
         services: ServiceProvider::default(),
-        value: Once::initialized(RefMut::from(instance)),
+        value: OnceLock::from(RefMut::from(instance)),
     }
 }
 
@@ -223,7 +223,7 @@ pub fn init_with_key<TKey, TSvc: Any + ?Sized>(instance: Box<TSvc>) -> Lazy<Keye
     Lazy {
         resolve: |_| unimplemented!(),
         services: ServiceProvider::default(),
-        value: Once::initialized(KeyedRef::<TKey, TSvc>::new(Ref::from(instance))),
+        value: OnceLock::from(KeyedRef::<TKey, TSvc>::new(Ref::from(instance))),
     }
 }
 
@@ -236,7 +236,7 @@ pub fn init_with_key_mut<TKey, TSvc: Any + ?Sized>(instance: Box<Mut<TSvc>>) -> 
     Lazy {
         resolve: |_| unimplemented!(),
         services: ServiceProvider::default(),
-        value: Once::initialized(KeyedRefMut::<TKey, TSvc>::new(Ref::from(instance))),
+        value: OnceLock::from(KeyedRefMut::<TKey, TSvc>::new(Ref::from(instance))),
     }
 }
 

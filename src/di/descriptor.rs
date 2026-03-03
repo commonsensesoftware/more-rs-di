@@ -1,6 +1,6 @@
 use crate::{Mut, ServiceDependency, ServiceProvider, Type};
-use spin::Once;
 use std::any::Any;
+use std::sync::OnceLock;
 
 /// Represents the possible service lifetimes.
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -35,7 +35,7 @@ pub struct ServiceDescriptor {
     service_type: Type,
     implementation_type: Type,
     dependencies: Vec<ServiceDependency>,
-    instance: Ref<Once<Ref<dyn Any>>>,
+    instance: Ref<OnceLock<Ref<dyn Any>>>,
     factory: Ref<ServiceFactory>,
 }
 
@@ -46,7 +46,7 @@ impl ServiceDescriptor {
         service_type: Type,
         implementation_type: Type,
         dependencies: Vec<ServiceDependency>,
-        instance: Once<Ref<dyn Any>>,
+        instance: OnceLock<Ref<dyn Any>>,
         factory: Ref<ServiceFactory>,
     ) -> Self {
         Self {
@@ -89,7 +89,7 @@ impl ServiceDescriptor {
             return (self.factory)(services);
         }
 
-        self.instance.call_once(|| (self.factory)(services)).clone()
+        self.instance.get_or_init(|| (self.factory)(services)).clone()
     }
 
     pub(crate) fn clone_with(&self, dependencies: bool) -> Self {
@@ -105,7 +105,7 @@ impl ServiceDescriptor {
             instance: if self.lifetime == ServiceLifetime::Singleton {
                 self.instance.clone()
             } else {
-                Ref::new(Once::new())
+                Ref::new(OnceLock::new())
             },
             factory: self.factory.clone(),
         }

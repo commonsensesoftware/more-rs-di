@@ -1,7 +1,7 @@
 use crate::{Ref, ServiceDependency, ServiceDescriptor, ServiceLifetime, ServiceProvider, Type};
-use spin::Once;
 use std::any::Any;
 use std::marker::PhantomData;
+use std::sync::OnceLock;
 
 /// Represents a [`ServiceDescriptor`](crate::ServiceDescriptor) builder.
 pub struct ServiceDescriptorBuilder<TSvc: Any + ?Sized, TImpl> {
@@ -30,7 +30,7 @@ impl<TSvc: Any + ?Sized, TImpl> ServiceDescriptorBuilder<TSvc, TImpl> {
                 self.dependencies.shrink_to_fit();
                 self.dependencies
             },
-            Once::new(),
+            OnceLock::new(),
             Ref::new(move |sp| Ref::new(factory(sp))),
         )
     }
