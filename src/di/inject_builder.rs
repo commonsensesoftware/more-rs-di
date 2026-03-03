@@ -1,5 +1,5 @@
 use crate::{Activator, ServiceDependency, ServiceDescriptor, ServiceLifetime, Type};
-use spin::Once;
+use std::sync::OnceLock;
 
 /// Represents the builder for an injected type.
 pub struct InjectBuilder {
@@ -65,7 +65,7 @@ impl InjectBuilder {
                 self.dependencies.shrink_to_fit();
                 self.dependencies
             },
-            Once::new(),
+            OnceLock::new(),
             self.activator.factory(),
         )
     }

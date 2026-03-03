@@ -1,7 +1,7 @@
 use crate::*;
-use spin::Once;
 use std::any::Any;
 use std::mem::MaybeUninit;
+use std::sync::OnceLock;
 
 type Builder<TSvc, TImpl> = ServiceDescriptorBuilder<TSvc, TImpl>;
 
@@ -179,7 +179,7 @@ pub fn existing<TSvc: Any + ?Sized, TImpl>(instance: Box<TSvc>) -> ServiceDescri
         Type::of::<TSvc>(),
         Type::of::<TImpl>(),
         Vec::with_capacity(0),
-        Once::initialized(Ref::new(Ref::<TSvc>::from(instance))),
+        OnceLock::from(Ref::new(Ref::<TSvc>::from(instance)) as Ref<dyn Any>),
         Ref::new(no_op),
     )
 }
@@ -200,7 +200,7 @@ pub fn existing_as_self<T: Any>(instance: T) -> ServiceDescriptor {
         Type::of::<T>(),
         Type::of::<T>(),
         Vec::with_capacity(0),
-        Once::initialized(Ref::new(Ref::from(instance))),
+        OnceLock::from(Ref::new(Ref::from(instance)) as Ref<dyn Any>),
         Ref::new(no_op),
     )
 }
@@ -221,7 +221,7 @@ pub fn existing_with_key<TKey, TSvc: Any + ?Sized, TImpl>(instance: Box<TSvc>) -
         Type::keyed::<TKey, TSvc>(),
         Type::of::<TImpl>(),
         Vec::with_capacity(0),
-        Once::initialized(Ref::new(Ref::<TSvc>::from(instance))),
+        OnceLock::from(Ref::new(Ref::<TSvc>::from(instance)) as Ref<dyn Any>),
         Ref::new(no_op),
     )
 }
@@ -242,7 +242,7 @@ pub fn existing_with_key_as_self<TKey, TSvc: Any>(instance: TSvc) -> ServiceDesc
         Type::keyed::<TKey, TSvc>(),
         Type::of::<TSvc>(),
         Vec::with_capacity(0),
-        Once::initialized(Ref::new(Ref::from(instance))),
+        OnceLock::from(Ref::new(Ref::from(instance)) as Ref<dyn Any>),
         Ref::new(no_op),
     )
 }
