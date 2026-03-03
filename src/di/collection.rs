@@ -848,9 +848,8 @@ fn traverse_services<R: Renderer>(
 
 #[cfg(test)]
 mod tests {
-
     use super::*;
-    use crate::{test::*, *};
+    use crate::{existing, existing_as_self, singleton, singleton_as_self, test::*, transient};
     use std::fs::remove_file;
     use std::path::{Path, PathBuf};
 

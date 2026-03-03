@@ -286,8 +286,10 @@ impl Default for ServiceProvider {
 
 #[cfg(test)]
 mod tests {
-
-    use crate::{test::*, *};
+    use crate::{
+        existing, existing_as_self, scoped, singleton, singleton_as_self, singleton_with_key, test::*, transient, Ref,
+        ServiceCollection,
+    };
     use std::fs::remove_file;
     use std::path::{Path, PathBuf};
 

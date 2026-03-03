@@ -243,7 +243,7 @@ pub fn init_with_key_mut<TKey, TSvc: Any + ?Sized>(instance: Box<Mut<TSvc>>) -> 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::*;
+    use crate::{lazy, scoped_factory, transient_as_self, ServiceCollection};
     use cfg_if::cfg_if;
 
     #[derive(Default)]
