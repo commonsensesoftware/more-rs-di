@@ -22,6 +22,8 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          clean: true
 
       - name: Install Rust
         run: |
@@ -33,12 +35,7 @@ jobs:
       - name: Install Cargo-to-JUnit
         run: cargo install cargo2junit
 
-      - name: Cargo Build
-        run: |
-          cargo build --features alias,fmt,lazy
-          cargo build --features async
-
-      - name: Cargo Test
+      - name: Cargo Build and Test
         run: |
           cargo test --features alias,fmt,lazy -- -Z unstable-options --format json --report-time | cargo2junit > target/debug/results.xml
           cargo test --features async -- -Z unstable-options --format json --report-time | cargo2junit > target/debug/results-async.xml
