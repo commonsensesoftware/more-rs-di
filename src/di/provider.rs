@@ -1,5 +1,4 @@
 use crate::{KeyedRef, KeyedRefMut, Mut, Ref, RefMut, ServiceDescriptor, Type};
-use cfg_if::cfg_if;
 use std::any::{type_name, Any};
 use std::borrow::Borrow;
 use std::collections::HashMap;
@@ -13,19 +12,12 @@ pub struct ServiceProvider {
     services: Ref<HashMap<Type, Vec<ServiceDescriptor>>>,
 }
 
-cfg_if! {
-    if #[cfg(feature = "async")] {
-        unsafe impl Send for ServiceProvider {}
-        unsafe impl Sync for ServiceProvider {}
-    }
-}
-
 impl ServiceProvider {
     /// Initializes a new service provider.
     ///
     /// # Arguments
     ///
-    /// * `services` - The [`ServiceDescriptor`](crate::ServiceDescriptor) map encapsulated by the provider
+    /// * `services` - The map of [service descriptors](ServiceDescriptor) encapsulated by the provider
     pub fn new(services: HashMap<Type, Vec<ServiceDescriptor>>) -> Self {
         Self {
             services: Ref::new(services),
@@ -46,6 +38,7 @@ impl ServiceProvider {
     }
 
     /// Gets a mutable service of the specified type.
+    #[inline]
     pub fn get_mut<T: Any + ?Sized>(&self) -> Option<RefMut<T>> {
         self.get::<Mut<T>>()
     }
@@ -66,6 +59,7 @@ impl ServiceProvider {
     }
 
     /// Gets a keyed, mutable service of the specified type.
+    #[inline]
     pub fn get_by_key_mut<TKey, TSvc: Any + ?Sized>(&self) -> Option<KeyedRefMut<TKey, TSvc>> {
         self.get_by_key::<TKey, Mut<TSvc>>()
     }
@@ -82,6 +76,7 @@ impl ServiceProvider {
     }
 
     /// Gets all of the mutable services of the specified type.
+    #[inline]
     pub fn get_all_mut<T: Any + ?Sized>(&self) -> impl Iterator<Item = RefMut<T>> + '_ {
         self.get_all::<Mut<T>>()
     }
@@ -101,6 +96,7 @@ impl ServiceProvider {
     }
 
     /// Gets all of the mutable services of the specified key and type.
+    #[inline]
     pub fn get_all_by_key_mut<'a, TKey: 'a, TSvc>(&'a self) -> impl Iterator<Item = KeyedRefMut<TKey, TSvc>> + 'a
     where
         TSvc: Any + ?Sized,
@@ -126,6 +122,7 @@ impl ServiceProvider {
     /// # Panics
     ///
     /// The requested service of type `T` does not exist.
+    #[inline]
     pub fn get_required_mut<T: Any + ?Sized>(&self) -> RefMut<T> {
         self.get_required::<Mut<T>>()
     }
@@ -152,25 +149,26 @@ impl ServiceProvider {
     /// # Panics
     ///
     /// The requested service of type `TSvc` with key `TKey` does not exist.
+    #[inline]
     pub fn get_required_by_key_mut<TKey, TSvc: Any + ?Sized>(&self) -> KeyedRefMut<TKey, TSvc> {
         self.get_required_by_key::<TKey, Mut<TSvc>>()
     }
 
     /// Creates and returns a new service provider that is used to resolve
     /// services from a newly create scope.
+    #[inline]
     pub fn create_scope(&self) -> Self {
         Self::new(self.services.as_ref().clone())
     }
 }
 
-/// Represents a scoped [`ServiceProvider`].
+/// Represents a scoped [ServiceProvider].
 ///
 /// # Remarks
 ///
-/// This struct has the exact same functionality as [`ServiceProvider`](crate::ServiceProvider).
-/// When a new instance is created, it also creates a new scope from the source
-/// [`ServiceProvider`](crate::ServiceProvider). The primary use case for this struct is to
-/// explicitly declare that a new scope should be created at the injection call site.
+/// This struct has the exact same functionality as [ServiceProvider]. When a new instance is created, it also creates
+/// a new scope from the source [ServiceProvider]. The primary use case for this struct is to explicitly declare that
+/// a new scope should be created at the injection call site.
 #[derive(Clone, Default)]
 pub struct ScopedServiceProvider {
     sp: ServiceProvider,
@@ -185,12 +183,14 @@ impl From<&ServiceProvider> for ScopedServiceProvider {
 }
 
 impl AsRef<ServiceProvider> for ScopedServiceProvider {
+    #[inline]
     fn as_ref(&self) -> &ServiceProvider {
         &self.sp
     }
 }
 
 impl Borrow<ServiceProvider> for ScopedServiceProvider {
+    #[inline]
     fn borrow(&self) -> &ServiceProvider {
         &self.sp
     }
@@ -199,6 +199,7 @@ impl Borrow<ServiceProvider> for ScopedServiceProvider {
 impl Deref for ScopedServiceProvider {
     type Target = ServiceProvider;
 
+    #[inline]
     fn deref(&self) -> &Self::Target {
         &self.sp
     }
@@ -283,7 +284,6 @@ impl Default for ServiceProvider {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use crate::{
         existing, existing_as_self, scoped, singleton, singleton_as_self, singleton_with_key, test::*, transient, Ref,
         ServiceCollection,
@@ -291,12 +291,15 @@ mod tests {
     use std::fs::remove_file;
     use std::path::{Path, PathBuf};
 
-    cfg_if! {
+    cfg_if::cfg_if! {
         if #[cfg(feature = "async")] {
             use std::sync::{Arc, Mutex};
             use std::thread;
         }
     }
+
+    #[cfg(feature = "async")]
+    fn assert_send_and_sync<T: Send + Sync>(_: T) {}
 
     #[test]
     fn get_should_return_none_when_service_is_unregistered() {
@@ -652,6 +655,23 @@ mod tests {
         // assert
         assert!(Ref::ptr_eq(&provider1.services, &provider2.services));
         assert!(std::ptr::eq(provider1.services.as_ref(), provider2.services.as_ref()));
+    }
+
+    #[test]
+    #[cfg(feature = "async")]
+    fn service_provider_should_be_send_and_sync() {
+        // arrange
+        let mut services = ServiceCollection::new();
+        let service =
+            singleton::<dyn TestService, TestAsyncServiceImpl>().from(|_| Ref::new(TestAsyncServiceImpl::default()));
+
+        services.add(service);
+
+        // act
+        let provider = services.build_provider().unwrap();
+
+        // assert
+        assert_send_and_sync(provider);
     }
 
     #[cfg(feature = "async")]

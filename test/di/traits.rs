@@ -1,10 +1,12 @@
 use di::{inject, injectable, lazy::Lazy, KeyedRef, Ref};
 use std::fmt::Debug;
 
+#[cfg_attr(feature = "async", maybe_impl::traits(Send, Sync))]
 pub trait Foo {
     fn echo(&self) -> &str;
 }
 
+#[cfg_attr(feature = "async", maybe_impl::traits(Send, Sync))]
 pub trait Bar {
     fn echo(&self) -> &str;
 }
@@ -47,6 +49,7 @@ impl FooImpl {
     }
 }
 
+#[cfg_attr(feature = "async", maybe_impl::traits(Send, Sync))]
 pub trait Pair<TKey: Default + Debug, TValue: Default + Debug> {
     fn key(&self) -> &TKey;
     fn value(&self) -> &TValue;
@@ -54,8 +57,8 @@ pub trait Pair<TKey: Default + Debug, TValue: Default + Debug> {
 
 pub struct PairImpl<TKey, TValue>
 where
-    TKey: Default + Debug + 'static,
-    TValue: Default + Debug + 'static,
+    TKey: Default + Debug + Send + Sync + 'static,
+    TValue: Default + Debug + Send + Sync + 'static,
 {
     key: TKey,
     value: TValue,
@@ -64,8 +67,8 @@ where
 #[injectable(Pair<TKey, TValue>)]
 impl<TKey, TValue> PairImpl<TKey, TValue>
 where
-    TKey: Default + Debug + 'static,
-    TValue: Default + Debug + 'static,
+    TKey: Default + Debug + Send + Sync + 'static,
+    TValue: Default + Debug + Send + Sync + 'static,
 {
     pub fn new() -> Self {
         Self {
@@ -77,8 +80,8 @@ where
 
 impl<TKey, TValue> Pair<TKey, TValue> for PairImpl<TKey, TValue>
 where
-    TKey: Default + Debug,
-    TValue: Default + Debug,
+    TKey: Default + Debug + Send + Sync,
+    TValue: Default + Debug + Send + Sync,
 {
     fn key(&self) -> &TKey {
         &self.key
@@ -154,6 +157,7 @@ pub mod key {
     pub struct Thing2;
 }
 
+#[cfg_attr(feature = "async", maybe_impl::traits(Send, Sync))]
 pub trait Thing: ToString {}
 
 #[derive(Default)]
@@ -251,8 +255,10 @@ impl MoreThingies {
     }
 }
 
+#[cfg_attr(feature = "async", maybe_impl::traits(Send, Sync))]
 pub trait Service1 {}
 
+#[cfg_attr(feature = "async", maybe_impl::traits(Send, Sync))]
 pub trait Service2 {}
 
 #[injectable]

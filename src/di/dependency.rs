@@ -25,8 +25,8 @@ impl ServiceDependency {
     ///
     /// # Arguments
     ///
-    /// * `injected_type` - The [injected type](crate::Type) of the service dependency
-    /// * `cardinality` - The [cardinality](crate::ServiceCardinality) of the service dependency
+    /// * `injected_type` - The [injected type](Type) of the service dependency
+    /// * `cardinality` - The [cardinality](ServiceCardinality) of the service dependency
     pub fn new(injected_type: Type, cardinality: ServiceCardinality) -> Self {
         Self {
             injected_type,
@@ -34,12 +34,14 @@ impl ServiceDependency {
         }
     }
 
-    /// Gets the [injected type](crate::Type) associated with the service dependency.
+    /// Gets the [injected type](Type) associated with the service dependency.
+    #[inline]
     pub fn injected_type(&self) -> &Type {
         &self.injected_type
     }
 
-    /// Gets the [cardinality](crate::ServiceCardinality) associated with the service dependency.
+    /// Gets the [cardinality](ServiceCardinality) associated with the service dependency.
+    #[inline]
     pub fn cardinality(&self) -> ServiceCardinality {
         self.cardinality
     }

@@ -27,7 +27,7 @@ pub struct MutStruct {
 pub struct MutTupleStruct(pub RefMut<MutDep>);
 
 #[injectable]
-pub struct MutTupleGeneric<T: 'static>(pub RefMut<T>);
+pub struct MutTupleGeneric<T: Send + Sync + 'static>(pub RefMut<T>);
 
 cfg_if! {
     if #[cfg(feature = "async")] {

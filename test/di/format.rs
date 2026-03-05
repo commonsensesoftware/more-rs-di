@@ -49,6 +49,7 @@ impl ToString for Thing3 {
     }
 }
 
+#[cfg_attr(feature = "async", maybe_impl::traits(Send, Sync))]
 trait Logger {}
 
 #[injectable]

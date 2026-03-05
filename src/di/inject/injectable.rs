@@ -2,14 +2,14 @@ use crate::{InjectBuilder, ServiceLifetime};
 
 /// Defines the behavior of an injectable type.
 pub trait Injectable: Sized {
-    /// Creates and returns a [builder](crate::InjectBuilder) for an injected type.
+    /// Creates and returns a [builder](InjectBuilder) for an injected type.
     ///
     /// # Arguments
     ///
-    /// * `lifetime` - The [lifetime](crate::ServiceLifetime) of the injected type
+    /// * `lifetime` - The [lifetime](ServiceLifetime) of the injected type
     fn inject(lifetime: ServiceLifetime) -> InjectBuilder;
 
-    /// Creates and returns a [builder](crate::InjectBuilder) for a singleton injected type.
+    /// Creates and returns a [builder](InjectBuilder) for a singleton injected type.
     fn singleton() -> InjectBuilder {
         Self::inject(ServiceLifetime::Singleton)
     }
@@ -30,11 +30,15 @@ mod tests {
     use super::*;
     use crate::{Activator, Mut, Ref, ServiceCollection};
 
+    #[cfg_attr(feature = "async", maybe_impl::traits(Send, Sync))]
     trait TestService {}
+
+    #[cfg_attr(feature = "async", maybe_impl::traits(Send, Sync))]
     trait OtherTestService {}
 
     #[derive(Default)]
     struct TestServiceImpl {}
+
     struct OtherTestServiceImpl {
         _service: Ref<dyn TestService>,
     }

@@ -60,29 +60,34 @@ impl Type {
     }
 
     /// Gets the type identifier.
+    #[inline]
     pub fn id(&self) -> u64 {
         self.id
     }
 
     /// Gets the type name.
+    #[inline]
     pub fn name(&self) -> &str {
         &self.name
     }
 
     /// Deconstructs the specified type into its name component
     /// and key component, if it is defined.
+    #[inline]
     pub fn deconstruct(t: &Type) -> (&str, Option<&str>) {
         (&t.name, t.key.as_deref())
     }
 }
 
 impl PartialEq<Type> for Type {
+    #[inline]
     fn eq(&self, other: &Self) -> bool {
         self.id == other.id
     }
 }
 
 impl PartialEq<Type> for &Type {
+    #[inline]
     fn eq(&self, other: &Type) -> bool {
         self.id == other.id
     }

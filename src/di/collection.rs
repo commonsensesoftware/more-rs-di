@@ -7,6 +7,200 @@ use std::ops::Index;
 use std::slice::{Iter, IterMut};
 use std::vec::IntoIter;
 
+macro_rules! decorate {
+    (($($traits:tt)+), ($($bounds:tt)+)) => {
+        /// Decorates an existing service descriptor with a new one that wraps the original.
+        ///
+        /// # Arguments
+        ///
+        /// * `activate` - The function that will be called to decorate the resolved service instance
+        ///
+        /// # Remarks
+        ///
+        /// This function will only decorate the last registered [ServiceDescriptor] for the specified service type. If
+        /// there are multiple, the others are ignored. If you need decorate all services of a particular service type,
+        /// consider using [Self::decorate_all] instead. If the service to be decorated is not registered, this function
+        /// does nothing. The decorator [ServiceDescriptor] is created with the same lifetime as the original. The
+        /// implementation type of the decorator is determined by the generic parameter `TImpl`. If the original and
+        /// decorator implementation types are the same, the original, decorated [ServiceDescriptor] is not replaced to
+        /// prevent infinite recursion.
+        ///
+        /// # Example
+        ///
+        /// ```
+        /// use di::{injectable, Injectable, ServiceCollection, Ref};
+        ///
+        /// trait Counter {
+        ///     fn count(&self) -> usize;
+        /// }
+        ///
+        /// #[injectable(Counter)]
+        /// struct SingleCount;
+        ///
+        /// impl Counter for SingleCount {
+        ///     fn count(&self) -> usize {
+        ///         1
+        ///     }
+        /// }
+        ///
+        /// struct DoubleCount(Ref<dyn Counter>);
+        ///
+        /// impl Counter for DoubleCount {
+        ///     fn count(&self) -> usize {
+        ///         self.0.count() * 2
+        ///     }
+        /// }
+        ///
+        /// let provider = ServiceCollection::new()
+        ///     .add(SingleCount::transient())
+        ///     .decorate::<dyn Counter, DoubleCount>(|_, decorated| Ref::new(DoubleCount(decorated)))
+        ///     .build_provider()
+        ///     .unwrap();
+        /// let counter = provider.get_required::<dyn Counter>();
+        ///
+        /// assert_eq!(counter.count(), 2);
+        /// ```
+        pub fn decorate<TSvc: ?Sized + $($traits)+, TImpl>(
+            &mut self,
+            activate: impl Fn(&ServiceProvider, Ref<TSvc>) -> Ref<TSvc> + $($bounds)+,
+        ) -> &mut Self {
+            let service_type = Type::of::<TSvc>();
+
+            for item in self.items.iter_mut().rev() {
+                if item.service_type() != service_type {
+                    continue;
+                }
+
+                let impl_type = Type::of::<TImpl>();
+
+                if item.implementation_type() == impl_type {
+                    return self;
+                }
+
+                let original = item.clone();
+                let builder = ServiceDescriptorBuilder::<TSvc, TImpl>::new(original.lifetime(), impl_type);
+
+                *item = builder.from(move |sp| {
+                    let decorated = original.get(sp).downcast_ref::<Ref<TSvc>>().unwrap().clone();
+                    activate(sp, decorated)
+                });
+
+                break;
+            }
+
+            self
+        }
+
+        /// Decorates all existing service descriptors with a new one that wraps the original.
+        ///
+        /// # Arguments
+        ///
+        /// * `activate` - The function that will be called to decorate the resolved service instance
+        ///
+        /// # Remarks
+        ///
+        /// This function decorates all registered [ServiceDescriptor] for the specified service type. If there are none,
+        /// this function does nothing. The decorator [ServiceDescriptor] is created with the same lifetime as the original.
+        /// If the original, decorated [ServiceDescriptor] is the same the decorator type, it is ignored.
+        ///
+        /// # Example
+        ///
+        /// ```
+        /// use di::{injectable, Injectable, ServiceCollection, Ref};
+        /// use std::sync::atomic::{AtomicUsize, Ordering};
+        ///
+        /// trait Feature {
+        ///     fn show(&self);
+        /// }
+        ///
+        /// #[injectable(Feature)]
+        /// struct Feature1;
+        ///
+        /// impl Feature for Feature1 {
+        ///     fn show(&self) {
+        ///     }
+        /// }
+        ///
+        /// #[injectable(Feature)]
+        /// struct Feature2;
+        ///
+        /// impl Feature for Feature2 {
+        ///     fn show(&self) {
+        ///     }
+        /// }
+        ///
+        /// #[injectable]
+        /// struct Tracker(AtomicUsize);
+        ///
+        /// impl Tracker {
+        ///     fn track(&self) {
+        ///         self.0.fetch_add(1, Ordering::Relaxed);
+        ///     }
+        ///
+        ///     fn count(&self) -> usize {
+        ///         self.0.load(Ordering::Relaxed)
+        ///     }
+        /// }
+        ///
+        /// struct FeatureTracker {
+        ///     feature: Ref<dyn Feature>,
+        ///     tracker: Ref<Tracker>,
+        /// };
+        ///
+        /// impl Feature for FeatureTracker {
+        ///     fn show(&self) {
+        ///         self.tracker.track();
+        ///         self.feature.show();
+        ///     }
+        /// }
+        ///
+        /// let provider = ServiceCollection::new()
+        ///     .add(Tracker::singleton())
+        ///     .try_add_to_all(Feature1::transient())
+        ///     .try_add_to_all(Feature2::transient())
+        ///     .decorate_all::<dyn Feature, FeatureTracker>(|sp, decorated| {
+        ///         Ref::new(FeatureTracker { feature: decorated, tracker: sp.get_required::<Tracker>() })
+        ///     })
+        ///     .build_provider()
+        ///     .unwrap();
+        /// let features = provider.get_all::<dyn Feature>();
+        /// let tracker = provider.get_required::<Tracker>();
+        ///
+        /// for feature in features {
+        ///     feature.show();
+        /// }
+        ///
+        /// assert_eq!(tracker.count(), 2);
+        /// ```
+        pub fn decorate_all<TSvc: ?Sized + $($traits)+, TImpl>(
+            &mut self,
+            activate: impl Fn(&ServiceProvider, Ref<TSvc>) -> Ref<TSvc> + $($bounds)+,
+        ) -> &mut Self {
+            let service_type = Type::of::<TSvc>();
+            let func = Ref::new(activate);
+
+            for item in self.items.iter_mut() {
+                let impl_type = Type::of::<TImpl>();
+
+                if item.service_type() != service_type || item.implementation_type() == impl_type {
+                    continue;
+                }
+
+                let original = item.clone();
+                let activate = func.clone();
+                let builder = ServiceDescriptorBuilder::<TSvc, TImpl>::new(original.lifetime(), impl_type);
+
+                *item = builder.from(move |sp| {
+                    let decorated = original.get(sp).downcast_ref::<Ref<TSvc>>().unwrap().clone();
+                    (activate)(sp, decorated)
+                });
+            }
+
+            self
+        }
+    };
+}
+
 /// Represents a service collection.
 #[derive(Default)]
 pub struct ServiceCollection {
@@ -15,21 +209,25 @@ pub struct ServiceCollection {
 
 impl ServiceCollection {
     /// Creates and returns a new instance of the service collection.
+    #[inline]
     pub fn new() -> Self {
         Self::default()
     }
 
     /// Returns true if the collection contains no elements.
+    #[inline]
     pub fn is_empty(&self) -> bool {
         self.items.is_empty()
     }
 
     /// Returns the number of elements in the collection.
+    #[inline]
     pub fn len(&self) -> usize {
         self.items.len()
     }
 
     /// Removes all elements from the collection.
+    #[inline]
     pub fn clear(&mut self) {
         self.items.clear()
     }
@@ -43,6 +241,7 @@ impl ServiceCollection {
     /// # Panics
     ///
     /// Panics if `index` is out of bounds.
+    #[inline]
     pub fn remove(&mut self, index: usize) -> ServiceDescriptor {
         self.items.remove(index)
     }
@@ -51,7 +250,7 @@ impl ServiceCollection {
     ///
     /// # Arguments
     ///
-    /// * `descriptor` - The [`ServiceDescriptor`](crate::ServiceDescriptor) to register
+    /// * `descriptor` - The [ServiceDescriptor] to register
     pub fn add<T: Into<ServiceDescriptor>>(&mut self, descriptor: T) -> &mut Self {
         self.items.push(descriptor.into());
         self
@@ -61,7 +260,7 @@ impl ServiceCollection {
     ///
     /// # Arguments
     ///
-    /// * `descriptor` - The [`ServiceDescriptor`](crate::ServiceDescriptor) to register
+    /// * `descriptor` - The [ServiceDescriptor] to register
     pub fn try_add<T: Into<ServiceDescriptor>>(&mut self, descriptor: T) -> &mut Self {
         let new_item = descriptor.into();
         let service_type = new_item.service_type();
@@ -81,7 +280,7 @@ impl ServiceCollection {
     ///
     /// # Arguments
     ///
-    /// * `descriptor` - The [`ServiceDescriptor`](crate::ServiceDescriptor) to register
+    /// * `descriptor` - The [ServiceDescriptor] to register
     pub fn try_add_to_all<T: Into<ServiceDescriptor>>(&mut self, descriptor: T) -> &mut Self {
         let new_item = descriptor.into();
         let service_type = new_item.service_type();
@@ -106,7 +305,7 @@ impl ServiceCollection {
     ///
     /// # Arguments
     ///
-    /// * `descriptors` - The [`ServiceDescriptor`](crate::ServiceDescriptor) sequence to register
+    /// * `descriptors` - The [ServiceDescriptor] sequence to register
     pub fn try_add_all(&mut self, descriptors: impl IntoIterator<Item = ServiceDescriptor>) -> &mut Self {
         for descriptor in descriptors {
             self.try_add_to_all(descriptor);
@@ -118,7 +317,7 @@ impl ServiceCollection {
     ///
     /// # Arguments
     ///
-    /// * `descriptor` - The replacement [`ServiceDescriptor`](crate::ServiceDescriptor)
+    /// * `descriptor` - The replacement [ServiceDescriptor]
     pub fn replace<T: Into<ServiceDescriptor>>(&mut self, descriptor: T) -> &mut Self {
         let new_item = descriptor.into();
         let service_type = new_item.service_type();
@@ -138,7 +337,8 @@ impl ServiceCollection {
     ///
     /// # Arguments
     ///
-    /// * `descriptor` - The replacement [`ServiceDescriptor`](crate::ServiceDescriptor)
+    /// * `descriptor` - The replacement [ServiceDescriptor]
+    #[inline]
     pub fn try_replace<T: Into<ServiceDescriptor>>(&mut self, descriptor: T) -> &mut Self {
         self.try_add(descriptor)
     }
@@ -156,7 +356,7 @@ impl ServiceCollection {
         self
     }
 
-    /// Builds and returns a new [`ServiceProvider`](crate::ServiceProvider).
+    /// Builds and returns a new [ServiceProvider].
     pub fn build_provider(&self) -> Result<ServiceProvider, ValidationError> {
         validate(self)?;
 
@@ -166,9 +366,9 @@ impl ServiceCollection {
             let key = item.service_type().clone();
             let descriptors = services.entry(key).or_insert_with(Vec::new);
 
-            // note: dependencies are only interesting for validation. after a ServiceProvider
-            // is created, no further validation occurs. prevent copying unnecessary memory
-            // and allow it to potentially be freed if the ServiceCollection is dropped.
+            // dependencies are only interesting for validation. after a ServiceProvider is created, no further
+            // validation occurs. prevent copying unnecessary memory and allow it to potentially be freed if the
+            // ServiceCollection is dropped.
             descriptors.push(item.clone_with(false));
         }
 
@@ -181,198 +381,17 @@ impl ServiceCollection {
     }
 
     /// Gets a read-only iterator for the collection
+    #[inline]
     pub fn iter(&self) -> impl ExactSizeIterator<Item = &ServiceDescriptor> + DoubleEndedIterator {
         self.items.iter()
     }
 
-    /// Decorates an existing service descriptor with a new one that wraps the original.
-    ///
-    /// # Arguments
-    ///
-    /// * `activate` - The function that will be called to decorate the resolved service instance
-    ///
-    /// # Remarks
-    ///
-    /// This function will only decorate the last registered [ServiceDescriptor] for the specified service type. If
-    /// there are multiple, the others are ignored. If you need decorate all services of a particular service type,
-    /// consider using [Self::decorate_all] instead. If the service to be decorated is not registered, this function
-    /// does nothing. The decorator [ServiceDescriptor] is created with the same lifetime as the original. The
-    /// implementation type of the decorator is determined by the generic parameter `TImpl`. If the original and
-    /// decorator implementation types are the same, the original, decorated [ServiceDescriptor] is not replaced to
-    /// prevent infinite recursion.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use di::{injectable, Injectable, ServiceCollection, Ref};
-    ///
-    /// trait Counter {
-    ///     fn count(&self) -> usize;
-    /// }
-    ///
-    /// #[injectable(Counter)]
-    /// struct SingleCount;
-    ///
-    /// impl Counter for SingleCount {
-    ///     fn count(&self) -> usize {
-    ///         1
-    ///     }
-    /// }
-    ///
-    /// struct DoubleCount(Ref<dyn Counter>);
-    ///
-    /// impl Counter for DoubleCount {
-    ///     fn count(&self) -> usize {
-    ///         self.0.count() * 2
-    ///     }
-    /// }
-    ///
-    /// let provider = ServiceCollection::new()
-    ///     .add(SingleCount::transient())
-    ///     .decorate::<dyn Counter, DoubleCount>(|_, decorated| Ref::new(DoubleCount(decorated)))
-    ///     .build_provider()
-    ///     .unwrap();
-    /// let counter = provider.get_required::<dyn Counter>();
-    ///
-    /// assert_eq!(counter.count(), 2);
-    /// ```
-    pub fn decorate<TSvc: Any + ?Sized, TImpl>(
-        &mut self,
-        activate: impl Fn(&ServiceProvider, Ref<TSvc>) -> Ref<TSvc> + 'static,
-    ) -> &mut Self {
-        let service_type = Type::of::<TSvc>();
-
-        for item in self.items.iter_mut().rev() {
-            if item.service_type() != service_type {
-                continue;
-            }
-
-            let impl_type = Type::of::<TImpl>();
-
-            if item.implementation_type() == impl_type {
-                return self;
-            }
-
-            let original = item.clone();
-            let builder = ServiceDescriptorBuilder::<TSvc, TImpl>::new(original.lifetime(), impl_type);
-
-            *item = builder.from(move |sp| {
-                let decorated = original.get(sp).downcast_ref::<Ref<TSvc>>().unwrap().clone();
-                activate(sp, decorated)
-            });
-
-            break;
+    cfg_if::cfg_if! {
+        if #[cfg(feature = "async")] {
+            decorate!((Any + Send + Sync), (Send + Sync + 'static));
+        } else {
+            decorate!((Any), ('static));
         }
-
-        self
-    }
-
-    /// Decorates all existing service descriptors with a new one that wraps the original.
-    ///
-    /// # Arguments
-    ///
-    /// * `activate` - The function that will be called to decorate the resolved service instance
-    ///
-    /// # Remarks
-    ///
-    /// This function decorates all registered [ServiceDescriptor] for the specified service type. If there are none,
-    /// this function does nothing. The decorator [ServiceDescriptor] is created with the same lifetime as the original.
-    /// If the original, decorated [ServiceDescriptor] is the same the decorator type, it is ignored.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use di::{injectable, Injectable, ServiceCollection, Ref};
-    /// use std::sync::atomic::{AtomicUsize, Ordering};
-    ///
-    /// trait Feature {
-    ///     fn show(&self);
-    /// }
-    ///
-    /// #[injectable(Feature)]
-    /// struct Feature1;
-    ///
-    /// impl Feature for Feature1 {
-    ///     fn show(&self) {
-    ///     }
-    /// }
-    ///
-    /// #[injectable(Feature)]
-    /// struct Feature2;
-    ///
-    /// impl Feature for Feature2 {
-    ///     fn show(&self) {
-    ///     }
-    /// }
-    ///
-    /// #[injectable]
-    /// struct Tracker(AtomicUsize);
-    ///
-    /// impl Tracker {
-    ///     fn track(&self) {
-    ///         self.0.fetch_add(1, Ordering::Relaxed);
-    ///     }
-    ///
-    ///     fn count(&self) -> usize {
-    ///         self.0.load(Ordering::Relaxed)
-    ///     }
-    /// }
-    ///
-    /// struct FeatureTracker {
-    ///     feature: Ref<dyn Feature>,
-    ///     tracker: Ref<Tracker>,
-    /// };
-    ///
-    /// impl Feature for FeatureTracker {
-    ///     fn show(&self) {
-    ///         self.tracker.track();
-    ///         self.feature.show();
-    ///     }
-    /// }
-    ///
-    /// let provider = ServiceCollection::new()
-    ///     .add(Tracker::singleton())
-    ///     .try_add_to_all(Feature1::transient())
-    ///     .try_add_to_all(Feature2::transient())
-    ///     .decorate_all::<dyn Feature, FeatureTracker>(|sp, decorated| {
-    ///         Ref::new(FeatureTracker { feature: decorated, tracker: sp.get_required::<Tracker>() })
-    ///     })
-    ///     .build_provider()
-    ///     .unwrap();
-    /// let features = provider.get_all::<dyn Feature>();
-    /// let tracker = provider.get_required::<Tracker>();
-    ///
-    /// for feature in features {
-    ///     feature.show();
-    /// }
-    ///
-    /// assert_eq!(tracker.count(), 2);
-    /// ```
-    pub fn decorate_all<TSvc: Any + ?Sized, TImpl>(
-        &mut self,
-        activate: impl Fn(&ServiceProvider, Ref<TSvc>) -> Ref<TSvc> + 'static,
-    ) -> &mut Self {
-        let service_type = Type::of::<TSvc>();
-        let func = Ref::new(activate);
-
-        for item in self.items.iter_mut() {
-            let impl_type = Type::of::<TImpl>();
-
-            if item.service_type() != service_type || item.implementation_type() == impl_type {
-                continue;
-            }
-
-            let original = item.clone();
-            let activate = func.clone();
-            let builder = ServiceDescriptorBuilder::<TSvc, TImpl>::new(original.lifetime(), impl_type);
-
-            *item = builder.from(move |sp| {
-                let decorated = original.get(sp).downcast_ref::<Ref<TSvc>>().unwrap().clone();
-                (activate)(sp, decorated)
-            });
-        }
-
-        self
     }
 }
 

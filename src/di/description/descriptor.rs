@@ -1,7 +1,19 @@
-use super::ServiceLifetime;
+use super::ServiceLifetime::{self, *};
 use crate::{Ref, ServiceDependency, ServiceFactory, ServiceProvider, Type};
 use std::any::Any;
 use std::sync::OnceLock;
+
+cfg_if::cfg_if! {
+    if #[cfg(feature = "async")] {
+        macro_rules! service {
+            () => { dyn Any + Send + Sync };
+        }
+    } else {
+        macro_rules! service {
+            () => { dyn Any };
+        }
+    }
+}
 
 /// Represents the description of a service with its service type, implementation, and lifetime.
 pub struct ServiceDescriptor {
@@ -9,8 +21,8 @@ pub struct ServiceDescriptor {
     service_type: Type,
     implementation_type: Type,
     dependencies: Vec<ServiceDependency>,
-    instance: Ref<OnceLock<Ref<dyn Any>>>,
     factory: Ref<ServiceFactory>,
+    instance: Ref<OnceLock<Ref<service!()>>>,
 }
 
 impl ServiceDescriptor {
@@ -20,7 +32,7 @@ impl ServiceDescriptor {
         service_type: Type,
         implementation_type: Type,
         dependencies: Vec<ServiceDependency>,
-        instance: OnceLock<Ref<dyn Any>>,
+        instance: OnceLock<Ref<service!()>>,
         factory: Ref<ServiceFactory>,
     ) -> Self {
         Self {
@@ -33,22 +45,26 @@ impl ServiceDescriptor {
         }
     }
 
-    /// Gets the [lifetime](crate::ServiceLifetime) associated with the service descriptor.
+    /// Gets the [lifetime](ServiceLifetime) associated with the service descriptor.
+    #[inline]
     pub fn lifetime(&self) -> ServiceLifetime {
         self.lifetime
     }
 
-    /// Gets the service [type](crate::Type) associated with the service descriptor.
+    /// Gets the service [type](Type) associated with the service descriptor.
+    #[inline]
     pub fn service_type(&self) -> &Type {
         &self.service_type
     }
 
-    /// Gets the implementation [type](crate::Type) associated with the service descriptor.
+    /// Gets the implementation [type](Type) associated with the service descriptor.
+    #[inline]
     pub fn implementation_type(&self) -> &Type {
         &self.implementation_type
     }
 
-    /// Gets the associated [service dependencies](crate::ServiceDependency), if any.
+    /// Gets the associated [service dependencies](ServiceDependency), if any.
+    #[inline]
     pub fn dependencies(&self) -> &[ServiceDependency] {
         &self.dependencies
     }
@@ -57,9 +73,9 @@ impl ServiceDescriptor {
     ///
     /// # Arguments
     ///
-    /// * `services` - The current [`ServiceProvider`](crate::ServiceProvider)
-    pub fn get(&self, services: &ServiceProvider) -> Ref<dyn Any> {
-        if self.lifetime == ServiceLifetime::Transient {
+    /// * `services` - The current [service provider](ServiceProvider)
+    pub fn get(&self, services: &ServiceProvider) -> Ref<service!()> {
+        if self.lifetime == Transient {
             return (self.factory)(services);
         }
 
@@ -76,7 +92,7 @@ impl ServiceDescriptor {
             } else {
                 Vec::new()
             },
-            instance: if self.lifetime == ServiceLifetime::Singleton {
+            instance: if self.lifetime == Singleton {
                 self.instance.clone()
             } else {
                 Ref::new(OnceLock::new())
@@ -87,9 +103,9 @@ impl ServiceDescriptor {
 }
 
 impl Clone for ServiceDescriptor {
+    #[inline]
     fn clone(&self) -> Self {
-        // without context, we don't know if this is 'safe';
-        // always copy dependencies here
+        // this might not be 'safe' so always copy dependencies
         self.clone_with(true)
     }
 }
