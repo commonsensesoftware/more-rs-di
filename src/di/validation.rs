@@ -205,11 +205,11 @@ impl<'a> ValidationRule<'a> for SingletonDependsOnScoped<'a> {
     }
 }
 
-/// Validates the specified [`ServiceCollection`](crate::ServiceCollection).
+/// Validates the specified [ServiceCollection].
 ///
 /// # Arguments
 ///
-/// * `services` - The [`ServiceCollection`](crate::ServiceCollection) to validate
+/// * `services` - The [service collection](ServiceCollection) to validate
 pub fn validate(services: &ServiceCollection) -> Result<(), ValidationError> {
     let mut lookup = HashMap::with_capacity(services.len());
 

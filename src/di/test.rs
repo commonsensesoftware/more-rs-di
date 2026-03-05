@@ -15,12 +15,15 @@ pub(crate) fn new_temp_file(name: &str) -> PathBuf {
     path
 }
 
+#[cfg_attr(feature = "async", maybe_impl::traits(Send, Sync))]
 pub(crate) trait TestService {
     fn value(&self) -> usize;
 }
 
+#[cfg_attr(feature = "async", maybe_impl::traits(Send, Sync))]
 pub(crate) trait OtherTestService {}
 
+#[cfg_attr(feature = "async", maybe_impl::traits(Send, Sync))]
 pub(crate) trait AnotherTestService {}
 
 #[derive(Default)]
@@ -148,18 +151,25 @@ impl TestService for TestAllKindOfProblems {
     }
 }
 
+#[cfg_attr(feature = "async", maybe_impl::traits(Send, Sync))]
 pub(crate) trait ServiceA {}
 
+#[cfg_attr(feature = "async", maybe_impl::traits(Send, Sync))]
 pub(crate) trait ServiceB {}
 
+#[cfg_attr(feature = "async", maybe_impl::traits(Send, Sync))]
 pub(crate) trait ServiceC {}
 
+#[cfg_attr(feature = "async", maybe_impl::traits(Send, Sync))]
 pub(crate) trait ServiceM {}
 
+#[cfg_attr(feature = "async", maybe_impl::traits(Send, Sync))]
 pub(crate) trait ServiceY {}
 
+#[cfg_attr(feature = "async", maybe_impl::traits(Send, Sync))]
 pub(crate) trait ServiceX {}
 
+#[cfg_attr(feature = "async", maybe_impl::traits(Send, Sync))]
 pub(crate) trait ServiceZ {}
 
 pub(crate) struct ServiceAImpl {
@@ -255,6 +265,7 @@ impl ServiceZImpl {
 
 impl ServiceZ for ServiceZImpl {}
 
+#[cfg_attr(feature = "async", maybe_impl::traits(Send, Sync))]
 pub(crate) trait Thing: ToString {}
 
 #[derive(Default)]

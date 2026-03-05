@@ -15,3 +15,4 @@ async = ["more-di/async"]
 [dependencies]
 more-di = { path = "../../src/di", features = ["fmt", "lazy"] }
 cfg-if.workspace = true
+maybe-impl.workspace = true

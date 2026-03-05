@@ -41,12 +41,12 @@ impl Foo {
     }
 }
 
-pub struct GenericBar<T: Default> {
+pub struct GenericBar<T: Default + Send + Sync> {
     _phantom: PhantomData<T>,
 }
 
 #[injectable]
-impl<T: Default + 'static> GenericBar<T> {
+impl<T: Default + Send + Sync + 'static> GenericBar<T> {
     pub fn new() -> Self {
         Self { _phantom: PhantomData }
     }
@@ -58,7 +58,7 @@ impl<T: Default + 'static> GenericBar<T> {
 
 pub struct GenericFoo<T>
 where
-    T: Default + 'static,
+    T: Default + Send + Sync + 'static,
 {
     bar: Ref<GenericBar<T>>,
 }
@@ -66,7 +66,7 @@ where
 #[injectable]
 impl<T> GenericFoo<T>
 where
-    T: Default + 'static,
+    T: Default + Send + Sync + 'static,
 {
     pub fn new(bar: Ref<GenericBar<T>>) -> Self {
         Self { bar }

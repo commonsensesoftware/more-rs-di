@@ -18,6 +18,9 @@ cfg_if! {
         /// Represents the type alias for a mutable service reference.
         #[doc(hidden)]
         pub type Mut<T> = std::sync::RwLock<T>;
+
+        /// Represents the callback function used to create a service.
+        pub type ServiceFactory = dyn (Fn(&ServiceProvider) -> Ref<dyn Any + Send + Sync>) + Send + Sync;
     } else {
         /// Represents the type alias for a service reference.
         pub type Ref<T> = std::rc::Rc<T>;
@@ -25,14 +28,14 @@ cfg_if! {
         /// Represents the type alias for a mutable service reference.
         #[doc(hidden)]
         pub type Mut<T> = std::cell::RefCell<T>;
+
+        /// Represents the callback function used to create a service.
+        pub type ServiceFactory = dyn Fn(&ServiceProvider) -> Ref<dyn Any>;
     }
 }
 
 /// Represents the type alias for a mutable service reference.
 pub type RefMut<T> = Ref<Mut<T>>;
-
-/// Represents the callback function used to create a service.
-pub type ServiceFactory = dyn Fn(&ServiceProvider) -> Ref<dyn Any>;
 
 mod collection;
 mod dependency;

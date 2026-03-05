@@ -458,6 +458,7 @@ fn inject_should_resolve_multiple_traits() {
 #[test]
 fn inject_should_support_multiple_traits() {
     // arrange
+    #[cfg_attr(feature = "async", maybe_impl::traits(Send, Sync))]
     trait IPityTheFoo {}
 
     #[injectable(IPityTheFoo + Send + Sync)]

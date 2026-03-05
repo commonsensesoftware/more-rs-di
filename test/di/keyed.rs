@@ -33,7 +33,7 @@ pub struct KeyedStruct {
 pub struct KeyedTupleStruct(pub KeyedRef<key::Key1, KeyedDep>);
 
 #[injectable]
-pub struct KeyedTupleGeneric<T: 'static>(pub KeyedRef<key::Key1, T>);
+pub struct KeyedTupleGeneric<T: Send + Sync + 'static>(pub KeyedRef<key::Key1, T>);
 
 cfg_if! {
     if #[cfg(feature = "async")] {
