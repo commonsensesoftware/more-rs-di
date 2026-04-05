@@ -2,6 +2,7 @@
 
 use crate::traits::*;
 use di::*;
+use std::env::set_var;
 
 #[injectable]
 struct A;
@@ -152,6 +153,12 @@ const TEXT_TERMINAL: &str =
  └ [38;2;75;154;214mdyn[0m [38;2;158;211;163mmore_di_tests::traits::Thing[0m → [38;2;78;201;176mmore_di_tests::format::Thing3[0m [38;2;118;118;118m[Scoped][0m\n  \
    └ [38;2;78;201;176mmore_di_tests::format::A[0m → [38;2;78;201;176mmore_di_tests::format::A[0m [38;2;118;118;118m[Singleton][0m\n";
 
+fn force_color_support() {
+    set_var("CLICOLOR_FORCE", "1");
+    set_var("COLORTERM", "truecolor");
+    set_var("TERM", "xterm-256color");
+}
+
 #[test]
 fn debug_should_format_service_collection() {
     // arrange
@@ -180,6 +187,8 @@ fn display_should_format_service_collection() {
 fn alt_display_should_format_service_collection() {
     // arrange
     let services = new_service_collection();
+
+    force_color_support();
 
     // act
     let output = format!("{services:#}");
