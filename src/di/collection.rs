@@ -18,12 +18,12 @@ macro_rules! decorate {
         /// # Remarks
         ///
         /// This function will only decorate the last registered [ServiceDescriptor] for the specified service type. If
-        /// there are multiple, the others are ignored. If you need decorate all services of a particular service type,
-        /// consider using [Self::decorate_all] instead. If the service to be decorated is not registered, this function
-        /// does nothing. The decorator [ServiceDescriptor] is created with the same lifetime as the original. The
-        /// implementation type of the decorator is determined by the generic parameter `TImpl`. If the original and
-        /// decorator implementation types are the same, the original, decorated [ServiceDescriptor] is not replaced to
-        /// prevent infinite recursion.
+        /// there are multiple, the others are ignored. If you need to decorate all services of a particular service
+        /// type, consider using [decorate_all](Self::decorate_all) instead. If the service to be decorated is not
+        /// registered, this function does nothing. The decorator [ServiceDescriptor] is created with the same
+        /// [lifetime](crate::ServiceLifetime) as the original service registration. The implementation type of the
+        /// decorator is determined by the generic parameter `TImpl`. If the original and decorator implementation types
+        /// are the same, the original, decorated [ServiceDescriptor] is not replaced to prevent infinite recursion.
         ///
         /// # Example
         ///
@@ -99,9 +99,10 @@ macro_rules! decorate {
         ///
         /// # Remarks
         ///
-        /// This function decorates all registered [ServiceDescriptor] for the specified service type. If there are none,
-        /// this function does nothing. The decorator [ServiceDescriptor] is created with the same lifetime as the original.
-        /// If the original, decorated [ServiceDescriptor] is the same the decorator type, it is ignored.
+        /// This function decorates all registered [ServiceDescriptor] instances for the specified service type. If
+        /// there are none, this function does nothing. The decorator [ServiceDescriptor] is created with the same
+        /// [lifetime](crate::ServiceLifetime) as the original. If the original, decorated [ServiceDescriptor] is the
+        /// same the decorator type, it is ignored.
         ///
         /// # Example
         ///
