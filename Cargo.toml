@@ -2,7 +2,7 @@
 members = ["src/di", "src/di-*", "test/di"]
 
 [workspace.package]
-version = "3.2.0"
+version = "3.2.1"
 authors = ["Chris Martinez <chris.s.martinez@outlook.com>"]
 license = "MIT"
 homepage = "https://commonsensesoftware.github.io/more-rs-di/"

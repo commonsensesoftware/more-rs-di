@@ -58,6 +58,7 @@ cfg_if! {
     if #[cfg(feature = "builder")] {
         mod builder;
 
+        #[cfg_attr(docsrs, doc(cfg(feature = "builder")))]
         pub use builder::{
             exactly_one, exactly_one_with_key, existing, existing_as_self, existing_with_key, existing_with_key_as_self,
             scoped, scoped_factory, scoped_with_key, scoped_with_key_factory, singleton, singleton_as_self,
@@ -65,6 +66,8 @@ cfg_if! {
             transient_factory, transient_with_key, transient_with_key_as_self, transient_with_key_factory, zero_or_more,
             zero_or_more_with_key, zero_or_one, zero_or_one_with_key,
         };
+
+        #[cfg_attr(docsrs, doc(cfg(feature = "builder")))]
         pub use description::ServiceDescriptorBuilder;
     }
 }
@@ -74,17 +77,17 @@ cfg_if! {
         mod activator;
         mod inject;
 
+        #[cfg_attr(docsrs, doc(cfg(feature = "inject")))]
         pub use activator::Activator;
+
+        #[cfg_attr(docsrs, doc(cfg(feature = "inject")))]
         pub use inject::{InjectBuilder, Injectable, inject, injectable};
     }
 }
 
-cfg_if! {
-    if #[cfg(feature = "lazy")] {
-        /// Contains support for lazy service resolution.
-        pub mod lazy;
-    }
-}
+/// Contains support for lazy service resolution.
+#[cfg(feature = "lazy")]
+pub mod lazy;
 
 #[cfg(test)]
 mod test;
