@@ -1,0 +1,49 @@
+{
+	"Rust Test": {
+	  "prefix": "test",
+	  "scope": "rust",
+	  "body": [
+		"#[test]",
+		"fn ${1:name}() {",
+		"    // arrange",
+		"    $0\n",
+		"    // act",
+		"    \n",
+		"    // assert",
+		"    ",
+		"}"
+	  ],
+	  "description": "Code snippet for a test method"
+	},
+  
+	"Rust Test Case": {
+	  "prefix": "testcase",
+	  "scope": "rust",
+	  "body": [
+		"#[test_case(${1:data} ; \"${2:case}\")]",
+		"fn ${3:name}(${4:argName}: ${5:argType}) {",
+		"    // arrange",
+		"    $0\n",
+		"    // act",
+		"    \n",
+		"    // assert",
+		"    ",
+		"}"
+	  ],
+	  "description": "Code snippet for a parameterized test method"
+	},
+  
+	"Rust Test Module": {
+	  "prefix": "testmod",
+	  "scope": "rust",
+	  "body": [
+		"#[cfg(test)]",
+		"mod tests {\n",
+		"    use super::*;",
+		"    use test_case::test_case;\n",
+		"    $0",
+		"}"
+	  ],
+	  "description": "Code snippet for a nested unit test module"
+	}
+  }
