@@ -1,7 +1,6 @@
 [package]
 name = "more-di-macros"
-description = "Macro implementation of #[injectable(Trait)]"
-include = ["*.rs"]
+description = "Macro implementation of #[injectable]"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
